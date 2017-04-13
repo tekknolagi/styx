@@ -1,0 +1,24 @@
+﻿{
+  "name" : "yatol",
+  "authors" : [
+    "Basile Burg"
+  ],
+  "targetPath" : "bin",
+  "sourcePaths" : [
+    "src"
+  ],
+  "configurations" : [
+    {
+      "name" : "compiler",
+      "targetType" : "executable"
+    },
+    {
+      "name" : "library",
+      "targetType" : "staticLibrary",
+      "excludedSourceFiles" : [
+        "src\/yatol\/app.d"
+      ]
+    }
+  ],
+  "description" : "YATOL is Yet Another TOy Language"
+}
