@@ -15,6 +15,8 @@ private:
     Lexer* _lexer;
     Token* _current;
     UnitContainerAstNode _unitContainer;
+    ProtectionAttributeAstNode[] _protStack;
+    char[] _firstProtection = "public:".dup;
 
     alias Range = TokenRange!(TokenType.lineComment, TokenType.invalid);
     Range _range;
@@ -33,12 +35,24 @@ private:
             _current.column, message);
     }
 
+    void expected(TokenType expected)
+    {
+        static immutable string specifier = "expected `%s` instead of `%s`";
+        parseError(specifier.format(tokenString(expected), _current.text));
+    }
+
+    void unexpected()
+    {
+        static immutable string specifier = "unexpected `%s`";
+        parseError(specifier.format(_current.text));
+    }
+
     bool advance()
     {
         bool result;
         if (!_range.empty())
         {
-            _current = cast(Token*) _range.front();
+            _current = cast(Token*) &_range.front();
             _range.popFront();
             result = true;
         }
@@ -47,18 +61,44 @@ private:
 
     Token* current() {return _current;}
 
-    Token* lookup(size_t count = 1) {return _current + count;}
-
-    void expected(TokenType expected)
+    Token* lookup(size_t count = 1)
     {
-        static immutable string specifier = "expected `%s` instead of `%s`";
-        parseError(specifier.format(tokenString(expected), tokenString(_current.type)));
+        return _current + count;
     }
 
-    void unexpected()
+    ProtectionAttributeAstNode pushProtectionStack(Token* identifier)
     {
-        static immutable string specifier = "unexpected `%s`";
-        parseError(specifier.format(tokenString(_current.type)));
+        ProtectionAttributeAstNode result = new ProtectionAttributeAstNode(identifier);
+        _protStack ~= result;
+        return result;
+    }
+
+    ProtectionAttributeAstNode pushProtectionStackWithCurrent()
+    {
+        ProtectionAttributeAstNode result =
+            new ProtectionAttributeAstNode(currentProtection.protection);
+        _protStack ~= result;
+        return result;
+    }
+
+    ProtectionAttributeAstNode overwriteProtectionStack(Token* identifier)
+    {
+        ProtectionAttributeAstNode result = new ProtectionAttributeAstNode(identifier);
+        _protStack[$-1] = result;
+        return result;
+    }
+
+    void popProtectionStack()
+    {
+        if (_protStack.length == 1)
+            unexpected();
+        else
+            _protStack.length -= 1;
+    }
+
+    ProtectionAttributeAstNode currentProtection()
+    {
+        return _protStack[$-1];
     }
 
 private:
@@ -69,7 +109,7 @@ private:
      */
     void parseUnitDeclaration(bool virtual)
     {
-        const(Token*)[] toks;
+        Token*[] toks;
         advance();
         if (!current.isTokIdentifier)
         {
@@ -112,7 +152,7 @@ private:
         }
     }
 
-    /// Parses a ClassDeclaration
+    /// Parses a ClassDeclaration.
     ClassDeclarationAstNode parseClassDeclaration()
     {
         ClassDeclarationAstNode result = new ClassDeclarationAstNode;
@@ -123,6 +163,7 @@ private:
             destroy(result);
             return null;
         }
+        pushProtectionStackWithCurrent();
         parseDeclarations(result.declarations);
         if (!current.isTokRightCurly)
         {
@@ -133,7 +174,7 @@ private:
         return result;
     }
 
-    /// Parses a structDeclaration
+    /// Parses a StructDeclaration.
     StructDeclarationAstNode parseStructDeclaration()
     {
         StructDeclarationAstNode result = new StructDeclarationAstNode;
@@ -144,6 +185,7 @@ private:
             destroy(result);
             return null;
         }
+        pushProtectionStackWithCurrent();
         parseDeclarations(result.declarations);
         if (!current.isTokRightCurly)
         {
@@ -163,18 +205,63 @@ private:
         with(TokenType) L0: while (advance()) switch(current.type)
         {
         L1:
+        case leftCurly:
+        {
+            ScopeAstNode sc = new ScopeAstNode;
+            DeclarationAstNode decl = new DeclarationAstNode;
+            decl.scopeDeclaration = sc;
+            if (!prot)
+                prot = new ProtectionAttributeAstNode(currentProtection.protection);
+            sc.protection = pushProtectionStack(prot.protection);
+            destroy(prot);
+            prot = null;
+            declarations ~= sc;
+            advance();
+            parseDeclarations(sc.declarations);
+            if (_protStack.length > 1 && current.type != TokenType.rightCurly)
+                expected(TokenType.rightCurly);
+            break;
+        }
+        case rightCurly:
+            popProtectionStack();
+            break L0;
         case virtual:
             parseUnitDeclaration(true);
             break;
         case class_:
             advance();
-            parseClassDeclaration;
+            ClassDeclarationAstNode classDecl = parseClassDeclaration;
+            if (prot)
+            {
+                classDecl.protection = prot;
+                destroy(prot);
+                prot = null;
+            }
+            if (classDecl)
+            {
+                DeclarationAstNode decl = new DeclarationAstNode;
+                decl.classDeclaration = classDecl;
+                declarations ~= decl;
+            }
             break;
         case struct_:
             advance();
-            parseStructDeclaration;
+            StructDeclarationAstNode structDecl = parseStructDeclaration;
+            if (prot)
+            {
+                structDecl.protection = prot;
+                destroy(prot);
+                prot = null;
+            }
+            if (structDecl)
+            {
+                DeclarationAstNode decl = new DeclarationAstNode;
+                decl.structDeclaration = structDecl;
+                declarations ~= decl;
+            }
             break;
         case protection:
+        {
             if (Token* id = parseProtectionAttribute())
             {
                 if (prot)
@@ -183,20 +270,23 @@ private:
                     destroy(prot);
                     prot = null;
                 }
-                advance();
-                if (current.isTokColon)
+                if (lookup(1).isTokColon)
                 {
-                    declarations ~= new DeclarationAstNode;
-                    declarations[$-1].protectionOverwrite = new ProtectionOverwriteAstNode(id);
+                    advance();
+                    ProtectionAttributeAstNode pa = overwriteProtectionStack(id);
+                    DeclarationAstNode decl = new DeclarationAstNode;
+                    decl.protectionOverwrite = new ProtectionOverwriteAstNode;
+                    decl.protectionOverwrite.protection = pa;
+                    declarations ~= decl;
                     break;
                 }
                 else
                 {
                     prot = new ProtectionAttributeAstNode(id);
-                    goto L1;
                 }
             }
-            break L0;
+            break;
+        }
         default:
             break;
         }
@@ -239,12 +329,14 @@ public:
     {
         if (!lexer)
         {
-            stderr.writeln("INTERNAL ERROR: attempt to create a parser without a lexer");
+            stderr.writeln("INTERNAL ERROR: attempt to create a parser without lexer");
             exit(1);
         }
         _lexer = lexer;
         _range = Range(lexer.tokens);
         _unitContainer = new UnitContainerAstNode;
+        pushProtectionStack(new Token(_firstProtection.ptr, _firstProtection.ptr + 5,
+            1, 1, TokenType.identifier));
         advance();
     }
 
@@ -258,11 +350,43 @@ public:
             return;
         }
         else parseUnitDeclaration(false);
+        if (_protStack.length > 1)
+        {
+            parseError("there are %s unclosed scope(s), struct(s) or class(es)"
+                .format(_protStack.length-1));
+        }
     }
 
     UnitContainerAstNode unitContainer()
     {
         return _unitContainer;
     }
+}
+
+unittest
+{
+    import yatol.parser.debug_visitor;
+    enum line = __LINE__;
+    enum source = `
+    unit a;
+    protection(private):
+    protection(public)
+    {
+        protection(public) struct Cat {}
+    }
+    struct Rat {
+    protection(public):
+    class Bat {};
+    class Cow {}`;
+
+    Lexer lx;
+    lx.setSourceFromText(source, line + 1, 4);
+    lx.lex;
+
+    Parser pr = Parser(&lx);
+    pr.parseMainUnit;
+
+    DebugVisitor dv = new DebugVisitor(pr.unitContainer);
+    dv.printText();
 }
 

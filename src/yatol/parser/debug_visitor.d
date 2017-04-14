@@ -1,9 +1,10 @@
 module yatol.parser.debug_visitor;
 
 import
-    std.stdio;
+    std.stdio, std.traits;
 import
     yatol.lexer.types, yatol.parser.ast;
+
 
 class DebugVisitor: AstVisitor
 {
@@ -14,15 +15,42 @@ private:
 
     ptrdiff_t _indentLevel;
 
-
-    void indentLevel(ptrdiff_t value)
+    void visitImpl(Node)(Node node)
     {
-        _indentLevel = value;
-        _indentText.length = value * 4;
+        if (!node.isGrammatic)
+        {
+            node.accept(this);
+        }
+        else
+        {
+            _text ~= _indentText ~ node.classinfo.name ~ "\n";
+            const bool hasChildren = !node.isTerminal;
+            if (hasChildren)
+            {
+                _text ~= _indentText ~ "{\n";
+                indent();
+            }
+            node.accept(this);
+            if (hasChildren)
+            {
+                outdent();
+                _text ~= _indentText ~ "}\n";
+            }
+        }
+    }
+
+    void indent()
+    {
+        ++_indentLevel;
+        _indentText.length = _indentLevel * 4;
         _indentText[] = ' ';
     }
 
-    ptrdiff_t indentLevel(){return _indentLevel;}
+    void outdent()
+    {
+        --_indentLevel;
+        _indentText.length = _indentLevel * 4;
+    }
 
     invariant{assert(_indentLevel > -1);}
     char[] _text;
@@ -34,7 +62,7 @@ public:
     this(UnitContainerAstNode node)
     {
         assert(node);
-        visit(node);
+        visitImpl(node);
     }
 
     void printText()
@@ -44,64 +72,62 @@ public:
 
     override void visit(ClassDeclarationAstNode node)
     {
-        _text ~= _indentText ~ node.classinfo.name ~ "\n";
-        indentLevel(indentLevel+1);
-        node.accept(this);
-        indentLevel(indentLevel-1);
+        assert(node);
+        visitImpl(node);
     }
 
     override void visit(ImportDeclarationAstNode node)
     {
-        _text ~= _indentText ~ node.classinfo.name ~ "\n";
-        node.accept(this);
+        assert(node);
+        visitImpl(node);
     }
 
     override void visit(DeclarationAstNode node)
     {
-        node.DeclarationAstNode.accept(this);
+        assert(node);
+        visitImpl(node);
     }
 
     override void visit(LiteralAstNode node)
     {
-        _text ~= _indentText ~ node.classinfo.name ~ "\n";
-        node.accept(this);
+        assert(node);
+        visitImpl(node);
     }
 
     override void visit(ProtectionAttributeAstNode node)
     {
-        _text ~= _indentText ~ node.classinfo.name ~ " ";
-        node.accept(this);
+        assert(node);
+        visitImpl(node);
     }
 
     override void visit(ProtectionOverwriteAstNode node)
     {
-        _text ~= _indentText ~ node.classinfo.name ~ "\n";
-        indentLevel(indentLevel+1);
-        node.accept(this);
-        indentLevel(indentLevel-1);
+        assert(node);
+        visitImpl(node);
     }
 
     override void visit(StructDeclarationAstNode node)
     {
-        _text ~= _indentText ~ node.classinfo.name ~ "\n";
-        indentLevel(indentLevel+1);
-        node.accept(this);
-        indentLevel(indentLevel-1);
+        assert(node);
+        visitImpl(node);
     }
 
     override void visit(UnitAstNode node)
     {
-        _text ~= _indentText ~ node.classinfo.name ~ "\n";
-        indentLevel(indentLevel+1);
-        node.accept(this);
-        indentLevel(indentLevel-1);
+        assert(node);
+        visitImpl(node);
     }
 
     override void visit(UnitContainerAstNode node)
     {
-        _text ~= _indentText ~ node.classinfo.name ~ "\n";
-        indentLevel(indentLevel+1);
-        node.accept(this);
-        indentLevel(indentLevel-1);
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(ScopeAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
     }
 }
+

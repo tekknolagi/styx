@@ -1,5 +1,4 @@
 .dub 
 bin
-d2kw.d
-d2kw.pas
 notes
+isitthere/keywords.d

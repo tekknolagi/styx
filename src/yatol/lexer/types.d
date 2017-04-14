@@ -204,7 +204,7 @@ unittest
     assert(Keywords.isKeyword("import"));
 }
 
-alias Tokens =  const(Token*)[];
+alias Tokens = Token[];
 alias TokensList = Tokens[];
 
 
@@ -241,7 +241,7 @@ public:
         }
     }
 
-    const(Token*) front()
+    ref const(Token) front()
     {
         import std.range: front;
         return front(_tokens);

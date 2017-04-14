@@ -19,6 +19,8 @@ Yatol:
 
     UnitDeclaration < Unit IdentifierChain Semicolon
 
+    # Statements should go with Declarations
+
     Declarations    < Declaration+
     Declaration     < ImportDeclaration
                     / ProtectionOverwrite
@@ -26,6 +28,7 @@ Yatol:
                     / ClassDeclaration
                     / StructDeclaration
                     / FunctionDeclaration
+                    / Scope
 
     VariableDeclaration < ProtectionAttribute? Type IdentifierList Semicolon
     StructDeclaration   < ProtectionAttribute? Struct Identifier LeftCurly Declarations? RightCurly

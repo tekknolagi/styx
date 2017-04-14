@@ -15,7 +15,7 @@ struct Lexer
 
 private:
 
-    Token*[] _tokens;
+    Tokens _tokens;
     char[] _filename;
     char[] _text;
     char* _tokStart;
@@ -55,8 +55,8 @@ private:
     {
         if (!_anticipated)
             error("INTERNAL, attempt to validate an unanticipated token");
-        _tokens ~= new Token(_tokStart, _front, _tokStartLine,
-            _tokStartColumn, _anticipatedType);
+        _tokens.length += 1;
+        _tokens[$-1] = Token(_tokStart, _front, _tokStartLine, _tokStartColumn, _anticipatedType);
         _anticipated = false;
     }
 
@@ -65,8 +65,8 @@ private:
     {
         if (!_anticipated)
             error("INTERNAL, attempt to validate an unanticipated token");
-        _tokens ~= new Token(_tokStart, _front, _tokStartLine,
-            _tokStartColumn, type);
+        _tokens.length += 1;
+        _tokens[$-1] = Token(_tokStart, _front, _tokStartLine, _tokStartColumn, type);
         _anticipated = false;
     }
 
@@ -171,13 +171,13 @@ public:
      * Params:
      *      text = The string to parse.
      */
-    void setSourceFromText(const(char)[] text)
+    void setSourceFromText(const(char)[] text, size_t line = 1, size_t column = 1)
     {
         _text    = text.dup;
         _front   = _text.ptr;
         _back    = _text.ptr + _text.length - 1;
-        _frontLine   = 1;
-        _frontColumn = 1;
+        _frontLine   = line;
+        _frontColumn = column;
         _tokens.length = 0;
     }
 
@@ -282,8 +282,8 @@ public:
     {
         void printTokens()
         {
-            foreach(tk; _tokens)
-                writeln(*tk);
+            foreach(ref tk; _tokens)
+                writeln(tk);
         }
     }
 }

@@ -27,20 +27,28 @@ class AstVisitor
     void visit(StructDeclarationAstNode node){assert(node);node.accept(this);}
     void visit(UnitAstNode node){assert(node);node.accept(this);}
     void visit(UnitContainerAstNode node){assert(node);node.accept(this);}
+    void visit(ScopeAstNode node){assert(node);node.accept(this);}
 }
 
+
+
+/// The base AST node.
 class AstNode
 {
+    /// Gets visited by an AstVisitor.
     void accept(AstVisitor visitor) {}
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    bool isGrammatic() {return false;}
+    /// Returns: $(D true) if the node has no children.
+    bool isTerminal() {return false;}
 }
 
+/// LiteralAstNode
 class LiteralAstNode: AstNode
 {
 
 private:
 
-    Token* _literalType;
-    Token* _literal;
     double _asFloat;
     ulong  _asInt;
     bool _cached;
@@ -49,9 +57,9 @@ private:
     {
         if (!_cached)
         {
-            try _asInt = to!ulong(_literal.text());
+            try _asInt = to!ulong(literal.text());
             catch(ConvException) _asInt = 0;
-            try _asFloat = to!double(_literal.text());
+            try _asFloat = to!double(literal.text());
             catch(ConvException) _asFloat = 0.0;
         }
         _cached = true;
@@ -61,30 +69,45 @@ protected:
 
 public:
 
+    /// The token that gives the type of literal.
+    Token* literalType;
+    /// The token that gives the literal text.
+    Token* literal;
+
+    /// Creates a new instance with a token that gives the literal and the
+    /// one that gives the type.
     this (Token* literal, Token* type)
     {
-        _literal = literal;
-        _literalType = type;
+        this.literal = literal;
+        this.literalType = type;
     }
 
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return true;}
+
+    /// Returns: The literal interpreted as a u8.
     ubyte asU8(){tryCacheValue(); return cast(ubyte) _asInt;}
-
+    /// Returns: The literal interpreted as a u16.
     ushort asU16(){tryCacheValue(); return cast(ushort) _asInt;}
-
+    /// Returns: The literal interpreted as a u32.
     uint asU32(){tryCacheValue(); return cast(uint) _asInt;}
-
+    /// Returns: The literal interpreted as a u64.
     ulong asU64(){tryCacheValue(); return _asInt;}
 
+    /// Returns: The literal interpreted as a s8.
     byte asS8(){tryCacheValue(); return cast(byte) _asInt;}
-
+    /// Returns: The literal interpreted as a s16.
     short asS16(){tryCacheValue(); return cast(short) _asInt;}
-
+    /// Returns: The literal interpreted as a s32.
     int asS32(){tryCacheValue(); return cast(int) _asInt;}
-
+    /// Returns: The literal interpreted as a s64.
     long asS64(){tryCacheValue(); return _asInt;}
 
+    /// Returns: The literal interpreted as a f32.
     float asF32(){tryCacheValue(); return cast(float) _asFloat;}
-
+    /// Returns: The literal interpreted as a f64.
     double asF64(){tryCacheValue(); return _asFloat;}
 }
 
@@ -97,62 +120,110 @@ class ImportDeclarationAstNode: DeclarationAstNode
     TokensList importList;
     ///
     override void accept(AstVisitor){}
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return true;}
 }
 
 /// ProtectionOverwrite
 class ProtectionOverwriteAstNode: DeclarationAstNode
 {
-    /// Creates with the token that speicies the new protection.
-    this(Token* protection) {this.protection = protection;}
-    /// The token that speicies the new protection.
-    Token* protection;
+    /// Indicates the new protection.
+    ProtectionAttributeAstNode protection;
     ///
-    override void accept(AstVisitor){}
+    override void accept(AstVisitor visitor)
+    {
+        if (protection)
+            visitor.visit(protection);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
 }
 
 /// StructDeclaration
 class StructDeclarationAstNode: DeclarationAstNode
 {
-    /// The declaration;
+    /// The struct protection.
+    ProtectionAttributeAstNode protection;
+    /// The declarations located in the struct.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
     {
         declarations.each!(a => visitor.visit(a));
     }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
 }
 
 /// ClassDeclaration
 class ClassDeclarationAstNode: DeclarationAstNode
 {
-    /// The declaration;
+    /// The class protection.
+    ProtectionAttributeAstNode protection;
+    /// The declarations located in the class.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
     {
         declarations.each!(a => visitor.visit(a));
     }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// Scope
+class ScopeAstNode: DeclarationAstNode
+{
+    /// The scope protection.
+    ProtectionAttributeAstNode protection;
+    /// The declarations located in the scope.
+    DeclarationAstNode[] declarations;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (protection)
+            visitor.visit(protection);
+        declarations.each!(a => visitor.visit(a));
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
 }
 
 /// ProtectionAttribute (overwrite once)
 class ProtectionAttributeAstNode: AstNode
 {
-    /// Creates with the token that speicies the new protection.
+    /// Creates with the token that specifies the new protection.
     this(Token* protection) {this.protection = protection;}
-    /// The token that speicies the new protection.
+    /// The token that specifies the new protection.
     Token* protection;
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return true;}
 }
 
 class DeclarationAstNode: AstNode
 {
-    /// Assigned if this declaration is an ImportDeclarationAstNode
+    /// Assigned if this declaration is an ImportDeclarationAstNode.
     ImportDeclarationAstNode importDeclaration;
-    /// Assigned if this declaration is an ProtectionOverwriteAstNode
+    /// Assigned if this declaration is an ProtectionOverwriteAstNode.
     ProtectionOverwriteAstNode protectionOverwrite;
-    /// Assigned if this declaration is an ClassDeclarationAstNode
+    /// Assigned if this declaration is an ClassDeclarationAstNode.
     ClassDeclarationAstNode classDeclaration;
-    /// Assigned if this declaration is an StructDeclarationAstNode
+    /// Assigned if this declaration is an StructDeclarationAstNode.
     StructDeclarationAstNode structDeclaration;
+    /// Assigned if this declaration is a Scope.
+    ScopeAstNode scopeDeclaration;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -164,17 +235,24 @@ class DeclarationAstNode: AstNode
             visitor.visit(classDeclaration);
         else if (structDeclaration)
             visitor.visit(structDeclaration);
+        else if (scopeDeclaration)
+            visitor.visit(scopeDeclaration);
     }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return false;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+
 }
 
 /// Either a MainUnit or a VirtualUnit
 class UnitAstNode: AstNode
 {
-    /// The chain of tokens used in the UnitDeclaration
-    Tokens unitDeclaration;
-    /// When the unit is virtual, this is a reference to the MainUnit
+    /// The chain of tokens used in the UnitDeclaration.
+    Token*[] unitDeclaration;
+    /// When the unit is virtual, this is a reference to the MainUnit.
     UnitAstNode mainUnit; //!\\ not to visit //!\\
-    /// The declarations
+    /// The declarations located in the unit.
     DeclarationAstNode[] declarations;
     /// Indicates if this is a VirtualUnit.
     final bool isVirtual() const {return mainUnit !is null;}
@@ -185,14 +263,19 @@ class UnitAstNode: AstNode
     {
         declarations.each!(a => visitor.visit(a));
     }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+
 }
 
 /// The AST root node
 class UnitContainerAstNode: AstNode
 {
-    /// The main unit
+    /// The main unit.
     UnitAstNode mainUnit;
-    /// The virtual units
+    /// The virtual units.
     UnitAstNode[] virtualUnits;
     ///
     override void accept(AstVisitor visitor)
@@ -201,5 +284,9 @@ class UnitContainerAstNode: AstNode
             visitor.visit(mainUnit);
         virtualUnits.each!(a => visitor.visit(a));
     }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
 }
 
