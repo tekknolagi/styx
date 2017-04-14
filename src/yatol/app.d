@@ -82,8 +82,8 @@ int main(string[] args)
     );
     catch (GetOptException ge)
     {
-        writefln("options error, %s", ge.msg);
-        return 0;
+        stderr.writefln("options error, %s", ge.msg);
+        return 1;
     }
     if (gr.helpWanted)
     {
