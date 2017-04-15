@@ -23,7 +23,7 @@ private:
         }
         else
         {
-            _text ~= _indentText ~ node.classinfo.name ~ "\n";
+            _text ~= _indentText ~ Node.stringof ~ "\n";
             const bool hasChildren = !node.isTerminal;
             if (hasChildren)
             {

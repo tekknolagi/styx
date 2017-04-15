@@ -285,6 +285,7 @@ private:
                 advance();
             }
         }
+        result.type = type;
         return result;
     }
 
@@ -608,6 +609,7 @@ unittest
     enum source = `
     unit a;
     function ant(s8 p1,p2; s16 p3,p4): s8***[] {}
+    function bee(Rat p1,p2; a.Cow p3,p4): s8* {}
     protection(private):
     protection(public)
     {
