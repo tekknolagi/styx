@@ -30,7 +30,7 @@ Yatol:
                     / FunctionDeclaration
                     / Scope
 
-    VariableDeclaration < ProtectionAttribute? TypedVariableList Semicolon
+    VariableDeclaration < ProtectionAttribute? Static? TypedVariableList Semicolon
     StructDeclaration   < ProtectionAttribute? Struct Identifier LeftCurly Declarations? RightCurly
     ClassDeclaration    < ProtectionAttribute? Class Identifier LeftCurly Declarations? RightCurly
 
