@@ -28,6 +28,11 @@ class AstVisitor
     void visit(UnitAstNode node){assert(node);node.accept(this);}
     void visit(UnitContainerAstNode node){assert(node);node.accept(this);}
     void visit(ScopeAstNode node){assert(node);node.accept(this);}
+    void visit(TypeAstNode node){assert(node);node.accept(this);}
+    void visit(TypeModifierAstNode node){assert(node);node.accept(this);}
+    void visit(TypedVariableListAstNode node){assert(node);node.accept(this);}
+    void visit(FunctionHeaderAstNode node){assert(node);node.accept(this);}
+    void visit(FunctionDeclarationAstNode node){assert(node);node.accept(this);}
 }
 
 
@@ -111,6 +116,54 @@ public:
     double asF64(){tryCacheValue(); return _asFloat;}
 }
 
+class FunctionHeaderAstNode: AstNode
+{
+    /// Indicates the function protection.
+    ProtectionAttributeAstNode protection;
+    /// The function name.
+    Token* name;
+    /// The function parameters
+    TypedVariableListAstNode[] parameters;
+    /// The function return
+    TypeAstNode returnType;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (protection)
+            visitor.visit(protection);
+        parameters.each!(a => visitor.visit(a));
+        if (returnType)
+            visitor.visit(returnType);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+class FunctionDeclarationAstNode: DeclarationAstNode
+{
+    /// The function header.
+    FunctionHeaderAstNode header;
+    /// Used to indicates the body kind.
+    Token* firstBodyToken;
+    /// The body.
+    DeclarationAstNode[] declarations;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (header)
+            visitor.visit(header);
+        declarations.each!(a => visitor.visit(a));
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+    /// Returns: $(D true) if the function is implemented.
+    bool isImplemented() {return firstBodyToken.isTokLeftCurly;}
+}
+
 /// ImportDeclaration, listo fprioritized imports.
 class ImportDeclarationAstNode: DeclarationAstNode
 {
@@ -146,6 +199,8 @@ class ProtectionOverwriteAstNode: DeclarationAstNode
 /// StructDeclaration
 class StructDeclarationAstNode: DeclarationAstNode
 {
+    /// The struct name.
+    Token* name;
     /// The struct protection.
     ProtectionAttributeAstNode protection;
     /// The declarations located in the struct.
@@ -153,6 +208,8 @@ class StructDeclarationAstNode: DeclarationAstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        if (protection)
+            visitor.visit(protection);
         declarations.each!(a => visitor.visit(a));
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
@@ -164,6 +221,8 @@ class StructDeclarationAstNode: DeclarationAstNode
 /// ClassDeclaration
 class ClassDeclarationAstNode: DeclarationAstNode
 {
+    /// The struct name.
+    Token* name;
     /// The class protection.
     ProtectionAttributeAstNode protection;
     /// The declarations located in the class.
@@ -171,6 +230,8 @@ class ClassDeclarationAstNode: DeclarationAstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        if (protection)
+            visitor.visit(protection);
         declarations.each!(a => visitor.visit(a));
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
@@ -202,10 +263,10 @@ class ScopeAstNode: DeclarationAstNode
 /// ProtectionAttribute (overwrite once)
 class ProtectionAttributeAstNode: AstNode
 {
-    /// Creates with the token that specifies the new protection.
-    this(Token* protection) {this.protection = protection;}
     /// The token that specifies the new protection.
     Token* protection;
+    ///
+    override void accept(AstVisitor visitor) {}
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}
     /// Returns: $(D true) if the node has no children.
@@ -214,6 +275,8 @@ class ProtectionAttributeAstNode: AstNode
 
 class DeclarationAstNode: AstNode
 {
+    /// Assigned if this declaration is a FunctionDeclaration.
+    FunctionDeclarationAstNode functionDeclaration;
     /// Assigned if this declaration is an ImportDeclarationAstNode.
     ImportDeclarationAstNode importDeclaration;
     /// Assigned if this declaration is an ProtectionOverwriteAstNode.
@@ -237,12 +300,80 @@ class DeclarationAstNode: AstNode
             visitor.visit(structDeclaration);
         else if (scopeDeclaration)
             visitor.visit(scopeDeclaration);
+        else if (functionDeclaration)
+            visitor.visit(functionDeclaration);
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return false;}
     /// Returns: $(D true) if the node has no children.
     override bool isTerminal() {return false;}
+}
 
+/// TypedVariableList
+class TypedVariableListAstNode: AstNode
+{
+    /// The variables list.
+    Token*[] variableList;
+    /// The variables common type.
+    TypeAstNode type;
+    override void accept(AstVisitor visitor)
+    {
+        if (type)
+            visitor.visit(type);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// Type
+class TypeAstNode: AstNode
+{
+    /// The unmodified type.
+    Token*[] type;
+    /// The first modifier.
+    TypeModifierAstNode modifier;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (modifier)
+            visitor.visit(modifier);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// Describes the type modifiers.
+enum ModifierKind
+{
+    /// modified by nested "[]"
+    array,
+    /// modified by consecutive "*"
+    pointer,
+}
+
+/// TypeModifier
+class TypeModifierAstNode: AstNode
+{
+    /// The modifier kind.
+    ModifierKind kind;
+    /// The count of modifiers.
+    size_t count;
+    /// Next modifications, always of a different kind.
+    TypeModifierAstNode modifier;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (modifier)
+            visitor.visit(modifier);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
 }
 
 /// Either a MainUnit or a VirtualUnit

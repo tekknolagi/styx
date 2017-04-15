@@ -1,6 +1,7 @@
 class
 f32
 f64
+function
 import
 protection
 s16
@@ -8,6 +9,7 @@ s32
 s64
 s8
 sreg
+static
 struct
 u16
 u32

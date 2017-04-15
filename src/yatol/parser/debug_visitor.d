@@ -1,7 +1,7 @@
 module yatol.parser.debug_visitor;
 
 import
-    std.stdio, std.traits;
+    std.stdio, std.traits, std.format, std.algorithm;
 import
     yatol.lexer.types, yatol.parser.ast;
 
@@ -30,6 +30,39 @@ private:
                 _text ~= _indentText ~ "{\n";
                 indent();
             }
+            static immutable specifier1 = "%s- %s : `%s` \n";
+            static immutable specifier2 = "%s- %s[%d] : `%s` \n";
+            static immutable specifier3 = "%s- %s : `%d` \n";
+            foreach (member; __traits(allMembers, Node))
+            {
+                static if (member.among("__monitor", "__ctor", "__vtbl", "Monitor"))
+                    continue;
+                else static if (is(typeof(
+                    (){auto a = __traits(getMember, node, member);})))
+                {
+                    alias NT = typeof(__traits(getMember, node, member));
+                    static if (is(NT == Token*))
+                    {
+                        _text ~= specifier1.format(_indentText, member,
+                            __traits(getMember, node, member).text());
+                    }
+                    else static if (is(NT == Token*[]))
+                        foreach(i, t; __traits(getMember, node, member))
+                    {
+                        _text ~= specifier2.format(_indentText, member, i, t.text);
+                    }
+                    else static if (is(NT == enum) || isSomeString!NT)
+                    {
+                        _text ~= specifier1.format(_indentText, member,
+                            __traits(getMember, node, member));
+                    }
+                    else static if (isIntegral!NT)
+                    {
+                        _text ~= specifier3.format(_indentText, member,
+                            __traits(getMember, node, member));
+                    }
+                }
+            }
             node.accept(this);
             if (hasChildren)
             {
@@ -49,10 +82,11 @@ private:
     void outdent()
     {
         --_indentLevel;
+        if (_indentLevel < 0)
+            _indentLevel = 0;
         _indentText.length = _indentLevel * 4;
     }
 
-    invariant{assert(_indentLevel > -1);}
     char[] _text;
     char[] _indentText;
 
@@ -125,6 +159,36 @@ public:
     }
 
     override void visit(ScopeAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(TypeAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(TypeModifierAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(TypedVariableListAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(FunctionHeaderAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(FunctionDeclarationAstNode node)
     {
         assert(node);
         visitImpl(node);

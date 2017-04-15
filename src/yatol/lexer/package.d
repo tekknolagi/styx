@@ -98,22 +98,58 @@ private:
         advance();
         while (true)
         {
+            if (_front > _back)
+            {
+                validateToken();
+                return;
+            }
             switch(*_front)
             {
             case 0:
                 error("null character encountered inside a comment");
-                advance();
-                continue;
+                return;
             case '\r', '\n':
                 validateToken();
                 processlineEnding;
                 return;
             default:
-                if (_front > _back)
+                advance();
+            }
+        }
+    }
+
+    void lexStarComment()
+    {
+        anticipateToken(TokenType.starComment);
+        advance();
+        advance();
+        while (true)
+        {
+            if (_front > _back)
+            {
+                error("unterminated star comment");
+                return;
+            }
+            switch(*_front)
+            {
+            case 0:
+                error("null character encountered inside a star comment");
+                advance();
+                continue;
+            case '\r', '\n':
+                processlineEnding;
+                break;
+            case '*':
+                if (*(_front + 1) == '/')
                 {
+                    advance();
+                    advance();
                     validateToken();
                     return;
                 }
+                advance();
+                break;
+            default:
                 advance();
             }
         }
@@ -171,8 +207,10 @@ public:
      * Params:
      *      text = The string to parse.
      */
-    void setSourceFromText(const(char)[] text, size_t line = 1, size_t column = 1)
+    void setSourceFromText(const(char)[] text, const(char)[] filename = "",
+        size_t line = 1, size_t column = 1)
     {
+        _filename= filename.dup;
         _text    = text.dup;
         _front   = _text.ptr;
         _back    = _text.ptr + _text.length - 1;
@@ -203,8 +241,10 @@ public:
                 processlineEnding;
                 continue;
             case '/':
-                if (*(_front + 1) == *_front)
+                if (*(_front + 1) == '/')
                     lexLineComment();
+                else if (*(_front + 1) == '*')
+                    lexStarComment;
                 else
                 {
                     anticipateToken(TokenType.div);
@@ -216,6 +256,11 @@ public:
             case 'A': .. case 'Z':
             case '_':
                 lexIdentifier();
+                continue;
+            case '*':
+                anticipateToken(TokenType.mul);
+                advance();
+                validateToken();
                 continue;
             case '.':
                 anticipateToken(TokenType.dot);
@@ -335,8 +380,7 @@ unittest
 
 unittest
 {
-    enum source =
-    q{};
+    enum source = q{};
     Lexer lx;
     lx.setSourceFromText(source);
     lx.lex();
@@ -373,14 +417,60 @@ unittest
     assert(lx.tokens[0].text == source);
 }
 
-/// Tests the symbols and single char operators.
 unittest
 {
-    enum source = `.:;,()/[]{}`;
+    enum source = `//3456789012`;
     Lexer lx;
     lx.setSourceFromText(source);
     lx.lex();
-    assert(lx.tokens.length == 11);
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].text == source);
+}
+
+unittest
+{
+    enum source = `a`;
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].text == source);
+}
+
+unittest
+{
+    enum source = `s8 /*s16*/ s32`;
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].type == TokenType.s8);
+    assert(lx.tokens[1].type == TokenType.starComment);
+    assert(lx.tokens[1].text == "/*s16*/");
+    assert(lx.tokens[2].type == TokenType.s32);
+}
+
+unittest
+{
+    enum source = "s8 /*\n/*\n*/ s32";
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].type == TokenType.s8);
+    assert(lx.tokens[1].type == TokenType.starComment);
+    assert(lx.tokens[1].text == "/*\n/*\n*/");
+    assert(lx.tokens[2].type == TokenType.s32);
+}
+
+/// Tests the symbols and single char operators.
+unittest
+{
+    enum source = `.:;,()/[]{}*`;
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 12);
     foreach(i, tk; lx.tokens)
         assert(lx.tokens[i].text == source[i..i+1]);
 }

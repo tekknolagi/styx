@@ -30,7 +30,7 @@ Yatol:
                     / FunctionDeclaration
                     / Scope
 
-    VariableDeclaration < ProtectionAttribute? Type IdentifierList Semicolon
+    VariableDeclaration < ProtectionAttribute? TypedVariableList Semicolon
     StructDeclaration   < ProtectionAttribute? Struct Identifier LeftCurly Declarations? RightCurly
     ClassDeclaration    < ProtectionAttribute? Class Identifier LeftCurly Declarations? RightCurly
 
@@ -46,12 +46,14 @@ Yatol:
 
     FunctionDeclaration < FunctionHeader FunctionBody
 
-    FunctionParameters < VariableDeclaration+
+    FunctionHeader < ProtectionAttribute? Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
 
-    FunctionHeader < Type Identifier LeftParen FunctionParameters? RightParen
-
-    FunctionBody < LeftCurly RightCurly   # Statements in between
+    FunctionBody < LeftCurly Declarations RightCurly
                  / Semicolon
+
+    FunctionPointerType < Static? Function Mul Identifier LeftParen FunctionParameters? RightParen Cast?
+
+    FunctionParameters < TypedVariableList (Semicolon TypedVariableList)
 
 ################################################################################
 # Statements
@@ -77,13 +79,16 @@ Yatol:
 ################################################################################
 # Type
 
-    Type < TypeIdentifier TypeModifier?
+    TypedVariableList < Type IdentifierList
+
+    Type < Static? TypeIdentifier TypeModifiers? Mul*
     TypeIdentifier  <  BasicType
-                    /  Identifier
+                    /  IdentifierChain
+                    /  FunctionPointerType
 
-    TypeModifier < ArrayDimensions
+    TypeModifiers < TypeModifier TypeModifiers?
 
-    ArrayDimensions < LeftRightSquares+
+    TypeModifier < LeftRightSquares / Mul
 
 ################################################################################
 # Scope
@@ -91,7 +96,7 @@ Yatol:
     Scope < ProtectionAttribute? LeftCurly Declarations RightCurly
 
 ################################################################################
-# ProtectionAttribute
+# Protection
 
     ProtectionOverwrite < ProtectionAttribute Colon
     ProtectionAttribute < Prot LeftParen Identifier RightParen
@@ -106,17 +111,26 @@ Yatol:
     LeftRightSquares < LeftSquare RightSquare
 
 ################################################################################
+# Comments, should be considered as part of to the spaces allowed with " < "
+
+    Comment <~ LineComment / StarComment
+
+    LineComment < : "//" (!Eol .)* :Eol
+    StarComment < : "/*" (!"*/" .)* :"*/"
+
+################################################################################
 # Identifier and numbers
 
     HexLiteral  <- HexPrefix HexDigits+ HexLiteralSuffix?
     HexLiteralSuffix <- Colon BasicType
 
-    FloatLiteral  <- Num+ Dot Num+ IntLiteralSuffix?
+    FloatLiteral  <- Num+ Dot Num+ FloatLiteralSuffix?
     FloatLiteralSuffix <- Colon BasicFloatType
 
     IntLiteral  <- Num+ IntLiteralSuffix?
     IntLiteralSuffix <- Colon BasicIntegerType
 
+    Eol <- "\r\n" / '\n'
 
     Identifier  <~ !Keyword (Alpha) (AlphaNum)*
 
@@ -127,6 +141,7 @@ Yatol:
     Alpha       <- [a-zA-Z_]
 
     Div         <- '/'
+    Mul         <- '*'
     Dot         <- '.'
     Semicolon   <- ';'
     Colon       <- ':'
@@ -171,6 +186,8 @@ Yatol:
     Virtual <- "virtual"
     Struct  <- "struct"
     Class   <- "class"
+    Function<- "function"
+    Static  <- "static"
 
     SREG    <- "sreg"
     UREG    <- "ureg"
@@ -186,18 +203,29 @@ Yatol:
     U8      <- "u8"
 `));
 
+enum overview =q{
+
+function foo(): s8;
+static function foo(): s8;
+function* foo(): s8 funcPtr;
+static function* foo(): s8 memberFuncPtr;
+
+};
+
 enum source1 = `
     unit a.b;
     import(0:s8) r.d,s.d,t;
     import(1) s1,s256yy;
-    s8 q,h; sreg j;
+    s8*[]*[] q,h; sreg j;
     Foo[][  ] foo;
     virtual unit c;
     protection(private):
     protection(public) struct Foo { sreg a,b,c; }
     virtual unit d;
-    s8 foo(s8 a,b; f32 c;){}
-    Foo foo(s8 a,b;);
+    function foo(s8 a,b;): Foo;
+    function bar(){};
+    /*sfsdfsdf °0°0°033&
+    */
 `;
 
 unittest
