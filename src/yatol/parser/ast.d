@@ -33,6 +33,7 @@ class AstVisitor
     void visit(TypedVariableListAstNode node){assert(node);node.accept(this);}
     void visit(FunctionHeaderAstNode node){assert(node);node.accept(this);}
     void visit(FunctionDeclarationAstNode node){assert(node);node.accept(this);}
+    void visit(FunctionTypeAstNode node){assert(node);node.accept(this);}
 }
 
 
@@ -116,6 +117,29 @@ public:
     double asF64(){tryCacheValue(); return _asFloat;}
 }
 
+/// FunctionType
+class FunctionTypeAstNode: AstNode
+{
+    /// Indicates wether the function type needs a context.
+    bool isStatic;
+    /// The function parameters;
+    TypedVariableListAstNode[] parameters;
+    /// The function return
+    TypeAstNode returnType;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        parameters.each!(a => visitor.visit(a));
+        if (returnType)
+            visitor.visit(returnType);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// FunctionDeclaration
 class FunctionHeaderAstNode: BaseDeclarationAstNode
 {
     /// The function name.
@@ -124,6 +148,8 @@ class FunctionHeaderAstNode: BaseDeclarationAstNode
     TypedVariableListAstNode[] parameters;
     /// The function return
     TypeAstNode returnType;
+    ///
+    bool isStatic;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -139,6 +165,7 @@ class FunctionHeaderAstNode: BaseDeclarationAstNode
     override bool isTerminal() {return false;}
 }
 
+/// FunctionDeclaration
 class FunctionDeclarationAstNode: AstNode
 {
     /// The function header.
@@ -162,13 +189,13 @@ class FunctionDeclarationAstNode: AstNode
     bool isImplemented() {return firstBodyToken.isTokLeftCurly;}
 }
 
-/// ImportDeclaration, listo fprioritized imports.
+/// ImportDeclaration, list of prioritized imports.
 class ImportDeclarationAstNode: BaseDeclarationAstNode
 {
     /// The imports priority.
     LiteralAstNode priority;
     /// An array of tokens chain, each represents a unit to import.
-    TokensList importList;
+    Token*[][] importList;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -336,8 +363,10 @@ class TypedVariableListAstNode: AstNode
 /// Type
 class TypeAstNode: AstNode
 {
-    /// The unmodified type.
-    Token*[] type;
+    /// The basic type or a qualified custom type
+    Token*[] basicOrQualifiedType;
+    /// If the type is a function, then assigned.
+    FunctionTypeAstNode functionType;
     /// The first modifier.
     TypeModifierAstNode modifier;
     ///
@@ -345,6 +374,8 @@ class TypeAstNode: AstNode
     {
         if (modifier)
             visitor.visit(modifier);
+        if (functionType)
+            visitor.visit(functionType);
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}

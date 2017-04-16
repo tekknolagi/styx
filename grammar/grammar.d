@@ -51,7 +51,7 @@ Yatol:
     FunctionBody < LeftCurly Declarations RightCurly
                  / Semicolon
 
-    FunctionPointerType < Static? Function Mul Identifier LeftParen FunctionParameters? RightParen Cast?
+    FunctionPointerType < Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
 
     FunctionParameters < TypedVariableList (Semicolon TypedVariableList)
 
@@ -84,7 +84,7 @@ Yatol:
 
     TypedVariableList < Type IdentifierList
 
-    Type < Static? TypeIdentifier TypeModifiers? Mul*
+    Type < TypeIdentifier TypeModifiers?
     TypeIdentifier  <  BasicType
                     /  IdentifierChain
                     /  FunctionPointerType

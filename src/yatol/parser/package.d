@@ -10,6 +10,7 @@ import
 import
     yatol.lexer.types, yatol.lexer, yatol.parser.ast;
 
+/// The parser
 struct Parser
 {
 
@@ -69,8 +70,10 @@ private:
         return result;
     }
 
+    pragma(inline, true)
     Token* current() {return _current;}
 
+    pragma(inline, true)
     Token* lookup(size_t count)
     {
         return _current + count;
@@ -260,18 +263,25 @@ private:
      */
     TypeAstNode parseType()
     {
-        Token*[] identifiers;
+        TypeAstNode result = new TypeAstNode;
         if (current.isTokBasicType)
         {
-            identifiers ~= current();
+            result.basicOrQualifiedType ~= current();
             advance();
         }
-        else identifiers = parseIdentifierChain();
-        if (identifiers.length)
+        else if (current.isTokFunction || current.isTokStatic)
         {
-            ptrdiff_t indr;
-            TypeAstNode result = new TypeAstNode;
-            result.type = identifiers;
+            advance();
+            result.functionType = parseFunctionType();
+            if (!result.functionType)
+                parseError("invalid function type");
+        }
+        else
+        {
+            result.basicOrQualifiedType = parseIdentifierChain();
+        }
+        if (result.basicOrQualifiedType.length || result.functionType)
+        {
             if (current.isTokMul || current.isTokLeftSquare)
             {
                 if (TypeModifierAstNode mod = parseTypeModifier())
@@ -387,6 +397,112 @@ private:
     }
 
     /**
+     * Parses an ImportDeclaration.
+     *
+     * Returns:
+     *      On success a $(D ImportDeclarationAstNode) otherwise $(D null).
+     */
+    ImportDeclarationAstNode parseImportDeclaration()
+    {
+        Token* priority;
+        if (current.isTokLeftParen)
+        {
+            advance();
+            priority = current();
+            // literal
+            advance();
+            if (!current.isTokRightParen)
+            {
+                expected(TokenType.rightParen);
+                return null;
+            }
+            advance();
+        }
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        ImportDeclarationAstNode result = new ImportDeclarationAstNode;
+        while (true)
+        {
+            Token*[] imp = parseIdentifierChain();
+            if (!imp.length)
+            {
+                parseError("expected an identifier chain to identify an import");
+                return null;
+            }
+            result.importList ~= imp;
+            if (current.isTokSemicolon)
+            {
+                break;
+            }
+            else if (!current.isTokComma)
+            {
+                expected(TokenType.colon);
+                return null;
+            }
+            advance();
+        }
+        return result;
+    }
+
+    /**
+     * Parses a FunctionType.
+     *
+     * Returns:
+     *      On success a $(D FunctionTypeAstNode) otherwise $(D null).
+     */
+    FunctionTypeAstNode parseFunctionType()
+    {
+        const bool st = current.isTokFunction;
+        if (st)
+            advance();
+        if (!current.isTokMul)
+        {
+            expected(TokenType.mul);
+            return null;
+        }
+        advance();
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        advance();
+        FunctionTypeAstNode result = new FunctionTypeAstNode;
+        result.isStatic = st;
+        if (!current.isTokRightParen) while (true)
+        {
+            if (TypedVariableListAstNode tvl = parseTypedVariableList())
+            {
+                result.parameters ~= tvl;
+            if (!current.isTokSemicolon)
+                break;
+            }
+            advance();
+        }
+        if (!current.isTokRightParen)
+        {
+            expected(TokenType.rightParen);
+            return null;
+        }
+        advance();
+        if (current.isTokColon)
+        {
+            advance();
+            if (TypeAstNode returnType = parseType())
+                result.returnType = returnType;
+            else
+            {
+                parseError("expected function return type after colon");
+                return null;
+            }
+        }
+        return result;
+    }
+
+    /**
      * Parses a FunctionHeader.
      *
      * Returns:
@@ -394,12 +510,16 @@ private:
      */
     FunctionHeaderAstNode parseFunctionHeader()
     {
+        const bool st = current.isTokFunction;
+        if (st)
+            advance();
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
             return null;
         }
         FunctionHeaderAstNode result = new FunctionHeaderAstNode;
+        result.isStatic = st;
         result.name = current();
         advance();
         if (!current.isTokLeftParen)
@@ -424,18 +544,16 @@ private:
             return null;
         }
         advance();
-        if (!current.isTokColon)
+        if (current.isTokColon)
         {
-            expected(TokenType.colon);
-            return null;
-        }
-        advance();
-        if (TypeAstNode returnType = parseType())
-            result.returnType = returnType;
-        else
-        {
-            parseError("expected function return type after colon");
-            return null;
+            advance();
+            if (TypeAstNode returnType = parseType())
+                result.returnType = returnType;
+            else
+            {
+                parseError("expected function return type after colon");
+                return null;
+            }
         }
         return result;
     }
@@ -547,6 +665,14 @@ private:
                 break;
             }
             else return false;
+        case static_:
+            if (lookup(1).isTokFunction)
+                goto case function_;
+            else
+            {
+                unexpected();
+                return false;
+            }
         case function_:
             advance();
             FunctionDeclarationAstNode functionDecl = parseFunctionDeclaration();
@@ -563,6 +689,24 @@ private:
                 break;
             }
             else return false;
+        case import_:
+        {
+            advance();
+            ImportDeclarationAstNode impdecl = parseImportDeclaration();
+            if (impdecl)
+            {
+                if (prot)
+                {
+                    impdecl.protectionAttribute = prot;
+                    prot = null;
+                }
+                DeclarationAstNode decl = new DeclarationAstNode;
+                decl.importDeclaration = impdecl;
+                declarations ~= decl;
+                break;
+            }
+            else return false;
+        }
         case protection:
         {
             if (Token* id = parseProtectionAttribute())
@@ -759,7 +903,11 @@ unittest
     class Bat {}
     class Cow { class Fox{  } }
     virtual unit b;
-    function bee(s32[] p1): s32 {}
+    function bee(s32[] p1): function*(): static function*(): s8[]
+    {
+        // function that returns a function that returns an s8 array
+    }
+    protection(public) import a.b, c.d;
     `;
 
     Lexer lx;

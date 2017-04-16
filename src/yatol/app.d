@@ -52,8 +52,7 @@ int main(string[] args)
     {
         if (arg.exists)
         {
-            string ext = extension(arg);
-            if (ext == ".ya")
+            if (extension(arg) == ".ya")
             {
                 sources ~= arg;
             }
@@ -114,8 +113,8 @@ int main(string[] args)
         parsers ~= new Parser(lexer);
         if (UnitContainerAstNode uc = parsers[$-1].parse())
         {
-            DebugVisitor dbgv = new DebugVisitor(uc);
-            dbgv.printText;
+            //DebugVisitor dbgv = new DebugVisitor(uc);
+            //dbgv.printText;
         }
         else
         {

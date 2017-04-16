@@ -51,7 +51,13 @@ private:
                     {
                         _text ~= specifier2.format(_indentText, member, i, t.text);
                     }
-                    else static if (is(NT == enum) || isSomeString!NT)
+                    else static if (is(NT == Token*[][]))
+                        foreach(i, t; __traits(getMember, node, member))
+                    {
+                        import yatol.lexer;
+                        _text ~= specifier2.format(_indentText, member, i, t.tokenPointerArrayText);
+                    }
+                    else static if (is(NT == enum) || isSomeString!NT || is(NT == bool))
                     {
                         _text ~= specifier1.format(_indentText, member,
                             __traits(getMember, node, member));
@@ -189,6 +195,12 @@ public:
     }
 
     override void visit(FunctionDeclarationAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(FunctionTypeAstNode node)
     {
         assert(node);
         visitImpl(node);

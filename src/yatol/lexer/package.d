@@ -378,6 +378,16 @@ unittest
     assert(lx.tokens[22].text == ".");
 }
 
+/**
+ * Returns: An array of tokens pointer converted to an array of string.
+ */
+string tokenPointerArrayText(Token*[] toks)
+{
+    import std.algorithm.iteration: map;
+    import std.conv: to;
+    return toks.map!(a => a.text()).to!string;
+}
+
 unittest
 {
     enum source = q{};
