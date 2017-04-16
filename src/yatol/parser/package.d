@@ -122,17 +122,21 @@ private:
 private:
 
     /**
-     * Parses a UnitDeclaration. ($D virtual) indicates if the previous token
-     * was of type ($D TokenType.virtual)
+     * Parses a UnitDeclaration.
+     *
+     * Params:
+     *      virtual = Indicates if the previous token is of type ($D TokenType.virtual).
+     * Returns:
+     *      $(D true) on success, $(D false) otherwise.
      */
-    void parseUnitDeclaration(bool virtual)
+    bool parseUnitDeclaration(bool virtual)
     {
         Token*[] toks;
         advance();
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
-            return;
+            return false;
         }
         toks ~= current;
         while (true)
@@ -146,15 +150,14 @@ private:
                     _unitContainer.mainUnit = node;
                 else
                     _unitContainer.virtualUnits ~= node;
-                parseDeclarations(node.declarations);
-                return;
+                return parseDeclarations(node.declarations);
             }
             else
             {
                 if (!current.isTokDot)
                 {
                     expected(TokenType.dot);
-                    return;
+                    return false;
                 }
                 else
                 {
@@ -162,7 +165,7 @@ private:
                     if (!current.isTokIdentifier)
                     {
                         expected(TokenType.identifier);
-                        return;
+                        return false;
                     }
                     toks ~= current;
                 }
@@ -170,7 +173,12 @@ private:
         }
     }
 
-    /// Parses an IdentifierChain.
+    /**
+     * Parses an IdentifierChain.
+     *
+     * Returns:
+     *      On success an array of $(D Token*) otherwise $(D null).
+     */
     Token*[] parseIdentifierChain()
     {
         Token*[] result;
@@ -189,6 +197,12 @@ private:
         }
     }
 
+    /**
+     * Parses consecutives TypeModifier.
+     *
+     * Returns:
+     *      On success a $(D TypeModifierAstNode) otherwise $(D null).
+     */
     TypeModifierAstNode parseTypeModifier()
     {
         TypeModifierAstNode result = new TypeModifierAstNode;
@@ -230,10 +244,20 @@ private:
                 ++result.count;
             }
         }
+        else if (current.isTokRightSquare)
+        {
+            unexpected;
+            return null;
+        }
         return result;
     }
 
-    /// Parses a Type.
+    /**
+     * Parses a Type.
+     *
+     * Returns:
+     *      On success a $(D TypeAstNode) otherwise $(D null).
+     */
     TypeAstNode parseType()
     {
         Token*[] identifiers;
@@ -252,13 +276,20 @@ private:
             {
                 if (TypeModifierAstNode mod = parseTypeModifier())
                     result.modifier = mod;
+                else
+                    return null;
             }
             return result;
         }
         else return null;
     }
 
-    /// Parses a TypedVariabeList
+    /**
+     * Parses a TypedVariableList.
+     *
+     * Returns:
+     *      On success a $(D TypedVariableListAstNode) otherwise $(D null).
+     */
     TypedVariableListAstNode parseTypedVariableList()
     {
         TypedVariableListAstNode result;
@@ -289,7 +320,12 @@ private:
         return result;
     }
 
-    /// Parses a ClassDeclaration.
+    /**
+     * Parses a ClassDeclaration.
+     *
+     * Returns:
+     *      On success a $(D ClassDeclarationAstNode) otherwise $(D null).
+     */
     ClassDeclarationAstNode parseClassDeclaration()
     {
         if (!current.isTokIdentifier)
@@ -317,7 +353,12 @@ private:
         return result;
     }
 
-    /// Parses a StructDeclaration.
+    /**
+     * Parses a StructDeclaration.
+     *
+     * Returns:
+     *      On success a $(D StructDeclarationAstNode) otherwise $(D null).
+     */
     StructDeclarationAstNode parseStructDeclaration()
     {
         if (!current.isTokIdentifier)
@@ -345,7 +386,12 @@ private:
         return result;
     }
 
-    /// Parses a FunctionHeader
+    /**
+     * Parses a FunctionHeader.
+     *
+     * Returns:
+     *      On success a $(D FunctionHeaderAstNode) otherwise $(D null).
+     */
     FunctionHeaderAstNode parseFunctionHeader()
     {
         if (!current.isTokIdentifier)
@@ -362,12 +408,14 @@ private:
             return null;
         }
         advance();
-        while (true)
+        if (!current.isTokRightParen) while (true)
         {
             if (TypedVariableListAstNode tvl = parseTypedVariableList())
+            {
                 result.parameters ~= tvl;
             if (!current.isTokSemicolon)
                 break;
+            }
             advance();
         }
         if (!current.isTokRightParen)
@@ -392,7 +440,12 @@ private:
         return result;
     }
 
-    /// Parses a FunctionDeclaration.
+    /**
+     * Parses a FunctionDeclaration.
+     *
+     * Returns:
+     *      On success a $(D FunctionDeclarationAstNode) otherwise $(D null).
+     */
     FunctionDeclarationAstNode parseFunctionDeclaration()
     {
         FunctionHeaderAstNode header = parseFunctionHeader();
@@ -417,13 +470,18 @@ private:
 
     /**
      * Parses contiguous declarations.
+     *
+     * Params:
+     *      declarations = The array of $(D DeclarationAstNode) where the
+     *      declarations are stored.
+     *
+     * Returns: $(D true) on success, $(D false= otherwise.
      */
-    void parseDeclarations(ref DeclarationAstNode[] declarations)
+    bool parseDeclarations(ref DeclarationAstNode[] declarations)
     {
         ProtectionAttributeAstNode prot;
         with(TokenType) while (advance()) switch(current.type)
         {
-        L1:
         case leftCurly:
         {
             ScopeAstNode sc = new ScopeAstNode;
@@ -434,9 +492,10 @@ private:
                 prot = new ProtectionAttributeAstNode;
                 prot.protection = currentProtection.protection;
             }
-            sc.protection = pushProtectionStack(prot.protection);
+            sc.protectionAttribute = pushProtectionStack(prot.protection);
             prot = null;
-            declarations ~= sc;
+            declarations ~= new DeclarationAstNode;
+            declarations[$-1].scopeDeclaration = sc;
             parseDeclarations(sc.declarations);
             if (_protStack.length > 1 && current.type != TokenType.rightCurly)
                 expected(TokenType.rightCurly);
@@ -444,10 +503,18 @@ private:
         }
         case rightCurly:
             popProtectionStack();
-            return;
+            return true;
         case virtual:
-            parseUnitDeclaration(true);
-            break;
+            advance();
+            if (current.isTokUnit)
+            {
+                return parseUnitDeclaration(true);
+            }
+            else
+            {
+                unexpected();
+                return false;
+            }
         case class_:
             advance();
             ClassDeclarationAstNode classDecl = parseClassDeclaration();
@@ -455,14 +522,14 @@ private:
             {
                 if (prot)
                 {
-                    classDecl.protection = prot;
+                    classDecl.protectionAttribute = prot;
                     prot = null;
                 }
                 DeclarationAstNode decl = new DeclarationAstNode;
                 decl.classDeclaration = classDecl;
                 declarations ~= decl;
             }
-            else return;
+            else return false;
             break;
         case struct_:
             advance();
@@ -471,15 +538,15 @@ private:
             {
                 if (prot)
                 {
-                    structDecl.protection = prot;
+                    structDecl.protectionAttribute = prot;
                     prot = null;
                 }
                 DeclarationAstNode decl = new DeclarationAstNode;
                 decl.structDeclaration = structDecl;
                 declarations ~= decl;
+                break;
             }
-            else return;
-            break;
+            else return false;
         case function_:
             advance();
             FunctionDeclarationAstNode functionDecl = parseFunctionDeclaration();
@@ -487,15 +554,15 @@ private:
             {
                 if (prot)
                 {
-                    functionDecl.header.protection = prot;
+                    functionDecl.header.protectionAttribute = prot;
                     prot = null;
                 }
                 DeclarationAstNode decl = new DeclarationAstNode;
                 decl.functionDeclaration = functionDecl;
                 declarations ~= decl;
+                break;
             }
-            else return;
-            break;
+            else return false;
         case protection:
         {
             if (Token* id = parseProtectionAttribute())
@@ -512,7 +579,7 @@ private:
                     ProtectionAttributeAstNode pa = overwriteProtectionStack(id);
                     DeclarationAstNode decl = new DeclarationAstNode;
                     decl.protectionOverwrite = new ProtectionOverwriteAstNode;
-                    decl.protectionOverwrite.protection = pa;
+                    decl.protectionOverwrite.protectionAttribute = pa;
                     declarations ~= decl;
                     break;
                 }
@@ -520,20 +587,24 @@ private:
                 {
                     prot = new ProtectionAttributeAstNode;
                     prot.protection = id;
+                    break;
                 }
             }
-            else return;
-            break;
+            else return false;
         }
         default:
             unexpected();
-            return;
+            return false;
         }
+        return true;
     }
 
     /**
      * Parses a ProtectionAttribute.
-     * Returns: The identifier that specifies the protection.
+     *
+     * Returns:
+     *      On success a pointer to the token that indicates the protection,
+     *      $(D null) otherwise.
      */
     Token* parseProtectionAttribute()
     {
@@ -561,8 +632,12 @@ private:
 
 public:
 
+    ///
     @disable this();
 
+    /**
+     * Constructs the parse with the lexer that contains the tokens to parse.
+     */
     this()(Lexer* lexer)
     {
         if (!lexer)
@@ -578,28 +653,92 @@ public:
         advance();
     }
 
-    void parseMainUnit()
+    /**
+     * Main parser function. The function trie to parse from the main unit to
+     * the last virtual unit (if any).
+     *
+     * Returns: An $(D UnitContainerAstNode) on suceess, $(D null) otherwise.
+     */
+    UnitContainerAstNode parse()
     {
         if (!current)
-            return;
+            return null;
         if (!current.isTokUnit)
         {
             expected(TokenType.unit);
-            return;
+            return null;
         }
-        else parseUnitDeclaration(false);
+        else
+        {
+            if (parseUnitDeclaration(false))
+                return _unitContainer;
+        }
         if (_protStack.length > 1)
         {
             expected(TokenType.rightCurly);
             parseError("there are %s unclosed scope(s), struct(s) or class(es)"
                 .format(_protStack.length-1));
         }
+        return null;
     }
 
-    UnitContainerAstNode unitContainer()
+    /**
+     * For testing prurpose, tries to parse a particular AST node.
+     *
+     * Params:
+     *      T = The AstNode type to parse.
+     *      a = The parameters for the sub parser. Usually nothing, an
+     *          array of statements or an array of declarations.
+     * Returns:
+     *      A $(D T) instance or $(D true) on success, $(D null) or $(D false)
+     *      otherwise.
+     */
+    T parseCustomNode(T, A...)(auto ref A a)
     {
-        return _unitContainer;
+        import std.string: endsWith;
+        static assert(T.stringof.endsWith("AstNode"), "expected an AstNode");
+        enum fun = T.stringof[0..T.stringof.length - "AstNode".length];
+        mixin( "return parse" ~ fun ~ "(a[0..$]);");
     }
+}
+
+unittest
+{
+    enum line = __LINE__;
+    enum source = `
+    s8**[]`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE__, line + 1, 1);
+    lx.lex;
+    Parser prs = Parser(&lx);
+    TypeAstNode tan = prs.parseCustomNode!TypeAstNode;
+    assert(tan);
+}
+
+unittest
+{
+    enum line = __LINE__;
+    enum source = `
+    ][]`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE__, line + 1, 1);
+    lx.lex;
+    Parser prs = Parser(&lx);
+    TypeModifierAstNode tman = prs.parseCustomNode!TypeModifierAstNode;
+    assert(!tman);
+}
+
+unittest
+{
+    enum line = __LINE__;
+    enum source = `
+    :s8**[]`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE__, line + 1, 1);
+    lx.lex;
+    Parser prs = Parser(&lx);
+    TypeAstNode tan = prs.parseCustomNode!TypeAstNode;
+    assert(!tan);
 }
 
 unittest
@@ -618,16 +757,17 @@ unittest
     struct Rat {}
     protection(public):
     class Bat {}
-    class Cow { class Fox{  } }`;
+    class Cow { class Fox{  } }
+    virtual unit b;
+    function bee(s32[] p1): s32 {}
+    `;
 
     Lexer lx;
     lx.setSourceFromText(source, __FILE__, line + 1, 1);
     lx.lex;
 
     Parser pr = Parser(&lx);
-    pr.parseMainUnit;
-
-    DebugVisitor dv = new DebugVisitor(pr.unitContainer);
+    DebugVisitor dv = new DebugVisitor(pr.parse);
     dv.printText();
 }
 

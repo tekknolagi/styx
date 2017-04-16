@@ -3,7 +3,8 @@ module app;
 import
     std.getopt, std.file, std.stdio, std.path;
 import
-    yatol.lexer, yatol.lexer.types, yatol.parser, yatol.parser.debug_visitor;
+    yatol.lexer, yatol.lexer.types, yatol.parser, yatol.parser.ast,
+    yatol.parser.debug_visitor;
 
 enum Until
 {
@@ -111,11 +112,16 @@ int main(string[] args)
         if (options.verbose)
             writeln("parsing ", lexer.filename, "...");
         parsers ~= new Parser(lexer);
-        parsers[$-1].parseMainUnit();
-
-        DebugVisitor dbgv = new DebugVisitor(parsers[$-1].unitContainer);
-        dbgv.printText;
-
+        if (UnitContainerAstNode uc = parsers[$-1].parse())
+        {
+            DebugVisitor dbgv = new DebugVisitor(uc);
+            dbgv.printText;
+        }
+        else
+        {
+            stderr.writeln("error, failed to parse `",  lexer.filename, "`");
+            return 1;
+        }
     }
     if (options.until == Until.parsing)
     {

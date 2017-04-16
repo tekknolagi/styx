@@ -116,10 +116,8 @@ public:
     double asF64(){tryCacheValue(); return _asFloat;}
 }
 
-class FunctionHeaderAstNode: AstNode
+class FunctionHeaderAstNode: BaseDeclarationAstNode
 {
-    /// Indicates the function protection.
-    ProtectionAttributeAstNode protection;
     /// The function name.
     Token* name;
     /// The function parameters
@@ -129,8 +127,8 @@ class FunctionHeaderAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
-        if (protection)
-            visitor.visit(protection);
+        if (protectionAttribute)
+            visitor.visit(protectionAttribute);
         parameters.each!(a => visitor.visit(a));
         if (returnType)
             visitor.visit(returnType);
@@ -141,7 +139,7 @@ class FunctionHeaderAstNode: AstNode
     override bool isTerminal() {return false;}
 }
 
-class FunctionDeclarationAstNode: DeclarationAstNode
+class FunctionDeclarationAstNode: AstNode
 {
     /// The function header.
     FunctionHeaderAstNode header;
@@ -165,14 +163,18 @@ class FunctionDeclarationAstNode: DeclarationAstNode
 }
 
 /// ImportDeclaration, listo fprioritized imports.
-class ImportDeclarationAstNode: DeclarationAstNode
+class ImportDeclarationAstNode: BaseDeclarationAstNode
 {
     /// The imports priority.
     LiteralAstNode priority;
     /// An array of tokens chain, each represents a unit to import.
     TokensList importList;
     ///
-    override void accept(AstVisitor){}
+    override void accept(AstVisitor visitor)
+    {
+        if (protectionAttribute)
+            visitor.visit(protectionAttribute);
+    }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}
     /// Returns: $(D true) if the node has no children.
@@ -180,15 +182,13 @@ class ImportDeclarationAstNode: DeclarationAstNode
 }
 
 /// ProtectionOverwrite
-class ProtectionOverwriteAstNode: DeclarationAstNode
+class ProtectionOverwriteAstNode: BaseDeclarationAstNode
 {
-    /// Indicates the new protection.
-    ProtectionAttributeAstNode protection;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (protection)
-            visitor.visit(protection);
+        if (protectionAttribute)
+            visitor.visit(protectionAttribute);
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}
@@ -197,19 +197,17 @@ class ProtectionOverwriteAstNode: DeclarationAstNode
 }
 
 /// StructDeclaration
-class StructDeclarationAstNode: DeclarationAstNode
+class StructDeclarationAstNode: BaseDeclarationAstNode
 {
     /// The struct name.
     Token* name;
-    /// The struct protection.
-    ProtectionAttributeAstNode protection;
     /// The declarations located in the struct.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (protection)
-            visitor.visit(protection);
+        if (protectionAttribute)
+            visitor.visit(protectionAttribute);
         declarations.each!(a => visitor.visit(a));
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
@@ -219,19 +217,17 @@ class StructDeclarationAstNode: DeclarationAstNode
 }
 
 /// ClassDeclaration
-class ClassDeclarationAstNode: DeclarationAstNode
+class ClassDeclarationAstNode: BaseDeclarationAstNode
 {
     /// The struct name.
     Token* name;
-    /// The class protection.
-    ProtectionAttributeAstNode protection;
     /// The declarations located in the class.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (protection)
-            visitor.visit(protection);
+        if (protectionAttribute)
+            visitor.visit(protectionAttribute);
         declarations.each!(a => visitor.visit(a));
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
@@ -241,17 +237,15 @@ class ClassDeclarationAstNode: DeclarationAstNode
 }
 
 /// Scope
-class ScopeAstNode: DeclarationAstNode
+class ScopeAstNode: BaseDeclarationAstNode
 {
-    /// The scope protection.
-    ProtectionAttributeAstNode protection;
     /// The declarations located in the scope.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (protection)
-            visitor.visit(protection);
+        if (protectionAttribute)
+            visitor.visit(protectionAttribute);
         declarations.each!(a => visitor.visit(a));
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
@@ -260,7 +254,18 @@ class ScopeAstNode: DeclarationAstNode
     override bool isTerminal() {return false;}
 }
 
-/// ProtectionAttribute (overwrite once)
+/// Base for all the declarations.
+class BaseDeclarationAstNode: AstNode
+{
+    /// The declaration protection
+    ProtectionAttributeAstNode protectionAttribute;
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return false;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// ProtectionAttribute
 class ProtectionAttributeAstNode: AstNode
 {
     /// The token that specifies the new protection.
@@ -316,6 +321,7 @@ class TypedVariableListAstNode: AstNode
     Token*[] variableList;
     /// The variables common type.
     TypeAstNode type;
+    ///
     override void accept(AstVisitor visitor)
     {
         if (type)

@@ -56,6 +56,9 @@ Yatol:
     FunctionParameters < TypedVariableList (Semicolon TypedVariableList)
 
 ################################################################################
+# Initializer
+
+################################################################################
 # Statements
 #
 #    Statements  < (Statement SemiColon)+
@@ -207,8 +210,8 @@ enum overview =q{
 
 function foo(): s8;
 static function foo(): s8;
-function* foo(): s8 funcPtr;
-static function* foo(): s8 memberFuncPtr;
+static function*(): s8 freeFuncPtr;
+function*(): s8 memberFuncPtr;
 
 };
 
