@@ -638,15 +638,15 @@ private:
             expected(TokenType.identifier);
             return null;
         }
-        Token* prot = current;
+        ProtectionDeclarationAstNode result = new ProtectionDeclarationAstNode;
+        result.protection = current();
         advance();
         if (!current.isTokRightParen)
         {
             expected(TokenType.rightParen);
+            destroy(result);
             return null;
         }
-        ProtectionDeclarationAstNode result = new ProtectionDeclarationAstNode;
-        result.protection = prot;
         return result;
     }
 
@@ -661,7 +661,7 @@ private:
      */
     bool parseDeclarations(ref DeclarationAstNode[] declarations)
     {
-        ptrdiff_t oldDeclLvl = _declarationLevels;
+        const ptrdiff_t oldDeclLvl = _declarationLevels;
         ++_declarationLevels;
         with(TokenType) while (advance()) switch(current.type)
         {
@@ -916,7 +916,11 @@ unittest
     }
     protection(public) import a.b, c.d;
     virtual unit c;
-    struct Owl {}
+    struct Owl
+    {
+        function of1(): s32;
+        function of2(): u32;
+    }
 `;
 
     Lexer lx;

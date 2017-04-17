@@ -61,19 +61,36 @@ Yatol:
 # Initializer
 
 ################################################################################
+# DeclarationOrStatement
+
+DeclarationOrStatements < DeclarationOrStatement+
+
+DeclarationOrStatement  < Declaration
+                        / Statement
+
+################################################################################
 # Statements
-#
-#    Statements  < (Statement SemiColon)+
-#    Statement   < ExpressionStatement
-#                / IfElseStatement
-#
+
+Statement   < EmptyStatment
+#            / ExpressionStatement
+#            / IfElseStatement
+#            / SwitchStatement
+#            / CaseStatement
+#            / ContinueStatement
+#            / BreakStatement
+#            / ReturnStatement
+
+EmptyStatment < Semicolon
+
 ################################################################################
 # Expressions
 #
 #    ExpressionStatement < Expressions*
 #
 #    Expressions <
+#        AssignExpression
 #        CallExpression
+#        UnaryExpression
 #        BinaryExpression
 #
 ################################################################################
@@ -97,6 +114,8 @@ Yatol:
 
 ################################################################################
 # List, chain, etc
+
+    IdentifierChainList < IdentifierChain (Comma IdentifierChain)*
 
     IdentifierChain < Identifier (Dot Identifier)*
 

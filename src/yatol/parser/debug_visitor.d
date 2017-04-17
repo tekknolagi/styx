@@ -3,7 +3,7 @@ module yatol.parser.debug_visitor;
 import
     std.stdio, std.traits, std.format, std.algorithm;
 import
-    yatol.lexer.types, yatol.parser.ast;
+    yatol.lexer.types, yatol.lexer, yatol.parser.ast;
 
 
 class DebugVisitor: AstVisitor
@@ -37,8 +37,8 @@ private:
             {
                 static if (member.among("__monitor", "__ctor", "__vtbl", "Monitor"))
                     continue;
-                else static if (is(typeof(
-                    (){auto a = __traits(getMember, node, member);})))
+                else static if (is(typeof((){auto a = __traits(getMember, node, member);}))
+                    && !hasUDA!(__traits(getMember, Node, member), Semantic))
                 {
                     alias NT = typeof(__traits(getMember, node, member));
                     static if (is(NT == Token*))
@@ -54,7 +54,6 @@ private:
                     else static if (is(NT == Token*[][]))
                         foreach(i, t; __traits(getMember, node, member))
                     {
-                        import yatol.lexer;
                         _text ~= specifier2.format(_indentText, member, i, t.tokenPointerArrayText);
                     }
                     else static if (is(NT == enum) || isSomeString!NT || is(NT == bool))

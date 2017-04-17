@@ -4,6 +4,7 @@ import
     std.getopt, std.file, std.stdio, std.path;
 import
     yatol.lexer, yatol.lexer.types, yatol.parser, yatol.parser.ast,
+    yatol.semantic,
     yatol.parser.debug_visitor;
 
 enum Until
@@ -106,7 +107,7 @@ int main(string[] args)
     }
 
     // parses each lexer
-    foreach (lexer; lexers)
+    foreach (ref lexer; lexers)
     {
         if (options.verbose)
             writeln("parsing ", lexer.filename, "...");
@@ -126,6 +127,11 @@ int main(string[] args)
     {
         writeln("parsing phase finished, exited.");
         return 0;
+    }
+
+    foreach (ref parser; parsers)
+    {
+
     }
 
     return 0;

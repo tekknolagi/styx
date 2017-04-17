@@ -5,10 +5,13 @@ import
 import
     yatol.lexer.types;
 
-/// USed to annotate the fields set by the semantic.
+/// Used to annotate the fields set by the semantic.
 enum Semantic;
 
-/// The AST visitor.
+/**
+ * The AST visitor.
+ * By default, every node is accepted.
+ */
 class AstVisitor
 {
     ///
@@ -21,22 +24,53 @@ class AstVisitor
             visit(node);
     }
 
-    void visit(AstNode node){assert(node);node.accept(this);}
-    void visit(ClassDeclarationAstNode node){assert(node);node.accept(this);}
-    void visit(DeclarationAstNode node){ assert(node);node.DeclarationAstNode.accept(this);}
-    void visit(FunctionDeclarationAstNode node){assert(node);node.accept(this);}
-    void visit(FunctionHeaderAstNode node){assert(node);node.accept(this);}
-    void visit(FunctionTypeAstNode node){assert(node);node.accept(this);}
-    void visit(ImportDeclarationAstNode node){assert(node);node.accept(this);}
-    void visit(LiteralAstNode node){assert(node);node.accept(this);}
-    void visit(ProtectionDeclarationAstNode node){assert(node);node.accept(this);}
-    void visit(ScopeDeclarationAstNode node){assert(node);node.accept(this);}
-    void visit(StructDeclarationAstNode node){assert(node);node.accept(this);}
-    void visit(TypeAstNode node){assert(node);node.accept(this);}
-    void visit(TypedVariableListAstNode node){assert(node);node.accept(this);}
-    void visit(TypeModifierAstNode node){assert(node);node.accept(this);}
-    void visit(UnitAstNode node){assert(node);node.accept(this);}
-    void visit(UnitContainerAstNode node){assert(node);node.accept(this);}
+    void visit(AstNode node){node.accept(this);}
+    void visit(ClassDeclarationAstNode node){node.accept(this);}
+    void visit(DeclarationAstNode node){node.accept(this);}
+    void visit(FunctionDeclarationAstNode node){node.accept(this);}
+    void visit(FunctionHeaderAstNode node){node.accept(this);}
+    void visit(FunctionTypeAstNode node){node.accept(this);}
+    void visit(ImportDeclarationAstNode node){node.accept(this);}
+    void visit(LiteralAstNode node){node.accept(this);}
+    void visit(ProtectionDeclarationAstNode node){node.accept(this);}
+    void visit(ScopeDeclarationAstNode node){node.accept(this);}
+    void visit(StructDeclarationAstNode node){node.accept(this);}
+    void visit(TypeAstNode node){node.accept(this);}
+    void visit(TypedVariableListAstNode node){node.accept(this);}
+    void visit(TypeModifierAstNode node){node.accept(this);}
+    void visit(UnitAstNode node){node.accept(this);}
+    void visit(UnitContainerAstNode node){node.accept(this);}
+}
+
+/**
+ * Base for any AST visitor that few nodes.
+ * Only the unit container and the units are visisted by default.
+ */
+class AstVisitorNone: AstVisitor
+{
+    /// Creates an instance and start to visit from node.
+    this(UnitContainerAstNode node)
+    {
+        if (node)
+            visit(node);
+    }
+
+    override void visit(AstNode node){}
+    override void visit(ClassDeclarationAstNode node){}
+    override void visit(DeclarationAstNode node){}
+    override void visit(FunctionDeclarationAstNode node){}
+    override void visit(FunctionHeaderAstNode node){}
+    override void visit(FunctionTypeAstNode node){}
+    override void visit(ImportDeclarationAstNode node){}
+    override void visit(LiteralAstNode node){}
+    override void visit(ProtectionDeclarationAstNode node){}
+    override void visit(ScopeDeclarationAstNode node){}
+    override void visit(StructDeclarationAstNode node){}
+    override void visit(TypeAstNode node){}
+    override void visit(TypedVariableListAstNode node){}
+    override void visit(TypeModifierAstNode node){}
+    override void visit(UnitAstNode node){node.accept(this);}
+    override void visit(UnitContainerAstNode node){node.accept(this);}
 }
 
 /// The base AST node.
@@ -49,16 +83,21 @@ class AstNode
     /// Returns: $(D true) if the node has no children.
     bool isTerminal() {return false;}
 
-    @Semantic
-    {
-        /// Indicates if this node represents something public.
-        bool isPublic;
-        /// Indicates $(D true) if this node represents something private.
-        bool isPrivate;
-        /// Indicates $(D true) if this node represents something private.
-        bool isProtected;
-        /// Indicates $(D true) if this node represents something protected.
-    }
+    /// Indicates if this node represents something public.
+    @Semantic bool isPublic;
+    /// Indicates $(D true) if this node represents something private.
+    @Semantic bool isPrivate;
+    /// Indicates $(D true) if this node represents something protected.
+    @Semantic bool isProtected;
+
+}
+
+unittest
+{
+    import std.traits;
+    static assert(hasUDA!(AstNode.isPrivate, Semantic));
+    static assert(hasUDA!(FunctionDeclarationAstNode.isPublic, Semantic));
+
 }
 
 /// LiteralAstNode
