@@ -101,6 +101,7 @@ public:
     /// Creates an instance and start to visit from node.
     this(UnitContainerAstNode node)
     {
+
         assert(node);
         visitImpl(node);
     }
@@ -134,13 +135,7 @@ public:
         visitImpl(node);
     }
 
-    override void visit(ProtectionAttributeAstNode node)
-    {
-        assert(node);
-        visitImpl(node);
-    }
-
-    override void visit(ProtectionOverwriteAstNode node)
+    override void visit(ProtectionDeclarationAstNode node)
     {
         assert(node);
         visitImpl(node);
@@ -164,7 +159,7 @@ public:
         visitImpl(node);
     }
 
-    override void visit(ScopeAstNode node)
+    override void visit(ScopeDeclarationAstNode node)
     {
         assert(node);
         visitImpl(node);

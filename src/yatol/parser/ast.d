@@ -5,6 +5,10 @@ import
 import
     yatol.lexer.types;
 
+/// USed to annotate the fields set by the semantic.
+enum Semantic;
+
+/// The AST visitor.
 class AstVisitor
 {
     ///
@@ -20,23 +24,20 @@ class AstVisitor
     void visit(AstNode node){assert(node);node.accept(this);}
     void visit(ClassDeclarationAstNode node){assert(node);node.accept(this);}
     void visit(DeclarationAstNode node){ assert(node);node.DeclarationAstNode.accept(this);}
+    void visit(FunctionDeclarationAstNode node){assert(node);node.accept(this);}
+    void visit(FunctionHeaderAstNode node){assert(node);node.accept(this);}
+    void visit(FunctionTypeAstNode node){assert(node);node.accept(this);}
     void visit(ImportDeclarationAstNode node){assert(node);node.accept(this);}
     void visit(LiteralAstNode node){assert(node);node.accept(this);}
-    void visit(ProtectionAttributeAstNode node){assert(node);node.accept(this);}
-    void visit(ProtectionOverwriteAstNode node){assert(node);node.accept(this);}
+    void visit(ProtectionDeclarationAstNode node){assert(node);node.accept(this);}
+    void visit(ScopeDeclarationAstNode node){assert(node);node.accept(this);}
     void visit(StructDeclarationAstNode node){assert(node);node.accept(this);}
+    void visit(TypeAstNode node){assert(node);node.accept(this);}
+    void visit(TypedVariableListAstNode node){assert(node);node.accept(this);}
+    void visit(TypeModifierAstNode node){assert(node);node.accept(this);}
     void visit(UnitAstNode node){assert(node);node.accept(this);}
     void visit(UnitContainerAstNode node){assert(node);node.accept(this);}
-    void visit(ScopeAstNode node){assert(node);node.accept(this);}
-    void visit(TypeAstNode node){assert(node);node.accept(this);}
-    void visit(TypeModifierAstNode node){assert(node);node.accept(this);}
-    void visit(TypedVariableListAstNode node){assert(node);node.accept(this);}
-    void visit(FunctionHeaderAstNode node){assert(node);node.accept(this);}
-    void visit(FunctionDeclarationAstNode node){assert(node);node.accept(this);}
-    void visit(FunctionTypeAstNode node){assert(node);node.accept(this);}
 }
-
-
 
 /// The base AST node.
 class AstNode
@@ -47,6 +48,17 @@ class AstNode
     bool isGrammatic() {return false;}
     /// Returns: $(D true) if the node has no children.
     bool isTerminal() {return false;}
+
+    @Semantic
+    {
+        /// Indicates if this node represents something public.
+        bool isPublic;
+        /// Indicates $(D true) if this node represents something private.
+        bool isPrivate;
+        /// Indicates $(D true) if this node represents something private.
+        bool isProtected;
+        /// Indicates $(D true) if this node represents something protected.
+    }
 }
 
 /// LiteralAstNode
@@ -140,7 +152,7 @@ class FunctionTypeAstNode: AstNode
 }
 
 /// FunctionDeclaration
-class FunctionHeaderAstNode: BaseDeclarationAstNode
+class FunctionHeaderAstNode: AstNode
 {
     /// The function name.
     Token* name;
@@ -153,8 +165,6 @@ class FunctionHeaderAstNode: BaseDeclarationAstNode
     ///
     override void accept(AstVisitor visitor)
     {
-        if (protectionAttribute)
-            visitor.visit(protectionAttribute);
         parameters.each!(a => visitor.visit(a));
         if (returnType)
             visitor.visit(returnType);
@@ -190,41 +200,22 @@ class FunctionDeclarationAstNode: AstNode
 }
 
 /// ImportDeclaration, list of prioritized imports.
-class ImportDeclarationAstNode: BaseDeclarationAstNode
+class ImportDeclarationAstNode: AstNode
 {
     /// The imports priority.
     LiteralAstNode priority;
     /// An array of tokens chain, each represents a unit to import.
     Token*[][] importList;
     ///
-    override void accept(AstVisitor visitor)
-    {
-        if (protectionAttribute)
-            visitor.visit(protectionAttribute);
-    }
+    override void accept(AstVisitor visitor) {}
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}
     /// Returns: $(D true) if the node has no children.
     override bool isTerminal() {return true;}
 }
 
-/// ProtectionOverwrite
-class ProtectionOverwriteAstNode: BaseDeclarationAstNode
-{
-    ///
-    override void accept(AstVisitor visitor)
-    {
-        if (protectionAttribute)
-            visitor.visit(protectionAttribute);
-    }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
-}
-
 /// StructDeclaration
-class StructDeclarationAstNode: BaseDeclarationAstNode
+class StructDeclarationAstNode: AstNode
 {
     /// The struct name.
     Token* name;
@@ -233,8 +224,6 @@ class StructDeclarationAstNode: BaseDeclarationAstNode
     ///
     override void accept(AstVisitor visitor)
     {
-        if (protectionAttribute)
-            visitor.visit(protectionAttribute);
         declarations.each!(a => visitor.visit(a));
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
@@ -244,7 +233,7 @@ class StructDeclarationAstNode: BaseDeclarationAstNode
 }
 
 /// ClassDeclaration
-class ClassDeclarationAstNode: BaseDeclarationAstNode
+class ClassDeclarationAstNode: AstNode
 {
     /// The struct name.
     Token* name;
@@ -253,8 +242,6 @@ class ClassDeclarationAstNode: BaseDeclarationAstNode
     ///
     override void accept(AstVisitor visitor)
     {
-        if (protectionAttribute)
-            visitor.visit(protectionAttribute);
         declarations.each!(a => visitor.visit(a));
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
@@ -264,15 +251,13 @@ class ClassDeclarationAstNode: BaseDeclarationAstNode
 }
 
 /// Scope
-class ScopeAstNode: BaseDeclarationAstNode
+class ScopeDeclarationAstNode: AstNode
 {
     /// The declarations located in the scope.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (protectionAttribute)
-            visitor.visit(protectionAttribute);
         declarations.each!(a => visitor.visit(a));
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
@@ -281,19 +266,8 @@ class ScopeAstNode: BaseDeclarationAstNode
     override bool isTerminal() {return false;}
 }
 
-/// Base for all the declarations.
-class BaseDeclarationAstNode: AstNode
-{
-    /// The declaration protection
-    ProtectionAttributeAstNode protectionAttribute;
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return false;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
-}
-
 /// ProtectionAttribute
-class ProtectionAttributeAstNode: AstNode
+class ProtectionDeclarationAstNode: AstNode
 {
     /// The token that specifies the new protection.
     Token* protection;
@@ -312,13 +286,13 @@ class DeclarationAstNode: AstNode
     /// Assigned if this declaration is an ImportDeclarationAstNode.
     ImportDeclarationAstNode importDeclaration;
     /// Assigned if this declaration is an ProtectionOverwriteAstNode.
-    ProtectionOverwriteAstNode protectionOverwrite;
+    ProtectionDeclarationAstNode protectionOverwrite;
     /// Assigned if this declaration is an ClassDeclarationAstNode.
     ClassDeclarationAstNode classDeclaration;
     /// Assigned if this declaration is an StructDeclarationAstNode.
     StructDeclarationAstNode structDeclaration;
     /// Assigned if this declaration is a Scope.
-    ScopeAstNode scopeDeclaration;
+    ScopeDeclarationAstNode scopeDeclaration;
     ///
     override void accept(AstVisitor visitor)
     {

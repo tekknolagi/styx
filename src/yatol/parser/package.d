@@ -18,9 +18,7 @@ private:
 
     Lexer* _lexer;
     Token* _current;
-    UnitContainerAstNode _unitContainer;
-    ProtectionAttributeAstNode[] _protStack;
-    char[] _firstProtection = "public:".dup;
+    ptrdiff_t _declarationLevels;
 
     alias Range = TokenRange!(TokenType.lineComment, TokenType.starComment,
         TokenType.invalid);
@@ -79,49 +77,6 @@ private:
         return _current + count;
     }
 
-    ProtectionAttributeAstNode pushProtectionStack(Token* identifier)
-    {
-        assert(identifier);
-        ProtectionAttributeAstNode result = new ProtectionAttributeAstNode;
-        result.protection = identifier;
-        _protStack ~= result;
-        return result;
-    }
-
-    ProtectionAttributeAstNode pushProtectionStackWithCurrent()
-    {
-        ProtectionAttributeAstNode result = new ProtectionAttributeAstNode;
-        assert(currentProtection.protection);
-        result.protection = currentProtection.protection;
-        _protStack ~= result;
-        return result;
-    }
-
-    ProtectionAttributeAstNode overwriteProtectionStack(Token* identifier)
-    {
-        assert(identifier);
-        ProtectionAttributeAstNode result = new ProtectionAttributeAstNode;
-        result.protection = identifier;
-        _protStack[$-1] = result;
-        return result;
-    }
-
-    void popProtectionStack()
-    {
-        if (_protStack.length == 1)
-            unexpected();
-        else
-            _protStack.length -= 1;
-    }
-
-    ProtectionAttributeAstNode currentProtection()
-    {
-        ProtectionAttributeAstNode result = _protStack[$-1];
-        assert(result);
-        assert(result.protection);
-        return result;
-    }
-
 private:
 
     /**
@@ -132,14 +87,19 @@ private:
      * Returns:
      *      $(D true) on success, $(D false) otherwise.
      */
-    bool parseUnitDeclaration(bool virtual)
+    UnitAstNode parseUnit()
     {
         Token*[] toks;
+        if (!current.isTokUnit)
+        {
+            expected(TokenType.unit);
+            return null;
+        }
         advance();
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
-            return false;
+            return null;
         }
         toks ~= current;
         while (true)
@@ -147,20 +107,26 @@ private:
             advance();
             if (current.isTokSemicolon)
             {
-                UnitAstNode node = new UnitAstNode;
-                node.unitDeclaration = toks.dup;
-                if (!virtual)
-                    _unitContainer.mainUnit = node;
+                UnitAstNode result = new UnitAstNode;
+                result.unitDeclaration = toks;
+                if (parseDeclarations(result.declarations))
+                {
+                    --_declarationLevels;
+                    return result;
+                }
                 else
-                    _unitContainer.virtualUnits ~= node;
-                return parseDeclarations(node.declarations);
+                {
+                    if (_declarationLevels > 1)
+                        parseError("unclosed scope(s), class(es) or struct(s)");
+                    return null;
+                }
             }
             else
             {
                 if (!current.isTokDot)
                 {
                     expected(TokenType.dot);
-                    return false;
+                    return null;
                 }
                 else
                 {
@@ -168,7 +134,7 @@ private:
                     if (!current.isTokIdentifier)
                     {
                         expected(TokenType.identifier);
-                        return false;
+                        return null;
                     }
                     toks ~= current;
                 }
@@ -271,7 +237,6 @@ private:
         }
         else if (current.isTokFunction || current.isTokStatic)
         {
-            advance();
             result.functionType = parseFunctionType();
             if (!result.functionType)
                 parseError("invalid function type");
@@ -338,6 +303,12 @@ private:
      */
     ClassDeclarationAstNode parseClassDeclaration()
     {
+        if (!current.isTokClass)
+        {
+            expected(TokenType.class_);
+            return null;
+        }
+        advance();
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
@@ -352,7 +323,6 @@ private:
             destroy(result);
             return null;
         }
-        pushProtectionStackWithCurrent();
         parseDeclarations(result.declarations);
         if (!current.isTokRightCurly)
         {
@@ -371,6 +341,12 @@ private:
      */
     StructDeclarationAstNode parseStructDeclaration()
     {
+        if (!current.isTokStruct)
+        {
+            expected(TokenType.struct_);
+            return null;
+        }
+        advance();
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
@@ -385,7 +361,6 @@ private:
             destroy(result);
             return null;
         }
-        pushProtectionStackWithCurrent();
         parseDeclarations(result.declarations);
         if (!current.isTokRightCurly)
         {
@@ -404,6 +379,12 @@ private:
      */
     ImportDeclarationAstNode parseImportDeclaration()
     {
+        if (!current.isTokImport)
+        {
+            expected(TokenType.import_);
+            return null;
+        }
+        advance();
         Token* priority;
         if (current.isTokLeftParen)
         {
@@ -448,6 +429,30 @@ private:
     }
 
     /**
+     * Parses an ScopeDeclaration.
+     *
+     * Returns:
+     *      On success a $(D ScopeDeclarationAstNode) otherwise $(D null).
+     */
+    ScopeDeclarationAstNode parseScopeDeclaration()
+    {
+        if (!current.isTokLeftCurly)
+        {
+            expected(TokenType.leftCurly);
+            return null;
+        }
+        ScopeDeclarationAstNode result = new ScopeDeclarationAstNode;
+        parseDeclarations(result.declarations);
+        if (!current.isTokRightCurly)
+        {
+            expected(TokenType.rightCurly);
+            destroy(result);
+            return null;
+        }
+        return result;
+    }
+
+    /**
      * Parses a FunctionType.
      *
      * Returns:
@@ -455,9 +460,17 @@ private:
      */
     FunctionTypeAstNode parseFunctionType()
     {
-        const bool st = current.isTokFunction;
-        if (st)
+        const bool isStatic = current.isTokStatic;
+        if (isStatic)
+        {
             advance();
+        }
+        if (!current.isTokFunction)
+        {
+            expected(TokenType.function_);
+            return null;
+        }
+        advance();
         if (!current.isTokMul)
         {
             expected(TokenType.mul);
@@ -471,7 +484,7 @@ private:
         }
         advance();
         FunctionTypeAstNode result = new FunctionTypeAstNode;
-        result.isStatic = st;
+        result.isStatic = isStatic;
         if (!current.isTokRightParen) while (true)
         {
             if (TypedVariableListAstNode tvl = parseTypedVariableList())
@@ -510,16 +523,25 @@ private:
      */
     FunctionHeaderAstNode parseFunctionHeader()
     {
-        const bool st = current.isTokFunction;
-        if (st)
+
+        const bool isStatic = current.isTokStatic;
+        if (isStatic)
+        {
             advance();
+        }
+        if (!current.isTokFunction)
+        {
+            expected(TokenType.function_);
+            return null;
+        }
+        advance();
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
             return null;
         }
         FunctionHeaderAstNode result = new FunctionHeaderAstNode;
-        result.isStatic = st;
+        result.isStatic = isStatic;
         result.name = current();
         advance();
         if (!current.isTokLeftParen)
@@ -580,9 +602,51 @@ private:
         result.firstBodyToken = current();
         if (current.isTokLeftCurly)
         {
-            pushProtectionStackWithCurrent();
             parseDeclarations(result.declarations);
+            if (!current.isTokRightCurly)
+            {
+                expected(TokenType.rightCurly);
+                destroy(result);
+                return null;
+            }
         }
+        return result;
+    }
+
+    /**
+     * Parses a ProtectionAttribute.
+     *
+     * Returns:
+     *      A $(D ProtectionDeclarationAstNode) on success, $(D null) otherwise.
+     */
+    ProtectionDeclarationAstNode parseProtectionDeclaration()
+    {
+        if (!current.isTokProtection)
+        {
+            expected(TokenType.protection);
+            return null;
+        }
+        advance();
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        advance();
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        Token* prot = current;
+        advance();
+        if (!current.isTokRightParen)
+        {
+            expected(TokenType.rightParen);
+            return null;
+        }
+        ProtectionDeclarationAstNode result = new ProtectionDeclarationAstNode;
+        result.protection = prot;
         return result;
     }
 
@@ -597,111 +661,72 @@ private:
      */
     bool parseDeclarations(ref DeclarationAstNode[] declarations)
     {
-        ProtectionAttributeAstNode prot;
+        ptrdiff_t oldDeclLvl = _declarationLevels;
+        ++_declarationLevels;
         with(TokenType) while (advance()) switch(current.type)
         {
-        case leftCurly:
-        {
-            ScopeAstNode sc = new ScopeAstNode;
-            DeclarationAstNode decl = new DeclarationAstNode;
-            decl.scopeDeclaration = sc;
-            if (!prot)
-            {
-                prot = new ProtectionAttributeAstNode;
-                prot.protection = currentProtection.protection;
-            }
-            sc.protectionAttribute = pushProtectionStack(prot.protection);
-            prot = null;
-            declarations ~= new DeclarationAstNode;
-            declarations[$-1].scopeDeclaration = sc;
-            parseDeclarations(sc.declarations);
-            if (_protStack.length > 1 && current.type != TokenType.rightCurly)
-                expected(TokenType.rightCurly);
-            break;
-        }
-        case rightCurly:
-            popProtectionStack();
-            return true;
         case virtual:
-            advance();
-            if (current.isTokUnit)
+        {
+            if (_declarationLevels > 1)
             {
-                return parseUnitDeclaration(true);
+                unexpected();
+                parseError("virtual units can only be declared after the main unit declarations");
+                return false;
             }
             else
             {
-                unexpected();
-                return false;
+                return true;
             }
+        }
         case class_:
-            advance();
-            ClassDeclarationAstNode classDecl = parseClassDeclaration();
-            if (classDecl)
+        {
+            if (ClassDeclarationAstNode c = parseClassDeclaration())
             {
-                if (prot)
-                {
-                    classDecl.protectionAttribute = prot;
-                    prot = null;
-                }
                 DeclarationAstNode decl = new DeclarationAstNode;
-                decl.classDeclaration = classDecl;
-                declarations ~= decl;
-            }
-            else return false;
-            break;
-        case struct_:
-            advance();
-            StructDeclarationAstNode structDecl = parseStructDeclaration();
-            if (structDecl)
-            {
-                if (prot)
-                {
-                    structDecl.protectionAttribute = prot;
-                    prot = null;
-                }
-                DeclarationAstNode decl = new DeclarationAstNode;
-                decl.structDeclaration = structDecl;
+                decl.classDeclaration = c;
                 declarations ~= decl;
                 break;
             }
             else return false;
+        }
+        case struct_:
+        {
+            if (StructDeclarationAstNode s = parseStructDeclaration())
+            {
+                DeclarationAstNode decl = new DeclarationAstNode;
+                decl.structDeclaration = s;
+                declarations ~= decl;
+                break;
+            }
+            else return false;
+        }
         case static_:
             if (lookup(1).isTokFunction)
+            {
                 goto case function_;
+            }
             else
             {
                 unexpected();
                 return false;
             }
         case function_:
-            advance();
-            FunctionDeclarationAstNode functionDecl = parseFunctionDeclaration();
-            if (functionDecl)
+        {
+            if (FunctionDeclarationAstNode f = parseFunctionDeclaration())
             {
-                if (prot)
-                {
-                    functionDecl.header.protectionAttribute = prot;
-                    prot = null;
-                }
                 DeclarationAstNode decl = new DeclarationAstNode;
-                decl.functionDeclaration = functionDecl;
+                decl.functionDeclaration = f;
                 declarations ~= decl;
                 break;
             }
             else return false;
+        }
         case import_:
         {
-            advance();
-            ImportDeclarationAstNode impdecl = parseImportDeclaration();
-            if (impdecl)
+            if (ImportDeclarationAstNode i = parseImportDeclaration())
             {
-                if (prot)
-                {
-                    impdecl.protectionAttribute = prot;
-                    prot = null;
-                }
                 DeclarationAstNode decl = new DeclarationAstNode;
-                decl.importDeclaration = impdecl;
+                decl.importDeclaration = i;
                 declarations ~= decl;
                 break;
             }
@@ -709,69 +734,46 @@ private:
         }
         case protection:
         {
-            if (Token* id = parseProtectionAttribute())
+            if (ProtectionDeclarationAstNode p = parseProtectionDeclaration())
             {
-                if (prot)
-                {
-                    warning("previous protection attribute is not used");
-                    destroy(prot);
-                    prot = null;
-                }
-                if (lookup(1).isTokColon)
-                {
-                    advance();
-                    ProtectionAttributeAstNode pa = overwriteProtectionStack(id);
-                    DeclarationAstNode decl = new DeclarationAstNode;
-                    decl.protectionOverwrite = new ProtectionOverwriteAstNode;
-                    decl.protectionOverwrite.protectionAttribute = pa;
-                    declarations ~= decl;
-                    break;
-                }
-                else
-                {
-                    prot = new ProtectionAttributeAstNode;
-                    prot.protection = id;
-                    break;
-                }
+                DeclarationAstNode decl = new DeclarationAstNode;
+                decl.protectionOverwrite = p;
+                declarations ~= decl;
+                break;
             }
             else return false;
+        }
+        case leftCurly:
+        {
+            if (ScopeDeclarationAstNode s = parseScopeDeclaration())
+            {
+                DeclarationAstNode decl = new DeclarationAstNode;
+                decl.scopeDeclaration = s;
+                declarations ~= decl;
+                break;
+            }
+            else return false;
+        }
+        case rightCurly:
+        {
+            --_declarationLevels;
+            if (_declarationLevels <= 0)
+            {
+                unexpected();
+                return false;
+            }
+            else if (oldDeclLvl != _declarationLevels)
+            {
+                //parseError("unclosed scope(s), class(es) or struct(s)");
+                return false;
+            }
+            else return true;
         }
         default:
             unexpected();
             return false;
         }
         return true;
-    }
-
-    /**
-     * Parses a ProtectionAttribute.
-     *
-     * Returns:
-     *      On success a pointer to the token that indicates the protection,
-     *      $(D null) otherwise.
-     */
-    Token* parseProtectionAttribute()
-    {
-        advance();
-        if (!current.isTokLeftParen)
-        {
-            expected(TokenType.leftParen);
-            return null;
-        }
-        advance();
-        if (!current.isTokIdentifier)
-        {
-            expected(TokenType.identifier);
-            return null;
-        }
-        Token* result = current;
-        advance();
-        if (!current.isTokRightParen)
-        {
-            expected(TokenType.rightParen);
-            return null;
-        }
-        return result;
     }
 
 public:
@@ -782,7 +784,7 @@ public:
     /**
      * Constructs the parse with the lexer that contains the tokens to parse.
      */
-    this()(Lexer* lexer)
+    this(Lexer* lexer)
     {
         if (!lexer)
         {
@@ -791,9 +793,6 @@ public:
         }
         _lexer = lexer;
         _range = Range(lexer.tokens);
-        _unitContainer = new UnitContainerAstNode;
-        pushProtectionStack(new Token(_firstProtection.ptr, _firstProtection.ptr + 6,
-            1, 1, TokenType.identifier));
         advance();
     }
 
@@ -801,7 +800,7 @@ public:
      * Main parser function. The function trie to parse from the main unit to
      * the last virtual unit (if any).
      *
-     * Returns: An $(D UnitContainerAstNode) on suceess, $(D null) otherwise.
+     * Returns: An $(D UnitContainerAstNode) on success, $(D null) otherwise.
      */
     UnitContainerAstNode parse()
     {
@@ -814,16 +813,26 @@ public:
         }
         else
         {
-            if (parseUnitDeclaration(false))
-                return _unitContainer;
+            UnitContainerAstNode result = new UnitContainerAstNode;
+            result.mainUnit = parseUnit();
+            if (!result.mainUnit)
+            {
+                return null;
+            }
+            while (current.isTokVirtual)
+            {
+                advance();
+                result.virtualUnits ~= parseUnit;
+                if (!result.virtualUnits[$-1])
+                    return null;
+            }
+            if (!_range.empty)
+            {
+                unexpected;
+                return null;
+            }
+            return result;
         }
-        if (_protStack.length > 1)
-        {
-            expected(TokenType.rightCurly);
-            parseError("there are %s unclosed scope(s), struct(s) or class(es)"
-                .format(_protStack.length-1));
-        }
-        return null;
     }
 
     /**
@@ -891,24 +900,24 @@ unittest
     enum line = __LINE__;
     enum source = `
     unit a;
-    function ant(s8 p1,p2; s16 p3,p4): s8***[] {}
-    function bee(Rat p1,p2; a.Cow p3,p4): s8* {}
-    protection(private):
+    protection(private)
+        function ant(s8 p1,p2; s16 p3,p4): s8***[];
+        function bee(Rat p1,p2; a.Cow p3,p4): s8* {}
     protection(public)
-    {
-        protection(public) struct Cat {}
-    }
-    struct Rat {}
-    protection(public):
-    class Bat {}
-    class Cow { class Fox{  } }
+        struct Cat {}
+        struct Rat {}
+    protection(public)
+        class Bat {}
+        class Cow { class Fox {} }
     virtual unit b;
     function bee(s32[] p1): function*(): static function*(): s8[]
     {
         // function that returns a function that returns an s8 array
     }
     protection(public) import a.b, c.d;
-    `;
+    virtual unit c;
+    struct Owl {}
+`;
 
     Lexer lx;
     lx.setSourceFromText(source, __FILE__, line + 1, 1);

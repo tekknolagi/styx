@@ -23,16 +23,18 @@ Yatol:
 
     Declarations    < Declaration+
     Declaration     < ImportDeclaration
-                    / ProtectionOverwrite
+                    / ProtectionDeclaration
                     / VariableDeclaration
                     / ClassDeclaration
                     / StructDeclaration
                     / FunctionDeclaration
-                    / Scope
+                    / ScopeDeclaration
 
-    VariableDeclaration < ProtectionAttribute? Static? TypedVariableList Semicolon
-    StructDeclaration   < ProtectionAttribute? Struct Identifier LeftCurly Declarations? RightCurly
-    ClassDeclaration    < ProtectionAttribute? Class Identifier LeftCurly Declarations? RightCurly
+    ProtectionDeclaration   < Prot LeftParen Identifier RightParen
+    VariableDeclaration     < Static? TypedVariableList Semicolon
+    StructDeclaration       < Struct Identifier LeftCurly Declarations? RightCurly
+    ClassDeclaration        < Class Identifier LeftCurly Declarations? RightCurly
+    ScopeDeclaration        < LeftCurly Declarations RightCurly
 
 ################################################################################
 # Imports declaration
@@ -46,7 +48,7 @@ Yatol:
 
     FunctionDeclaration < FunctionHeader FunctionBody
 
-    FunctionHeader < ProtectionAttribute? Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
+    FunctionHeader < Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
 
     FunctionBody < LeftCurly Declarations RightCurly
                  / Semicolon
@@ -92,17 +94,6 @@ Yatol:
     TypeModifiers < TypeModifier TypeModifiers?
 
     TypeModifier < LeftRightSquares / Mul
-
-################################################################################
-# Scope
-
-    Scope < ProtectionAttribute? LeftCurly Declarations RightCurly
-
-################################################################################
-# Protection
-
-    ProtectionOverwrite < ProtectionAttribute Colon
-    ProtectionAttribute < Prot LeftParen Identifier RightParen
 
 ################################################################################
 # List, chain, etc
@@ -222,7 +213,7 @@ enum source1 = `
     s8*[]*[] q,h; sreg j;
     Foo[][  ] foo;
     virtual unit c;
-    protection(private):
+    protection(private)
     protection(public) struct Foo { sreg a,b,c; }
     virtual unit d;
     function foo(s8 a,b;): Foo;

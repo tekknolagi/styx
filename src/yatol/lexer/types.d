@@ -339,6 +339,9 @@ public:
     bool isTokProtection() const {return type == TokenType.protection;}
 
     /// Conveniance function used by the parser.
+    bool isTokImport() const {return type == TokenType.import_;}
+
+    /// Conveniance function used by the parser.
     bool isTokUnit() const {return type == TokenType.unit;}
 
     /// Conveniance function used by the parser.
