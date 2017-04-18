@@ -24,7 +24,7 @@ private:
         else
         {
             _text ~= _indentText ~ Node.stringof ~ "\n";
-            const bool hasChildren = !node.isTerminal;
+            const bool hasChildren = true;//!node.isTerminal;
             if (hasChildren)
             {
                 _text ~= _indentText ~ "{\n";

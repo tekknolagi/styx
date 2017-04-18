@@ -27,6 +27,8 @@ class AstVisitor
     void visit(AstNode node){node.accept(this);}
     void visit(ClassDeclarationAstNode node){node.accept(this);}
     void visit(DeclarationAstNode node){node.accept(this);}
+    void visit(StatementAstNode node){node.accept(this);}
+    void visit(DeclarationOrStatementAstNode node){node.accept(this);}
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
     void visit(FunctionHeaderAstNode node){node.accept(this);}
     void visit(FunctionTypeAstNode node){node.accept(this);}
@@ -58,6 +60,8 @@ class AstVisitorNone: AstVisitor
     override void visit(AstNode node){}
     override void visit(ClassDeclarationAstNode node){}
     override void visit(DeclarationAstNode node){}
+    override void visit(StatementAstNode node){}
+    override void visit(DeclarationOrStatementAstNode node){}
     override void visit(FunctionDeclarationAstNode node){}
     override void visit(FunctionHeaderAstNode node){}
     override void visit(FunctionTypeAstNode node){}
@@ -97,7 +101,6 @@ unittest
     import std.traits;
     static assert(hasUDA!(AstNode.isPrivate, Semantic));
     static assert(hasUDA!(FunctionDeclarationAstNode.isPublic, Semantic));
-
 }
 
 /// LiteralAstNode
@@ -222,13 +225,13 @@ class FunctionDeclarationAstNode: AstNode
     /// Used to indicates the body kind.
     Token* firstBodyToken;
     /// The body.
-    DeclarationAstNode[] declarations;
+    DeclarationOrStatementAstNode[] declarationsOrStatements;
     ///
     override void accept(AstVisitor visitor)
     {
         if (header)
             visitor.visit(header);
-        declarations.each!(a => visitor.visit(a));
+        declarationsOrStatements.each!(a => visitor.visit(a));
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}
@@ -318,6 +321,7 @@ class ProtectionDeclarationAstNode: AstNode
     override bool isTerminal() {return true;}
 }
 
+/// Declaration
 class DeclarationAstNode: AstNode
 {
     /// Assigned if this declaration is a FunctionDeclaration.
@@ -350,6 +354,36 @@ class DeclarationAstNode: AstNode
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return false;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// Statement
+class StatementAstNode: AstNode
+{
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return false;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// DeclarationOrStatement
+class DeclarationOrStatementAstNode: AstNode
+{
+    /// Assigned if this is a declaration
+    DeclarationAstNode declaration;
+    /// Assigned if this is a statement
+    StatementAstNode statement;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (declaration)
+            visitor.visit(declaration);
+        else if (statement)
+            visitor.visit(statement);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
     /// Returns: $(D true) if the node has no children.
     override bool isTerminal() {return false;}
 }

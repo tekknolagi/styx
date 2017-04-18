@@ -1,17 +1,22 @@
 module yatol.semantic.node_protection;
 
 import
-    yatol.lexer.types, yatol.parser.ast;
+    std.stdio;
+import
+    yatol.lexer.types, yatol.lexer, yatol.parser.ast;
 
 /**
  * An AST visitor that set the protection of each node.
  */
-class NodeProtectionVisitor: AstVisitor
+final class NodeProtectionVisitor: AstVisitorNone
 {
 
-    alias visit = AstVisitor.visit;
+    alias visit = AstVisitorNone.visit;
 
 private:
+
+    Lexer* _lx;
+    bool _success = true;
 
     enum Protection
     {
@@ -56,12 +61,21 @@ private:
 public:
 
     /// Creates an instance and start to visit from node.
-    this(UnitContainerAstNode node)
+    this(UnitContainerAstNode node, Lexer* lexer)
     {
         assert(node);
+        assert(lexer);
+        _lx = lexer;
         pushProtection(Protection.public_);
-        if (node)
-            visit(node);
+        super(node);
+    }
+
+    /// Returns: true if the protection have been set correctly.
+    bool success() {return _success;}
+
+    override void visit(DeclarationAstNode node)
+    {
+        node.accept(this);
     }
 
     override void visit(ProtectionDeclarationAstNode node)
@@ -78,6 +92,11 @@ public:
                 pushProtection(protected_);
                 break;
             default:
+                writefln("%s(%d,%d): error, `%s` is not a valid protection, " ~
+                    "expected `public, `private` or `protected`",
+                    _lx.filename, node.protection.line, node.protection.column,
+                    node.protection.text);
+                _success = false;
         }
     }
 
@@ -100,7 +119,6 @@ public:
     override void visit(ImportDeclarationAstNode node)
     {
         setFields(node);
-        node.accept(this);
     }
 }
 

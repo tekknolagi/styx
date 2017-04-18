@@ -19,6 +19,7 @@ private:
     Lexer* _lexer;
     Token* _current;
     ptrdiff_t _declarationLevels;
+    UnitContainerAstNode _uc;
 
     alias Range = TokenRange!(TokenType.lineComment, TokenType.starComment,
         TokenType.invalid);
@@ -602,7 +603,7 @@ private:
         result.firstBodyToken = current();
         if (current.isTokLeftCurly)
         {
-            parseDeclarations(result.declarations);
+            parseDeclarationsOrStatements(result.declarationsOrStatements);
             if (!current.isTokRightCurly)
             {
                 expected(TokenType.rightCurly);
@@ -651,56 +652,179 @@ private:
     }
 
     /**
+     * Parses contiguous declarations or statements, a function body.
+     *
+     * Params:
+     *      declsOrStatements: The array filled with the declarations or
+     *      statements.
+     * Returns:
+     *      $(D true) on success, $(D false) otherwise.
+     */
+    bool parseDeclarationsOrStatements(ref DeclarationOrStatementAstNode[] declsOrStatements)
+    {
+        const ptrdiff_t oldDeclLvl = _declarationLevels;
+        ++_declarationLevels;
+        while (advance())
+        {
+            if (DeclarationAstNode d = parseDeclaration())
+            {
+                DeclarationOrStatementAstNode dos = new DeclarationOrStatementAstNode;
+                dos.declaration = d;
+                declsOrStatements ~= dos;
+            }
+            else
+            {
+                with (TokenType) switch (current.type)
+                {
+                case virtual:
+                    unexpected();
+                    return false;
+                case rightCurly:
+                    --_declarationLevels;
+                    if (_declarationLevels <= 0)
+                    {
+                        unexpected();
+                        return false;
+                    }
+                    else if (oldDeclLvl != _declarationLevels)
+                    {
+                        return false;
+                    }
+                    else return true;
+                default:
+                    unexpected();
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * Parses contiguous declarations.
      *
      * Params:
-     *      declarations = The array of $(D DeclarationAstNode) where the
-     *      declarations are stored.
-     *
-     * Returns: $(D true) on success, $(D false= otherwise.
+     *      declarations: The array filled with the declarations.
+     * Returns:
+     *      $(D true) on success, $(D false) otherwise.
      */
     bool parseDeclarations(ref DeclarationAstNode[] declarations)
     {
         const ptrdiff_t oldDeclLvl = _declarationLevels;
         ++_declarationLevels;
-        with(TokenType) while (advance()) switch(current.type)
+        while (advance())
         {
+            if (DeclarationAstNode d = parseDeclaration())
+            {
+                declarations ~= d;
+            }
+            else
+            {
+                with (TokenType) switch (current.type)
+                {
+                case virtual:
+                    return true; // virtual unit
+                case rightCurly:
+                    --_declarationLevels;
+                    if (_declarationLevels <= 0)
+                    {
+                        unexpected();
+                        return false;
+                    }
+                    else if (oldDeclLvl != _declarationLevels)
+                    {
+                        return false;
+                    }
+                    else return true;
+                default:
+                    unexpected();
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Parses a declaration.
+     *
+     * Returns: a $(D DeclarationAstNode) on success, $(D null) otherwise.
+     */
+    DeclarationAstNode parseDeclaration()
+    {
+        with(TokenType) switch(current.type)
+        {
+        case class_:
+        {
+            if (ClassDeclarationAstNode decl = parseClassDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.classDeclaration = decl;
+                return result;
+            }
+            else return null;
+        }
+        case struct_:
+        {
+            if (StructDeclarationAstNode decl = parseStructDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.structDeclaration = decl;
+                return result;
+            }
+            else return null;
+        }
+        case function_:
+        {
+            if (FunctionDeclarationAstNode decl = parseFunctionDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.functionDeclaration = decl;
+                return result;
+            }
+            else return null;
+        }
+        case import_:
+        {
+            if (ImportDeclarationAstNode decl = parseImportDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.importDeclaration = decl;
+                return result;
+            }
+            else return null;
+        }
+        case protection:
+        {
+            if (ProtectionDeclarationAstNode decl = parseProtectionDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.protectionOverwrite = decl;
+                return result;
+            }
+            else return null;
+        }
+        case leftCurly:
+        {
+            if (ScopeDeclarationAstNode decl = parseScopeDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.scopeDeclaration = decl;
+                return result;
+            }
+            else return null;
+        }
         case virtual:
         {
             if (_declarationLevels > 1)
             {
                 unexpected();
                 parseError("virtual units can only be declared after the main unit declarations");
-                return false;
             }
-            else
-            {
-                return true;
-            }
-        }
-        case class_:
-        {
-            if (ClassDeclarationAstNode c = parseClassDeclaration())
-            {
-                DeclarationAstNode decl = new DeclarationAstNode;
-                decl.classDeclaration = c;
-                declarations ~= decl;
-                break;
-            }
-            else return false;
-        }
-        case struct_:
-        {
-            if (StructDeclarationAstNode s = parseStructDeclaration())
-            {
-                DeclarationAstNode decl = new DeclarationAstNode;
-                decl.structDeclaration = s;
-                declarations ~= decl;
-                break;
-            }
-            else return false;
+            return null;
         }
         case static_:
+        {
             if (lookup(1).isTokFunction)
             {
                 goto case function_;
@@ -708,72 +832,12 @@ private:
             else
             {
                 unexpected();
-                return false;
+                return null;
             }
-        case function_:
-        {
-            if (FunctionDeclarationAstNode f = parseFunctionDeclaration())
-            {
-                DeclarationAstNode decl = new DeclarationAstNode;
-                decl.functionDeclaration = f;
-                declarations ~= decl;
-                break;
-            }
-            else return false;
-        }
-        case import_:
-        {
-            if (ImportDeclarationAstNode i = parseImportDeclaration())
-            {
-                DeclarationAstNode decl = new DeclarationAstNode;
-                decl.importDeclaration = i;
-                declarations ~= decl;
-                break;
-            }
-            else return false;
-        }
-        case protection:
-        {
-            if (ProtectionDeclarationAstNode p = parseProtectionDeclaration())
-            {
-                DeclarationAstNode decl = new DeclarationAstNode;
-                decl.protectionOverwrite = p;
-                declarations ~= decl;
-                break;
-            }
-            else return false;
-        }
-        case leftCurly:
-        {
-            if (ScopeDeclarationAstNode s = parseScopeDeclaration())
-            {
-                DeclarationAstNode decl = new DeclarationAstNode;
-                decl.scopeDeclaration = s;
-                declarations ~= decl;
-                break;
-            }
-            else return false;
-        }
-        case rightCurly:
-        {
-            --_declarationLevels;
-            if (_declarationLevels <= 0)
-            {
-                unexpected();
-                return false;
-            }
-            else if (oldDeclLvl != _declarationLevels)
-            {
-                //parseError("unclosed scope(s), class(es) or struct(s)");
-                return false;
-            }
-            else return true;
         }
         default:
-            unexpected();
-            return false;
+            return null;
         }
-        return true;
     }
 
 public:
@@ -813,17 +877,17 @@ public:
         }
         else
         {
-            UnitContainerAstNode result = new UnitContainerAstNode;
-            result.mainUnit = parseUnit();
-            if (!result.mainUnit)
+            _uc = new UnitContainerAstNode;
+            _uc.mainUnit = parseUnit();
+            if (!_uc.mainUnit)
             {
                 return null;
             }
             while (current.isTokVirtual)
             {
                 advance();
-                result.virtualUnits ~= parseUnit;
-                if (!result.virtualUnits[$-1])
+                _uc.virtualUnits ~= parseUnit;
+                if (!_uc.virtualUnits[$-1])
                     return null;
             }
             if (!_range.empty)
@@ -831,8 +895,14 @@ public:
                 unexpected;
                 return null;
             }
-            return result;
+            return _uc;
         }
+    }
+
+    /// Returns: The AST for the unit being parsed.
+    UnitContainerAstNode unitContainer()
+    {
+        return _uc;
     }
 
     /**
@@ -868,7 +938,7 @@ unittest
     assert(tan);
 }
 
-unittest
+version(none) unittest
 {
     enum line = __LINE__;
     enum source = `
@@ -881,7 +951,7 @@ unittest
     assert(!tman);
 }
 
-unittest
+version(none) unittest
 {
     enum line = __LINE__;
     enum source = `
@@ -919,7 +989,11 @@ unittest
     struct Owl
     {
         function of1(): s32;
-        function of2(): u32;
+        function of2(): u32
+        {
+            import c.v.b;
+            function local(): c.v.b.FooBar {}
+        }
     }
 `;
 

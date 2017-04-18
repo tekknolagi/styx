@@ -9,7 +9,6 @@ import
 
 enum Until
 {
-    all,
     lexing,
     parsing,
     semantic,
@@ -35,7 +34,7 @@ Files:
 Options:
     -h --help       : prints this message.
     -v --verbose    : verbose output.
-    --until=<phase> : compiles and stops after <phase>, either "all", "lexing", "parsing" or "semantic".
+    --until=<phase> : compiles and stops after <phase>, either "lexing", "parsing" or "semantic".
 `
     );
     stdout.flush;
@@ -129,9 +128,18 @@ int main(string[] args)
         return 0;
     }
 
-    foreach (ref parser; parsers)
+    foreach (i, ref parser; parsers)
     {
+        if (options.verbose)
+            writeln("unit semantic for ", lexers[i].filename, "...");
+        if (!unitSemantic(parser.unitContainer, lexers[i]))
+            return 1;
+    }
 
+    if (options.until == Until.semantic)
+    {
+        writeln("semantic phase finished, exited.");
+        return 0;
     }
 
     return 0;

@@ -221,7 +221,7 @@ public:
 
     /**
      * Splits either the content of the file passed in the constructor or
-     *  the string passed in $(D setSourceFromText) into tokens.
+     * the string passed in $(D setSourceFromText) into tokens.
      */
     void lex()
     {
