@@ -43,8 +43,9 @@ private:
                     alias NT = typeof(__traits(getMember, node, member));
                     static if (is(NT == Token*))
                     {
-                        _text ~= specifier1.format(_indentText, member,
-                            __traits(getMember, node, member).text());
+                        if (__traits(getMember, node, member) !is null)
+                            _text ~= specifier1.format(_indentText, member,
+                                __traits(getMember, node, member).text());
                     }
                     else static if (is(NT == Token*[]))
                         foreach(i, t; __traits(getMember, node, member))
@@ -122,13 +123,19 @@ public:
         visitImpl(node);
     }
 
+    override void visit(InterfaceDeclarationAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
     override void visit(DeclarationAstNode node)
     {
         assert(node);
         visitImpl(node);
     }
 
-    override void visit(LiteralAstNode node)
+    override void visit(NumberLiteralAstNode node)
     {
         assert(node);
         visitImpl(node);

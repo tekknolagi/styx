@@ -167,6 +167,31 @@ private:
         }
     }
 
+    NumberLiteralAstNode parseNumberLiteral()
+    {
+        if (!current.isTokIntegerLiteral && !current.isTokHexLiteral
+            && !current.isTokFloatLiteral)
+        {
+            unexpected();
+            return null;
+        }
+        NumberLiteralAstNode result = new NumberLiteralAstNode;
+        result.literal = current();
+        advance();
+        if (current.isTokColon)
+        {
+            advance();
+            if (!current.isTokBasicType)
+            {
+                parseError("expcted a basic type as number literal suffix");
+                return null;
+            }
+            result.literalType = current;
+            advance();
+        }
+        return result;
+    }
+
     /**
      * Parses consecutives TypeModifier.
      *
@@ -302,6 +327,44 @@ private:
      * Returns:
      *      On success a $(D ClassDeclarationAstNode) otherwise $(D null).
      */
+    InterfaceDeclarationAstNode parseInterfaceDeclaration()
+    {
+        if (!current.isTokInterface)
+        {
+            expected(TokenType.class_);
+            return null;
+        }
+        advance();
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        InterfaceDeclarationAstNode result = new InterfaceDeclarationAstNode;
+        result.name = current();
+        advance();
+        if (!current.isTokLeftCurly)
+        {
+            expected(TokenType.leftCurly);
+            destroy(result);
+            return null;
+        }
+        parseDeclarations(result.declarations);
+        if (!current.isTokRightCurly)
+        {
+            expected(TokenType.rightCurly);
+            destroy(result);
+            return null;
+        }
+        return result;
+    }
+
+    /**
+     * Parses a ClassDeclaration.
+     *
+     * Returns:
+     *      On success a $(D ClassDeclarationAstNode) otherwise $(D null).
+     */
     ClassDeclarationAstNode parseClassDeclaration()
     {
         if (!current.isTokClass)
@@ -385,14 +448,17 @@ private:
             expected(TokenType.import_);
             return null;
         }
+        ImportDeclarationAstNode result = new ImportDeclarationAstNode;
         advance();
-        Token* priority;
         if (current.isTokLeftParen)
         {
             advance();
-            priority = current();
-            // literal
-            advance();
+            result.priority = parseNumberLiteral();
+            if (!result.priority)
+            {
+                parseError("number literal expected to set the import priority");
+                return null;
+            }
             if (!current.isTokRightParen)
             {
                 expected(TokenType.rightParen);
@@ -405,7 +471,6 @@ private:
             expected(TokenType.identifier);
             return null;
         }
-        ImportDeclarationAstNode result = new ImportDeclarationAstNode;
         while (true)
         {
             Token*[] imp = parseIdentifierChain();
@@ -754,6 +819,16 @@ private:
     {
         with(TokenType) switch(current.type)
         {
+        case interface_:
+        {
+            if (InterfaceDeclarationAstNode decl = parseInterfaceDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.interfaceDeclaration = decl;
+                return result;
+            }
+            else return null;
+        }
         case class_:
         {
             if (ClassDeclarationAstNode decl = parseClassDeclaration())
@@ -938,7 +1013,7 @@ unittest
     assert(tan);
 }
 
-version(none) unittest
+unittest
 {
     enum line = __LINE__;
     enum source = `
@@ -951,7 +1026,7 @@ version(none) unittest
     assert(!tman);
 }
 
-version(none) unittest
+unittest
 {
     enum line = __LINE__;
     enum source = `
@@ -984,7 +1059,7 @@ unittest
     {
         // function that returns a function that returns an s8 array
     }
-    protection(public) import a.b, c.d;
+    protection(public) import(10) a.b, c.d;
     virtual unit c;
     struct Owl
     {
@@ -995,6 +1070,12 @@ unittest
             function local(): c.v.b.FooBar {}
         }
     }
+    interface Pig
+    {
+        function pig1(): s32;
+        function pig2(): s64;
+    }
+    import (10101) a.b, c.d.r;
 `;
 
     Lexer lx;

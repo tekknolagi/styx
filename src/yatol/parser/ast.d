@@ -33,7 +33,8 @@ class AstVisitor
     void visit(FunctionHeaderAstNode node){node.accept(this);}
     void visit(FunctionTypeAstNode node){node.accept(this);}
     void visit(ImportDeclarationAstNode node){node.accept(this);}
-    void visit(LiteralAstNode node){node.accept(this);}
+    void visit(InterfaceDeclarationAstNode node){node.accept(this);}
+    void visit(NumberLiteralAstNode node){node.accept(this);}
     void visit(ProtectionDeclarationAstNode node){node.accept(this);}
     void visit(ScopeDeclarationAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
@@ -45,8 +46,9 @@ class AstVisitor
 }
 
 /**
- * Base for any AST visitor that few nodes.
- * Only the unit container and the units are visisted by default.
+ * Base for any AST visitor that visit few nodes.
+ * Only the unit container and the units are visisted by default so
+ * that only the interesting $(D visit()) have to be overridden.
  */
 class AstVisitorNone: AstVisitor
 {
@@ -66,7 +68,8 @@ class AstVisitorNone: AstVisitor
     override void visit(FunctionHeaderAstNode node){}
     override void visit(FunctionTypeAstNode node){}
     override void visit(ImportDeclarationAstNode node){}
-    override void visit(LiteralAstNode node){}
+    override void visit(InterfaceDeclarationAstNode node){}
+    override void visit(NumberLiteralAstNode node){}
     override void visit(ProtectionDeclarationAstNode node){}
     override void visit(ScopeDeclarationAstNode node){}
     override void visit(StructDeclarationAstNode node){}
@@ -104,7 +107,7 @@ unittest
 }
 
 /// LiteralAstNode
-class LiteralAstNode: AstNode
+class NumberLiteralAstNode: AstNode
 {
 
 private:
@@ -133,14 +136,6 @@ public:
     Token* literalType;
     /// The token that gives the literal text.
     Token* literal;
-
-    /// Creates a new instance with a token that gives the literal and the
-    /// one that gives the type.
-    this (Token* literal, Token* type)
-    {
-        this.literal = literal;
-        this.literalType = type;
-    }
 
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}
@@ -245,15 +240,19 @@ class FunctionDeclarationAstNode: AstNode
 class ImportDeclarationAstNode: AstNode
 {
     /// The imports priority.
-    LiteralAstNode priority;
+    NumberLiteralAstNode priority;
     /// An array of tokens chain, each represents a unit to import.
     Token*[][] importList;
     ///
-    override void accept(AstVisitor visitor) {}
+    override void accept(AstVisitor visitor)
+    {
+        if (priority)
+            visitor.visit(priority);
+    }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}
     /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return true;}
+    override bool isTerminal() {return false;}
 }
 
 /// StructDeclaration
@@ -277,7 +276,7 @@ class StructDeclarationAstNode: AstNode
 /// ClassDeclaration
 class ClassDeclarationAstNode: AstNode
 {
-    /// The struct name.
+    /// The class name.
     Token* name;
     /// The declarations located in the class.
     DeclarationAstNode[] declarations;
@@ -291,6 +290,26 @@ class ClassDeclarationAstNode: AstNode
     /// Returns: $(D true) if the node has no children.
     override bool isTerminal() {return false;}
 }
+
+/// InterfaceDeclaration
+class InterfaceDeclarationAstNode: AstNode
+{
+    /// The interface name.
+    Token* name;
+    /// The declarations located in the class.
+    DeclarationAstNode[] declarations;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        declarations.each!(a => visitor.visit(a));
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+
 
 /// Scope
 class ScopeDeclarationAstNode: AstNode
@@ -328,11 +347,13 @@ class DeclarationAstNode: AstNode
     FunctionDeclarationAstNode functionDeclaration;
     /// Assigned if this declaration is an ImportDeclarationAstNode.
     ImportDeclarationAstNode importDeclaration;
-    /// Assigned if this declaration is an ProtectionOverwriteAstNode.
+    /// Assigned if this declaration is a ProtectionDeclarationAstNode.
     ProtectionDeclarationAstNode protectionOverwrite;
-    /// Assigned if this declaration is an ClassDeclarationAstNode.
+    /// Assigned if this declaration is an InterfaceDeclarationAstNode.
+    InterfaceDeclarationAstNode interfaceDeclaration;
+    /// Assigned if this declaration is a ClassDeclarationAstNode.
     ClassDeclarationAstNode classDeclaration;
-    /// Assigned if this declaration is an StructDeclarationAstNode.
+    /// Assigned if this declaration is a StructDeclarationAstNode.
     StructDeclarationAstNode structDeclaration;
     /// Assigned if this declaration is a Scope.
     ScopeDeclarationAstNode scopeDeclaration;
@@ -343,6 +364,8 @@ class DeclarationAstNode: AstNode
             visitor.visit(importDeclaration);
         else if (protectionOverwrite)
             visitor.visit(protectionOverwrite);
+        else if (interfaceDeclaration)
+            visitor.visit(interfaceDeclaration);
         else if (classDeclaration)
             visitor.visit(classDeclaration);
         else if (structDeclaration)

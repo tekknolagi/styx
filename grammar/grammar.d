@@ -29,11 +29,13 @@ Yatol:
                     / StructDeclaration
                     / FunctionDeclaration
                     / ScopeDeclaration
+                    / InterfaceDeclaration
 
     ProtectionDeclaration   < Prot LeftParen Identifier RightParen
     VariableDeclaration     < Static? TypedVariableList Semicolon
     StructDeclaration       < Struct Identifier LeftCurly Declarations? RightCurly
     ClassDeclaration        < Class Identifier LeftCurly Declarations? RightCurly
+    InterfaceDeclaration    < Interface Identifier LeftCurly Declarations? RightCurly
     ScopeDeclaration        < LeftCurly Declarations RightCurly
 
 ################################################################################
@@ -50,7 +52,7 @@ Yatol:
 
     FunctionHeader < Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
 
-    FunctionBody < LeftCurly Declarations RightCurly
+    FunctionBody < LeftCurly DeclarationOrStatements RightCurly
                  / Semicolon
 
     FunctionPointerType < Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
@@ -137,10 +139,10 @@ EmptyStatment < Semicolon
     HexLiteral  <- HexPrefix HexDigits+ HexLiteralSuffix?
     HexLiteralSuffix <- Colon BasicType
 
-    FloatLiteral  <- Num+ Dot Num+ FloatLiteralSuffix?
+    FloatLiteral  <- Minus? Num+ Dot Num+ FloatLiteralSuffix?
     FloatLiteralSuffix <- Colon BasicFloatType
 
-    IntLiteral  <- Num+ IntLiteralSuffix?
+    IntLiteral  <- Minus? Num+ IntLiteralSuffix?
     IntLiteralSuffix <- Colon BasicIntegerType
 
     Eol <- "\r\n" / '\n'
@@ -165,8 +167,9 @@ EmptyStatment < Semicolon
     RightSquare <- ']'
     LeftCurly   <- '{'
     RightCurly  <- '}'
+    Minus       <- '-'
 
-    HexPrefix   <- "0x"
+    HexPrefix   <- "0x" / "0X"
 
 ################################################################################
 # Keywords
@@ -196,6 +199,7 @@ EmptyStatment < Semicolon
     Unit    <- "unit"
     Prot    <- "protection"
     Import  <- "import"
+    Interface <- "interface"
     Virtual <- "virtual"
     Struct  <- "struct"
     Class   <- "class"

@@ -30,17 +30,21 @@ private:
 
     void warning(const(char[]) message)
     {
-        writefln("%s(%d,%d): warning, %s", _filename, _frontLine, _frontColumn, message);
+        writefln("%s(%d,%d): warning, %s", _filename, _frontLine,
+            _frontColumn, message);
     }
 
     void error(const(char[]) message)
     {
-        stderr.writefln("%s(%d,%d): error, %s", _filename, _frontLine, _frontColumn, message);
-        exit(1);
+        stderr.writefln("%s(%d,%d): error, %s", _filename, _frontLine,
+            _frontColumn, message);
+        version(assert) {}
+        else exit(1);
     }
 
     // Must be called when starting to lex something.
     // Allows to easily bookmark store the start position.
+    pragma(inline, true)
     void anticipateToken(TokenType type)
     {
         _tokStart = _front;
@@ -51,16 +55,19 @@ private:
     }
 
     // Puts  a new token, as anticipated.
+    pragma(inline, true)
     void validateToken()
     {
         if (!_anticipated)
             error("INTERNAL, attempt to validate an unanticipated token");
         _tokens.length += 1;
-        _tokens[$-1] = Token(_tokStart, _front, _tokStartLine, _tokStartColumn, _anticipatedType);
+        _tokens[$-1] = Token(_tokStart, _front, _tokStartLine, _tokStartColumn,
+            _anticipatedType);
         _anticipated = false;
     }
 
     // Puts  a new token, correct the anticipation.
+    pragma(inline, true)
     void validateToken(TokenType type)
     {
         if (!_anticipated)
@@ -71,13 +78,21 @@ private:
     }
 
     // next char, synchronizes column.
+    pragma(inline, true)
     void advance()
     {
         ++_front;
         ++_frontColumn;
     }
 
+    pragma(inline, true)
+    char* lookup(size_t value)
+    {
+        return _front + value;
+    }
+
     // Must be called when a sub-lexer finds a line ending.
+    pragma(inline, true)
     void processlineEnding()
     {
         if (*_front == '\r')
@@ -155,6 +170,100 @@ private:
         }
     }
 
+    void lexHexLiteral()
+    {
+        while (true)
+        {
+            switch(*_front)
+            {
+            case '0': .. case '9':
+            case 'a': .. case 'f':
+            case 'A': .. case 'F':
+            case '_':
+                advance();
+                if (_front > _back)
+                    goto default;
+                else
+                    break;
+            case 'g': .. case 'z':
+            case 'G': .. case 'Z':
+                error("invalid hexadecimal digit");
+                advance();
+                validateToken(TokenType.invalid);
+                return;
+            default:
+                validateToken();
+                return;
+            }
+        }
+    }
+
+    void lexIntegerLiteral()
+    {
+        anticipateToken(TokenType.intLiteral);
+        if (*_front == '-')
+        {
+            advance();
+        }
+        while (true)
+        {
+            switch(*_front)
+            {
+            case '0': .. case '9':
+            case '_':
+                advance();
+                if (_front > _back)
+                    goto default;
+                else
+                    break;
+            case 'a': .. case 'z':
+            case 'A': .. case 'Z':
+                error("invalid decimal digit");
+                advance();
+                validateToken(TokenType.invalid);
+                return;
+            case '.':
+                if ('0' <= *lookup(1) && *lookup(1) <= '9')
+                {
+                    advance();
+                    advance();
+                    lexFloatingLiteralFractionalPart();
+                    return;
+                }
+                else
+                {
+                    validateToken();
+                    return;
+                }
+            default:
+                validateToken();
+                return;
+            }
+        }
+    }
+
+    // lex
+    void lexFloatingLiteralFractionalPart()
+    {
+        assert (_anticipated);
+        while (true)
+        {
+            switch(*_front)
+            {
+            case '0': .. case '9':
+            case '_':
+                advance();
+                if (_front > _back)
+                    goto default;
+                else
+                    break;
+            default:
+                validateToken(TokenType.floatLiteral);
+                return;
+            }
+        }
+    }
+
     // Lex an identifier or a keywords.
     void lexIdentifier()
     {
@@ -225,7 +334,6 @@ public:
      */
     void lex()
     {
-
         if (_front) while (_front <= _back)
         {
             switch(*_front)
@@ -241,9 +349,9 @@ public:
                 processlineEnding;
                 continue;
             case '/':
-                if (*(_front + 1) == '/')
+                if ( *lookup(1) == '/')
                     lexLineComment();
-                else if (*(_front + 1) == '*')
+                else if (*lookup(1) == '*')
                     lexStarComment;
                 else
                 {
@@ -256,6 +364,35 @@ public:
             case 'A': .. case 'Z':
             case '_':
                 lexIdentifier();
+                continue;
+            case '0':
+                if ( 'x' == *lookup(1) || *lookup(1) == 'X')
+                {
+                    anticipateToken(TokenType.hexLiteral);
+                    advance();
+                    advance();
+                    lexHexLiteral();
+                }
+                else
+                {
+                    lexIntegerLiteral();
+                }
+                continue;
+            case '1': .. case '9':
+                lexIntegerLiteral();
+                continue;
+            case '-':
+                if ( '0' <= *lookup(1) && *lookup(1) <= '9')
+                {
+                    anticipateToken(TokenType.intLiteral);
+                    lexIntegerLiteral();
+                }
+                else
+                {
+                    anticipateToken(TokenType.minus);
+                    advance();
+                    validateToken();
+                }
                 continue;
             case '*':
                 anticipateToken(TokenType.mul);
@@ -444,6 +581,99 @@ unittest
     lx.setSourceFromText(source);
     lx.lex();
     assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].text == source);
+}
+
+unittest
+{
+    enum source = `12345678`;
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].text == source);
+    assert(lx.tokens[0].isTokIntegerLiteral);
+}
+
+unittest
+{
+    enum source = `1234.a`;
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIntegerLiteral);
+    assert(lx.tokens[0].text == "1234");
+    assert(lx.tokens[1].isTokDot);
+    assert(lx.tokens[2].isTokIdentifier);
+    assert(lx.tokens[2].text == "a");
+}
+
+unittest
+{
+    enum source = `(0)`;
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokLeftParen);
+    assert(lx.tokens[1].isTokIntegerLiteral);
+    assert(lx.tokens[2].isTokRightParen);
+}
+
+unittest
+{
+    enum source = `1a b`;
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].text == "1a");
+    assert(lx.tokens[1].isTokIdentifier);
+    assert(lx.tokens[1].text == "b");
+}
+
+unittest
+{
+    enum source = `1234.01`;
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokFloatLiteral);
+    assert(lx.tokens[0].text == "1234.01");
+}
+
+unittest
+{
+    enum source = `-1234.01`;
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokFloatLiteral);
+    assert(lx.tokens[0].text == source);
+}
+
+unittest
+{
+    enum source = `0x12AF20`;
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokHexLiteral);
+    assert(lx.tokens[0].text == source);
+}
+
+unittest
+{
+    enum source = `0X1234_abcdef`;
+    Lexer lx;
+    lx.setSourceFromText(source);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokHexLiteral);
     assert(lx.tokens[0].text == source);
 }
 
