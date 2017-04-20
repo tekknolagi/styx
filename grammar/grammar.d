@@ -32,11 +32,16 @@ Yatol:
                     / InterfaceDeclaration
 
     ProtectionDeclaration   < Prot LeftParen Identifier RightParen
-    VariableDeclaration     < Static? TypedVariableList Semicolon
     StructDeclaration       < Struct Identifier LeftCurly Declarations? RightCurly
     ClassDeclaration        < Class Identifier LeftCurly Declarations? RightCurly
     InterfaceDeclaration    < Interface Identifier LeftCurly Declarations? RightCurly
     ScopeDeclaration        < LeftCurly Declarations RightCurly
+
+    VariableDeclaration     < Static? Type VariableDeclarationList Semicolon
+
+    VariableDeclarationList < VariableDeclarationItem (Comma VariableDeclarationItem)*
+
+    VariableDeclarationItem < Identifier Initializer?
 
 ################################################################################
 # Imports declaration
@@ -50,17 +55,39 @@ Yatol:
 
     FunctionDeclaration < FunctionHeader FunctionBody
 
-    FunctionHeader < Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
+    FunctionHeader < Attributes? Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
 
-    FunctionBody < LeftCurly DeclarationOrStatements RightCurly
+    FunctionBody < LeftCurly DeclarationOrStatements? RightCurly
                  / Semicolon
 
-    FunctionPointerType < Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
+    FunctionPointerType < Attributes? Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
 
     FunctionParameters < TypedVariableList (Semicolon TypedVariableList)
 
 ################################################################################
+# Attribute
+
+    Attributes < Attribute*
+    Attribute <- At Identifier
+
+################################################################################
+# ParameterStorageClass
+
+
+
+################################################################################
 # Initializer
+
+    Initializer < BasicTypeInitializer
+                / ArrayDimInitializer
+
+    BasicTypeInitializer < Equal InitializerElement
+    ArrayDimInitializer < Equal LeftSquare ArrayInitializerElements? RightSquare
+
+    ArrayInitializerElements < InitializerElement (Comma InitializerElement)*
+
+    InitializerElement  < NumberLiteral
+                     #   / StructInit...
 
 ################################################################################
 # DeclarationOrStatement
@@ -90,10 +117,10 @@ EmptyStatment < Semicolon
 #    ExpressionStatement < Expressions*
 #
 #    Expressions <
-#        AssignExpression
-#        CallExpression
-#        UnaryExpression
-#        BinaryExpression
+#        / AssignExpression
+#        / CallExpression
+#        / UnaryExpression
+#        / BinaryExpression
 #
 ################################################################################
 # Cast
@@ -136,13 +163,17 @@ EmptyStatment < Semicolon
 ################################################################################
 # Identifier and numbers
 
-    HexLiteral  <- HexPrefix HexDigits+ HexLiteralSuffix?
+    NumberLiteral   < IntLiteral
+                    / HexLiteral
+                    / FloatLiteral
+
+    HexLiteral  <~ HexPrefix HexDigits+ HexLiteralSuffix?
     HexLiteralSuffix <- Colon BasicType
 
-    FloatLiteral  <- Minus? Num+ Dot Num+ FloatLiteralSuffix?
+    FloatLiteral  <~ Minus? Num+ Dot Num+ FloatLiteralSuffix?
     FloatLiteralSuffix <- Colon BasicFloatType
 
-    IntLiteral  <- Minus? Num+ IntLiteralSuffix?
+    IntLiteral  <~ Minus? Num+ IntLiteralSuffix?
     IntLiteralSuffix <- Colon BasicIntegerType
 
     Eol <- "\r\n" / '\n'
@@ -168,6 +199,8 @@ EmptyStatment < Semicolon
     LeftCurly   <- '{'
     RightCurly  <- '}'
     Minus       <- '-'
+    Equal       <- '='
+    At          <- '@'
 
     HexPrefix   <- "0x" / "0X"
 
@@ -231,18 +264,17 @@ function*(): s8 memberFuncPtr;
 
 enum source1 = `
     unit a.b;
-    import(0:s8) r.d,s.d,t;
-    import(1) s1,s256yy;
+    import(0:s8) r.d, s.d,t;
+    import(1) s1, s256yy;
+    struct Foo{}
     s8*[]*[] q,h; sreg j;
-    Foo[][  ] foo;
+    Foo[][] foo;
     virtual unit c;
     protection(private)
     protection(public) struct Foo { sreg a,b,c; }
     virtual unit d;
-    function foo(s8 a,b;): Foo;
-    function bar(){};
-    /*sfsdfsdf °0°0°033&
-    */
+    @const @inline function bar(){}
+    s8 signed1 = 42, signed2 = 355;
 `;
 
 unittest
