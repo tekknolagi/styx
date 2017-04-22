@@ -81,47 +81,79 @@ Yatol:
     Initializer < BasicTypeInitializer
                 / ArrayDimInitializer
 
-    BasicTypeInitializer < Equal InitializerElement
+    BasicTypeInitializer < Equal UnaryExpression
     ArrayDimInitializer < Equal LeftSquare ArrayInitializerElements? RightSquare
 
-    ArrayInitializerElements < InitializerElement (Comma InitializerElement)*
-
-    InitializerElement  < NumberLiteral
-                     #   / StructInit...
+    ArrayInitializerElements < UnaryExpression (Comma UnaryExpression)*
 
 ################################################################################
 # DeclarationOrStatement
 
-DeclarationOrStatements < DeclarationOrStatement+
+    DeclarationOrStatementsBlock < DeclarationOrStatement
+                                 / LeftCurly DeclarationOrStatements RightCurly
 
-DeclarationOrStatement  < Declaration
-                        / Statement
+    DeclarationOrStatements < DeclarationOrStatement+
+
+    DeclarationOrStatement  < Declaration
+                            / Statement
 
 ################################################################################
 # Statements
 
-Statement   < EmptyStatment
-#            / ExpressionStatement
-#            / IfElseStatement
-#            / SwitchStatement
-#            / CaseStatement
-#            / ContinueStatement
-#            / BreakStatement
-#            / ReturnStatement
+    Statement   < EmptyStatment
+                / ExpressionStatement
+                / IfElseStatement
+#               / SwitchStatement
+#               / CaseStatement
+#               / ContinueStatement
+#               / BreakStatement
+#               / ReturnStatement
 
-EmptyStatment < Semicolon
+    EmptyStatment < Semicolon
+
+    ExpressionStatement < PrimaryExpression Semicolon
+
+    IfElseStatement < If LeftParen ConditionExpression RightParen DeclarationOrStatementsBlock (Else DeclarationOrStatementsBlock)?
 
 ################################################################################
 # Expressions
-#
-#    ExpressionStatement < Expressions*
-#
-#    Expressions <
-#        / AssignExpression
-#        / CallExpression
-#        / UnaryExpression
-#        / BinaryExpression
-#
+
+    PrimaryExpression   < AssignExpression
+                        / BinaryExpression
+                        / CastExpression
+                        / UnaryExpression
+                        / ParenExpression
+                        / ConditionExpression
+                        / PolishExpression
+
+    ParenExpression < LeftParen PrimaryExpression RightParen
+
+    AssignExpression < UnaryExpression Equal UnaryExpression
+
+    BinaryExpression < UnaryExpression Operator UnaryExpression
+
+    CastExpression   < UnaryExpression Cast
+
+    UnaryExpression < PrimaryExpression
+                    / UnaryPrefix? CallExpression UnarySuffix?
+                    / UnaryPrefix? IdentifierChain UnarySuffix?
+                    / NumberLiteral UnarySuffix?
+
+    CallExpression < IdentifierChain LeftParen CallParameters? RightParen
+
+    CallParameters < PrimaryExpression (Comma PrimaryExpression)*
+
+    ConditionExpression < UnaryExpression CmpOperator UnaryExpression
+
+
+
+    PolishExpression < "@PN" LeftParen PolishPrimaryExpression* RightParen
+
+    PolishPrimaryExpression < Operator PolishOperand+
+
+    PolishOperand   < NumberLiteral
+                    / IdentifierChain
+
 ################################################################################
 # Cast
 
@@ -180,6 +212,29 @@ EmptyStatment < Semicolon
 
     Identifier  <~ !Keyword (Alpha) (AlphaNum)*
 
+    Operator < Mul / Div / Plus / Minus
+
+    CmpOperator < EqualEqual
+                / NotEqual
+                / Lesser
+                / Greater
+                / GreaterEqual
+                / LesserEqual
+
+    UnaryPrefix < Mul / PlusPlus / MinusMinus / Amp
+
+    UnarySuffix < Mul / PlusPlus / MinusMinus
+
+    EqualEqual  <~ Equal Equal
+    NotEqual    <~ Bang Equal
+    Lesser      <- '<'
+    Greater     <- '>'
+    GreaterEqual<~ Greater Equal
+    LesserEqual <~ Lesser Equal
+
+    PlusPlus    <~ Plus Plus
+    MinusMinus  <~ Minus Minus
+
     HexDigits   <- (HexAlpha|Num)
     AlphaNum    <- (Alpha|Num)
     Num         <- [0-9]
@@ -199,8 +254,11 @@ EmptyStatment < Semicolon
     LeftCurly   <- '{'
     RightCurly  <- '}'
     Minus       <- '-'
+    Plus        <- '+'
     Equal       <- '='
     At          <- '@'
+    Bang        <- '!'
+    Amp         <- '&'
 
     HexPrefix   <- "0x" / "0X"
 
@@ -231,6 +289,8 @@ EmptyStatment < Semicolon
 
     Unit    <- "unit"
     Prot    <- "protection"
+    Else    <- "else"
+    If      <- "if"
     Import  <- "import"
     Interface <- "interface"
     Virtual <- "virtual"
@@ -273,13 +333,60 @@ enum source1 = `
     protection(private)
     protection(public) struct Foo { sreg a,b,c; }
     virtual unit d;
-    @const @inline function bar(){}
-    s8 signed1 = 42, signed2 = 355;
+    @const @inline function bar()
+    {
+        a = 8;
+        a = unary;
+        a.b(8);
+        a.b(8, (c + d) * 8);
+        a = a + a;
+        ++a;
+        --a;
+        a = a++;
+        a = call()++;
+        a = *derefer;
+        a = b:ToType;
+        a = b:ToType + b:ToType;;
+        s8 a = 8;
+        b = @PN(+ 8 2 * 8 + 1 1 1 1);
+        if (a == 0) {call(a);}
+        else {call(1);}
+
+    }
+    s16 signed1 = 42, signed2 = 355;
 `;
+
+auto s =
+q{
+
+    switch (value)
+    {
+        case(0,8,9) return "flûte";
+        case(10..20) return "nay";
+        else return "yah";
+    }
+
+    compare (value, 0)
+    {
+        case(>=) return "flûte";
+        case(<=) return "nay";
+    }
+
+    compare (value, 0)
+    {
+        case(>) return "flûte";
+        case(<) return "nay";
+        case(==) return "yah";
+    }
+
+    if (a.b ?? )
+
+};
 
 unittest
 {
     const ParseTree tree = Yatol(source1);
-    pegged.tohtml.toHTML(tree, "/home/basile/ya-tree.html");
+    pegged.tohtml.toHTML!(Expand.ifNotMatch, "Literal", "Chain", "List", "Expression")(tree,
+        "/home/basile/ya-tree.html");
     assert(tree.successful);
 }

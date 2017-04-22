@@ -11,8 +11,12 @@ enum TokenType : ubyte
     lineComment,
     starComment,
     // Keywords
+    break_,
     class_,
+    continue_,
+    else_,
     function_,
+    if_,
     import_,
     interface_,
     protection,
@@ -32,24 +36,42 @@ enum TokenType : ubyte
     u64,
     u8,
     ureg,
+    while_,
     // symbols
+    amp,
+    bang,
     colon,
     comma,
     dot,
+    equal,
+    equalEqual,
+    greater,
+    greaterEqual,
     semiColon,
     leftCurly,
     leftParen,
     leftSquare,
+    lesser,
+    lesserEqual,
     rightCurly,
     rightParen,
     rightSquare,
+    at,
     // operators
     div,
     minus,
+    minusMinus,
     mul,
+    plus,
+    plusPlus,
 }
 
-static immutable string[TokenType.max+1] tokenStringTable =
+unittest
+{
+    static assert(tokenStringTable.length == TokenType.max + 1);
+}
+
+enum tokenStringTable =
 [
     "(invalid)",
     "(identifier)",
@@ -59,8 +81,12 @@ static immutable string[TokenType.max+1] tokenStringTable =
     "(lineComment)",
     "(starComment)",
     // Keywords
+    "break",
     "class",
+    "continue",
+    "else",
     "function",
+    "if",
     "import",
     "interface",
     "protection",
@@ -80,21 +106,34 @@ static immutable string[TokenType.max+1] tokenStringTable =
     "u64",
     "u8",
     "ureg",
+    "while",
     // symbols
+    "&",
+    "!",
     ":",
     ",",
     ".",
+    "=",
+    "==",
+    ">",
+    ">=",
     ";",
     "{",
     "(",
     "[",
+    "<",
+    "<=",
     "}",
     ")",
     "]",
+    "@",
     // operators
     "/",
     "-",
+    "--",
     "*",
+    "+",
+    "++",
 ];
 
 string tokenString(TokenType type)
@@ -103,9 +142,9 @@ string tokenString(TokenType type)
 }
 
 /// The value of the first keyword.
-static immutable firstKeyword = TokenType.class_;
+static immutable firstKeyword = TokenType.break_;
 /// The value of the last keyword.
-static immutable lastKeyword = TokenType.ureg;
+static immutable lastKeyword = TokenType.while_;
 
 /// The value of the first basic type.
 static immutable firstBasicType = TokenType.f32;
@@ -113,14 +152,14 @@ static immutable firstBasicType = TokenType.f32;
 static immutable lastBasicType = TokenType.ureg;
 
 /// The value of the first symbol.
-static immutable firstSymbol = TokenType.colon;
+static immutable firstSymbol = TokenType.amp;
 /// The value of the last symbol.
-static immutable lastSymbol = TokenType.rightSquare;
+static immutable lastSymbol = TokenType.at;
 
 /// The value of the first operator.
 static immutable firstOperator = TokenType.div;
 /// The value of the last operator.
-static immutable lastOperator = TokenType.mul;
+static immutable lastOperator = TokenType.plus;
 
 /**
  * Hashset that allows to distinguish efficiently the identifiers
@@ -424,5 +463,47 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokMinus() const {return type == TokenType.minus;}
+
+    /// Conveniance function used by the parser.
+    bool isTokPlus() const {return type == TokenType.plus;}
+
+    /// Conveniance function used by the parser.
+    bool isTokAt() const {return type == TokenType.at;}
+
+    /// Conveniance function used by the parser.
+    bool isTokEqualEqual() const {return type == TokenType.equalEqual;}
+
+    /// Conveniance function used by the parser.
+    bool isTokEqual() const {return type == TokenType.equal;}
+
+    /// Conveniance function used by the parser.
+    bool isTokGreater() const {return type == TokenType.greater;}
+
+    /// Conveniance function used by the parser.
+    bool isTokGreaterEqual() const {return type == TokenType.greaterEqual;}
+
+    /// Conveniance function used by the parser.
+    bool isTokLesser() const {return type == TokenType.lesser;}
+
+    /// Conveniance function used by the parser.
+    bool isTokLesserEqual() const {return type == TokenType.lesserEqual;}
+
+    /// Conveniance function used by the parser.
+    bool isTokBang() const {return type == TokenType.bang;}
+
+    /// Conveniance function used by the parser.
+    bool isTokIf() const {return type == TokenType.if_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokWhile() const {return type == TokenType.while_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokAmp() const {return type == TokenType.amp;}
+
+    /// Conveniance function used by the parser.
+    bool isTokPlusPlus() const {return type == TokenType.plusPlus;}
+
+    /// Conveniance function used by the parser.
+    bool isTokMinusMinus() const {return type == TokenType.minusMinus;}
 }
 

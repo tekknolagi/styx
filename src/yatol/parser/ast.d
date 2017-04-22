@@ -309,8 +309,6 @@ class InterfaceDeclarationAstNode: AstNode
     override bool isTerminal() {return false;}
 }
 
-
-
 /// Scope
 class ScopeDeclarationAstNode: AstNode
 {
