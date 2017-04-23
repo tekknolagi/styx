@@ -120,30 +120,28 @@ Yatol:
 
     PrimaryExpression   < AssignExpression
                         / BinaryExpression
+                        / ParenExpression
                         / CastExpression
                         / UnaryExpression
-                        / ParenExpression
                         / ConditionExpression
                         / PolishExpression
 
     ParenExpression < LeftParen PrimaryExpression RightParen
 
-    AssignExpression < UnaryExpression Equal UnaryExpression
+    AssignExpression < PrimaryExpression Equal PrimaryExpression
 
-    BinaryExpression < UnaryExpression Operator UnaryExpression
+    BinaryExpression < PrimaryExpression Operator PrimaryExpression
 
-    CastExpression   < UnaryExpression Cast
+    CastExpression   < PrimaryExpression Cast
 
-    UnaryExpression < PrimaryExpression
-                    / UnaryPrefix? CallExpression UnarySuffix?
-                    / UnaryPrefix? IdentifierChain UnarySuffix?
+    UnaryExpression < UnaryPrefix? IdentifierChain CallExpression? UnarySuffix?
                     / NumberLiteral UnarySuffix?
 
-    CallExpression < IdentifierChain LeftParen CallParameters? RightParen
+    CallExpression < LeftParen CallParameters? RightParen
 
     CallParameters < PrimaryExpression (Comma PrimaryExpression)*
 
-    ConditionExpression < UnaryExpression CmpOperator UnaryExpression
+    ConditionExpression < PrimaryExpression CmpOperator PrimaryExpression
 
 
 
@@ -223,8 +221,9 @@ Yatol:
 
     UnaryPrefix < Mul / PlusPlus / MinusMinus / Amp
 
-    UnarySuffix < Mul / PlusPlus / MinusMinus
+    UnarySuffix < PlusPlus / MinusMinus
 
+    Ellipsis    <~ Dot Dot
     EqualEqual  <~ Equal Equal
     NotEqual    <~ Bang Equal
     Lesser      <- '<'
@@ -337,13 +336,10 @@ enum source1 = `
     {
         a = 8;
         a = unary;
-        a.b(8);
-        a.b(8, (c + d) * 8);
         a = a + a;
         ++a;
         --a;
         a = a++;
-        a = call()++;
         a = *derefer;
         a = b:ToType;
         a = b:ToType + b:ToType;;
@@ -351,7 +347,10 @@ enum source1 = `
         b = @PN(+ 8 2 * 8 + 1 1 1 1);
         if (a == 0) {call(a);}
         else {call(1);}
-
+        a.b(8);
+        a.b(8, (c + d) * 8);
+        a = call()++;
+        b = ((1 + a) / (1 - a)) + (a * b);
     }
     s16 signed1 = 42, signed2 = 355;
 `;
@@ -365,22 +364,6 @@ q{
         case(10..20) return "nay";
         else return "yah";
     }
-
-    compare (value, 0)
-    {
-        case(>=) return "flûte";
-        case(<=) return "nay";
-    }
-
-    compare (value, 0)
-    {
-        case(>) return "flûte";
-        case(<) return "nay";
-        case(==) return "yah";
-    }
-
-    if (a.b ?? )
-
 };
 
 unittest
