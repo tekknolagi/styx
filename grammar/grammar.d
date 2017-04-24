@@ -351,6 +351,7 @@ enum source1 = `
         a.b(8, (c + d) * 8);
         a = call()++;
         b = ((1 + a) / (1 - a)) + (a * b);
+        b = ((1:s32 + a * 2 * c++) / (1 - a:ToType)) + (a * b);
     }
     s16 signed1 = 42, signed2 = 355;
 `;

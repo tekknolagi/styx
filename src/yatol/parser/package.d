@@ -737,6 +737,12 @@ private:
                 dos.declaration = d;
                 declsOrStatements ~= dos;
             }
+            else if (StatementAstNode s = parseStatement())
+            {
+                DeclarationOrStatementAstNode dos = new DeclarationOrStatementAstNode;
+                dos.statement  = s;
+                declsOrStatements ~= dos;
+            }
             else
             {
                 with (TokenType) switch (current.type)
@@ -808,6 +814,61 @@ private:
             }
         }
         return true;
+    }
+
+    /**
+     * Parses an expression statement
+     *
+     * Returns: a $(D ExpressionStatementAstNode) on success, $(D null) otherwise.
+     */
+    ExpressionStatementAstNode parseExpressionStatement()
+    {
+        advance();
+        with(TokenType) switch(current.type)
+        {
+            case equal: // a =
+                break;
+            case plusPlus, minusMinus: // a unarySuffix
+                break;
+            case leftParen: // a(  : unary call expr
+                break;
+            default:
+        }
+        return null;
+    }
+
+    /**
+     * Parses a statement.
+     *
+     * Returns: a $(D StatementAstNode) on success, $(D null) otherwise.
+     */
+    StatementAstNode parseStatement()
+    {
+        with(TokenType) switch(current.type)
+        {
+        case semiColon:
+        {
+            StatementAstNode result = new StatementAstNode;
+            result.emptyStatement = new EmptyStatementAstNode;
+            return result;
+        }
+        case leftParen:
+        {
+            return null;
+        }
+        case identifier:
+        {
+            if (ExpressionStatementAstNode es = parseExpressionStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.expression = es;
+                return result;
+            }
+            else return null;
+        }
+        default:
+            return null;
+        }
     }
 
     /**
@@ -909,6 +970,19 @@ private:
                 unexpected();
                 return null;
             }
+        }
+        case identifier:
+        {
+            if (lookup(1).isTokIdentifier)
+            {
+                return null;
+            }
+            else
+            {
+                // TODO-cparser: parseVariableDeclaration
+                // VariableDeclaration
+            }
+            return null;
         }
         default:
             return null;

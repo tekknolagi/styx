@@ -379,6 +379,28 @@ class DeclarationAstNode: AstNode
     override bool isTerminal() {return false;}
 }
 
+class UnaryExpressionAstNode: AstNode
+{
+    /// the expression prefix
+    Token* prefix;
+    /// the expression suffix
+    Token* suffix;
+    /// Assigned when no identifierChain.
+    NumberLiteralAstNode numberLitteral;
+    /// Assigned when no numberLitteral.
+    Token*[] identifierChain;
+}
+
+class ExpressionStatementAstNode: AstNode
+{
+
+}
+
+class EmptyStatementAstNode: AstNode
+{
+
+}
+
 /// Statement
 class StatementAstNode: AstNode
 {
@@ -386,6 +408,10 @@ class StatementAstNode: AstNode
     override bool isGrammatic() {return false;}
     /// Returns: $(D true) if the node has no children.
     override bool isTerminal() {return false;}
+    /// Assigned if this statement is an EmptyStatementAstNode.
+    EmptyStatementAstNode emptyStatement;
+    /// Assigned if this statement is an Expression.
+    ExpressionStatementAstNode expression;
 }
 
 /// DeclarationOrStatement

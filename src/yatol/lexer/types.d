@@ -57,6 +57,7 @@ enum TokenType : ubyte
     rightParen,
     rightSquare,
     at,
+    ellipsis,
     // operators
     div,
     minus,
@@ -127,6 +128,7 @@ enum tokenStringTable =
     ")",
     "]",
     "@",
+    "..",
     // operators
     "/",
     "-",
@@ -154,7 +156,7 @@ static immutable lastBasicType = TokenType.ureg;
 /// The value of the first symbol.
 static immutable firstSymbol = TokenType.amp;
 /// The value of the last symbol.
-static immutable lastSymbol = TokenType.at;
+static immutable lastSymbol = TokenType.ellipsis;
 
 /// The value of the first operator.
 static immutable firstOperator = TokenType.div;
@@ -505,5 +507,8 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokMinusMinus() const {return type == TokenType.minusMinus;}
+
+    /// Conveniance function used by the parser.
+    bool isTokEllipsis() const {return type == TokenType.ellipsis;}
 }
 

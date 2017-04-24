@@ -42,11 +42,12 @@ private:
         else exit(1);
     }
 
-    // Must be called when starting to lex something.
-    // Allows to easily bookmark store the start position.
+    // Puts a bookmark when starting to lex something.
     pragma(inline, true)
     void anticipateToken(TokenType type)
     {
+        version(assert) if (type == TokenType.invalid)
+            error("INTERNAL: attempt to anticipate an invalid token");
         _tokStart = _front;
         _tokStartLine = _frontLine;
         _tokStartColumn = _frontColumn;
@@ -432,8 +433,17 @@ public:
                 continue;
             case '.':
                 anticipateToken(TokenType.dot);
-                advance();
-                validateToken();
+                if (*lookup(1) == '.')
+                {
+                    advance();
+                    advance();
+                    validateToken(TokenType.ellipsis);
+                }
+                else
+                {
+                    advance();
+                    validateToken();
+                }
                 continue;
             case ';':
                 anticipateToken(TokenType.semiColon);
@@ -566,7 +576,7 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 7);
     lx.lex();
 
-    assert(lx.tokens.length == 23);
+    assert(lx.tokens.length == 22);
     assert(lx.tokens[0].text == "unit");
     assert(lx.tokens[0].isTokKeyword);
     assert(lx.tokens[0].isTokUnit);
@@ -589,9 +599,8 @@ unittest
     assert(lx.tokens[17].text == ";");
     assert(lx.tokens[18].text == ";");
     assert(lx.tokens[19].text == ";");
-    assert(lx.tokens[20].text == ".");
+    assert(lx.tokens[20].text == "..");
     assert(lx.tokens[21].text == ".");
-    assert(lx.tokens[22].text == ".");
 }
 
 /**
