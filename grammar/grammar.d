@@ -356,6 +356,7 @@ enum source1 = `
         b = b(b(b(8)));
         ++a = b + c;
         a = ++++b;
+        a = b = c + d;
     }
     s16 signed1 = 42, signed2 = 355;
 `;

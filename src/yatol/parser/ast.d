@@ -14,55 +14,31 @@ enum Semantic;
  */
 class AstVisitor
 {
-    ///
-    void visit(AstNode node){node.accept(this);}
-    ///
-    void visit(ClassDeclarationAstNode node){node.accept(this);}
-    ///
-    void visit(DeclarationAstNode node){node.accept(this);}
-    ///
-    void visit(StatementAstNode node){node.accept(this);}
-    ///
-    void visit(DeclarationOrStatementAstNode node){node.accept(this);}
-    ///
-    void visit(EmptyStatementAstNode node){node.accept(this);}
-    ///
-    void visit(ExpressionAstNode node){node.accept(this);}
-    ///
     void visit(AssignExpressionAstNode node){node.accept(this);}
-    ///
+    void visit(AstNode node){node.accept(this);}
     void visit(BinaryExpressionAstNode node){node.accept(this);}
-    ///
-    void visit(ParenExpressionAstNode node){node.accept(this);}
-    ///
-    void visit(UnaryExpressionAstNode node){node.accept(this);}
-    ///
+    void visit(CallParametersAstNode node){node.accept(this);}
+    void visit(ClassDeclarationAstNode node){node.accept(this);}
+    void visit(DeclarationAstNode node){node.accept(this);}
+    void visit(DeclarationOrStatementAstNode node){node.accept(this);}
+    void visit(EmptyStatementAstNode node){node.accept(this);}
+    void visit(ExpressionAstNode node){node.accept(this);}
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
-    ///
     void visit(FunctionHeaderAstNode node){node.accept(this);}
-    ///
     void visit(FunctionTypeAstNode node){node.accept(this);}
-    ///
     void visit(ImportDeclarationAstNode node){node.accept(this);}
-    ///
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
-    ///
     void visit(NumberLiteralAstNode node){node.accept(this);}
-    ///
+    void visit(ParenExpressionAstNode node){node.accept(this);}
     void visit(ProtectionDeclarationAstNode node){node.accept(this);}
-    ///
     void visit(ScopeDeclarationAstNode node){node.accept(this);}
-    ///
+    void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
-    ///
     void visit(TypeAstNode node){node.accept(this);}
-    ///
     void visit(TypedVariableListAstNode node){node.accept(this);}
-    ///
     void visit(TypeModifierAstNode node){node.accept(this);}
-    ///
+    void visit(UnaryExpressionAstNode node){node.accept(this);}
     void visit(UnitAstNode node){node.accept(this);}
-    ///
     void visit(UnitContainerAstNode node){node.accept(this);}
 }
 
@@ -73,29 +49,30 @@ class AstVisitor
  */
 class AstVisitorNone: AstVisitor
 {
+    override void visit(AssignExpressionAstNode node){}
     override void visit(AstNode node){}
+    override void visit(BinaryExpressionAstNode node){}
+    override void visit(CallParametersAstNode node){}
     override void visit(ClassDeclarationAstNode node){}
     override void visit(DeclarationAstNode node){}
-    override void visit(StatementAstNode node){}
     override void visit(DeclarationOrStatementAstNode node){}
     override void visit(EmptyStatementAstNode node){}
     override void visit(ExpressionAstNode node){}
-    override void visit(AssignExpressionAstNode node){}
-    override void visit(BinaryExpressionAstNode node){}
-    override void visit(ParenExpressionAstNode node){}
-    override void visit(UnaryExpressionAstNode node){}
     override void visit(FunctionDeclarationAstNode node){}
     override void visit(FunctionHeaderAstNode node){}
     override void visit(FunctionTypeAstNode node){}
     override void visit(ImportDeclarationAstNode node){}
     override void visit(InterfaceDeclarationAstNode node){}
     override void visit(NumberLiteralAstNode node){}
+    override void visit(ParenExpressionAstNode node){}
     override void visit(ProtectionDeclarationAstNode node){}
     override void visit(ScopeDeclarationAstNode node){}
+    override void visit(StatementAstNode node){}
     override void visit(StructDeclarationAstNode node){}
     override void visit(TypeAstNode node){}
     override void visit(TypedVariableListAstNode node){}
     override void visit(TypeModifierAstNode node){}
+    override void visit(UnaryExpressionAstNode node){}
     override void visit(UnitAstNode node){node.accept(this);}
     override void visit(UnitContainerAstNode node){node.accept(this);}
 }
@@ -116,7 +93,6 @@ class AstNode
     @Semantic bool isPrivate;
     /// Indicates $(D true) if this node represents something protected.
     @Semantic bool isProtected;
-
 }
 
 unittest
@@ -399,6 +375,21 @@ class DeclarationAstNode: AstNode
     override bool isTerminal() {return false;}
 }
 
+class CallParametersAstNode: AstNode
+{
+    /// The parameters
+    ExpressionAstNode[] parameters;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        parameters.each!(a => visitor.visit(a));
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
 /// UnaryExpression
 class UnaryExpressionAstNode: AstNode
 {
@@ -412,6 +403,8 @@ class UnaryExpressionAstNode: AstNode
     NumberLiteralAstNode numberLitteral;
     /// Assigned when no numberLitteral.
     Token*[] identifierChain;
+    /// Assigned if this unary is a function call
+    CallParametersAstNode callParameters;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -419,6 +412,8 @@ class UnaryExpressionAstNode: AstNode
             visitor.visit(unary);
         if (numberLitteral)
             visitor.visit(numberLitteral);
+        if (callParameters)
+            visitor.visit(callParameters);
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}

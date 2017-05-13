@@ -1,7 +1,7 @@
 module yatol.parser;
 
-//TODO-cparser: check when advance() reaches the EOF.
-//TODO-cparser: parseFunctionHeader, handle static.
+//TODO-cparser todo: check when advance() reaches the EOF.
+//TODO-cparser todo: parseFunctionHeader, handle static.
 
 import
     core.stdc.stdlib;
@@ -844,6 +844,42 @@ private:
     }
 
     /**
+     * Parses call parameters.
+     *
+     * Returns: a $(D CallParametersAstNode) on success, $(D null) otherwise.
+     */
+    CallParametersAstNode parseCallParameters()
+    {
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        advance();
+        CallParametersAstNode result = new CallParametersAstNode;
+        while (true)
+        {
+            if (ExpressionAstNode ex = parseExpression)
+            {
+                result.parameters ~= ex;
+                with(TokenType) switch (current.type)
+                {
+                case rightParen:
+                    advance();
+                    return result;
+                case comma:
+                    advance();
+                    continue;
+                default:
+                    unexpected();
+                    return null;
+                }
+            }
+            else return null;
+        }
+    }
+
+    /**
      * Parses an unary expression.
      *
      * Returns: a $(D UnaryExpressionAstNode) on success, $(D null) otherwise.
@@ -870,7 +906,14 @@ private:
             if (Token*[] idc = parseIdentifierChain())
                 result.identifierChain = idc;
             else return null;
-            // + function call...
+            if (current.isTokLeftParen)
+            {
+                if (CallParametersAstNode cp = parseCallParameters)
+                {
+                    result.callParameters = cp;
+                }
+                else return null;
+            }
         }
         // + else if current is literal...
         if (current.isTokPlusPlus || current.isTokMinusMinus)
@@ -891,7 +934,7 @@ private:
      *
      * Returns: a $(D ExpressionAstNode) on success, $(D null) otherwise.
      */
-    ExpressionAstNode parseExpression()
+    ExpressionAstNode parseExpression(string callSite = __FUNCTION__)
     {
         ExpressionAstNode result = new ExpressionAstNode;
 
@@ -900,8 +943,51 @@ private:
         case plusPlus, minusMinus, identifier:
             if (UnaryExpressionAstNode u = parseUnaryExpression)
             {
-                result.unaryExpression = u;
-                return result;
+                switch (current.type)
+                {
+                case equal:
+                    AssignExpressionAstNode ae = new AssignExpressionAstNode;
+                    result.assignExpression = ae;
+                    ae.left = new ExpressionAstNode;
+                    ae.left.unaryExpression = u;
+                    advance();
+                    if (ExpressionAstNode r = parseExpression())
+                    {
+                        ae.right = r;
+                        return result;
+                    }
+                    else
+                    {
+                        unexpected();
+                        advance(); // FIXME-cparser bug: otherwise does not stop parsing on exit
+                        return null;
+                    }
+                case firstOperator: .. case lastOperator:
+                    BinaryExpressionAstNode be = new BinaryExpressionAstNode;
+                    result.binaryExpression = be;
+                    be.operator = current();
+                    be.left = new ExpressionAstNode;
+                    be.left.unaryExpression = u;
+                    advance();
+                    if (ExpressionAstNode r = parseExpression())
+                    {
+                        be.right = r;
+                        return result;
+                    }
+                    else
+                    {
+                        unexpected();
+                        advance(); // FIXME-cparser bug: otherwise does not stop parsing on exit
+                        return null;
+                    }
+                case rightParen, semiColon, comma:
+                    result.unaryExpression = u;
+                    return result;
+                default:
+                    writeln(callSite);
+                    unexpected();
+                    return null;
+                }
             }
             break;
         case leftParen:
@@ -923,11 +1009,10 @@ private:
      */
     ExpressionStatementAstNode parseExpressionStatement()
     {
-        if (ExpressionAstNode ex = parseExpression)
+        if (ExpressionAstNode ex = parseExpression())
         {
             ExpressionStatementAstNode result = new ExpressionStatementAstNode;
             result.expression = ex;
-            writeln(current.text);
             if (!current.isTokSemicolon)
             {
                 expected(TokenType.semiColon);
@@ -1077,7 +1162,7 @@ private:
             }
             else
             {
-                // TODO-cparser: parseVariableDeclaration
+                // TODO-cparser todo: parseVariableDeclaration
                 // VariableDeclaration
             }
             return null;
@@ -1252,7 +1337,11 @@ unittest
     {
         ++--++a.a.a;
         (a++);
+        call(a++,--b);
+        a = b(c++);
+        a = b + a(p0++);
     }
+    struct Bug {}
 `;
     Lexer lx;
     lx.setSourceFromText(source, __FILE__, line + 1, 1);
@@ -1260,7 +1349,10 @@ unittest
 
     Parser pr = Parser(&lx);
     DebugVisitor dv = new DebugVisitor();
-    dv.visit(pr.parse);
-    dv.printText();
+    if (UnitContainerAstNode uc = pr.parse())
+    {
+        dv.visit(uc);
+        dv.printText();
+    }
 }
 

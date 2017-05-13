@@ -234,5 +234,11 @@ public:
         assert(node);
         visitImpl(node);
     }
+
+    override void visit(CallParametersAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
 }
 
