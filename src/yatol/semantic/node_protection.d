@@ -67,7 +67,7 @@ public:
         assert(lexer);
         _lx = lexer;
         pushProtection(Protection.public_);
-        super(node);
+        visit(node);
     }
 
     /// Returns: true if the protection have been set correctly.

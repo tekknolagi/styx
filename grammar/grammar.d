@@ -111,45 +111,46 @@ Yatol:
 
     EmptyStatment < Semicolon
 
-    ExpressionStatement < PrimaryExpression Semicolon
+    ExpressionStatement < Expression Semicolon
 
     IfElseStatement < If LeftParen ConditionExpression RightParen DeclarationOrStatementsBlock (Else DeclarationOrStatementsBlock)?
 
 ################################################################################
 # Expressions
 
-    PrimaryExpression   < AssignExpression
-                        / BinaryExpression
-                        / ParenExpression
-                        / CastExpression
-                        / UnaryExpression
-                        / ConditionExpression
-                        / PolishExpression
+    Expression  < AssignExpression
+                / BinaryExpression
+                / ParenExpression
+                / CastExpression
+                / UnaryExpression
+                / ConditionExpression
+                #/ PolishExpression
 
-    ParenExpression < LeftParen PrimaryExpression RightParen
+    ParenExpression < LeftParen Expression RightParen
 
-    AssignExpression < PrimaryExpression Equal PrimaryExpression
+    AssignExpression < Expression Equal Expression
 
-    BinaryExpression < PrimaryExpression Operator PrimaryExpression
+    BinaryExpression < Expression Operator Expression
 
-    CastExpression   < PrimaryExpression Cast
+    CastExpression   < Expression Cast
 
     UnaryExpression < UnaryPrefix? IdentifierChain CallExpression? UnarySuffix?
                     / NumberLiteral UnarySuffix?
+                    / UnaryPrefix? UnaryExpression
 
     CallExpression < LeftParen CallParameters? RightParen
 
-    CallParameters < PrimaryExpression (Comma PrimaryExpression)*
+    CallParameters < Expression (Comma Expression)*
 
-    ConditionExpression < PrimaryExpression CmpOperator PrimaryExpression
+    ConditionExpression < Expression CmpOperator Expression
 
 
 
-    PolishExpression < "@PN" LeftParen PolishPrimaryExpression* RightParen
+    # PolishExpression < "@PN" LeftParen PolishExpression* RightParen
 
-    PolishPrimaryExpression < Operator PolishOperand+
+    # PolishExpression < Operator PolishOperand+
 
-    PolishOperand   < NumberLiteral
+    # PolishOperand   < NumberLiteral
                     / IdentifierChain
 
 ################################################################################
@@ -344,7 +345,7 @@ enum source1 = `
         a = b:ToType;
         a = b:ToType + b:ToType;;
         s8 a = 8;
-        b = @PN(+ 8 2 * 8 + 1 1 1 1);
+
         if (a == 0) {call(a);}
         else {call(1);}
         a.b(8);
@@ -352,6 +353,9 @@ enum source1 = `
         a = call()++;
         b = ((1 + a) / (1 - a)) + (a * b);
         b = ((1:s32 + a * 2 * c++) / (1 - a:ToType)) + (a * b);
+        b = b(b(b(8)));
+        ++a = b + c;
+        a = ++++b;
     }
     s16 signed1 = 42, signed2 = 355;
 `;

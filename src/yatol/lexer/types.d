@@ -72,7 +72,11 @@ unittest
     static assert(tokenStringTable.length == TokenType.max + 1);
 }
 
-enum tokenStringTable =
+/**
+ * Maps a $(D TokenType) to a string, between parens when the
+ * token string is variable.
+ */
+static immutable string[TokenType.max + 1] tokenStringTable =
 [
     "(invalid)",
     "(identifier)",
@@ -138,6 +142,17 @@ enum tokenStringTable =
     "++",
 ];
 
+unittest
+{
+    import std.traits : EnumMembers;
+    foreach(m; EnumMembers!TokenType)
+        static assert(m.tokenString != "");
+}
+
+/**
+ * Maps a $(D TokenType) to a string, between parens when the
+ * token string is variable.
+ */
 string tokenString(TokenType type)
 {
     return tokenStringTable[type];
@@ -297,11 +312,13 @@ private:
 
 public:
 
+    ///
     this()(auto ref Tokens tokens)
     {
         _tokens = tokens;
     }
 
+    ///
     void popFront()
     {
         import std.range: popFront, front, empty;
@@ -315,12 +332,14 @@ public:
         }
     }
 
+    ///
     ref const(Token) front()
     {
         import std.range: front;
         return front(_tokens);
     }
 
+    ///
     bool empty() const
     {
         import std.range: empty;

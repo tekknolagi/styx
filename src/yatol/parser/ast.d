@@ -15,33 +15,54 @@ enum Semantic;
 class AstVisitor
 {
     ///
-    this() {}
-
-    /// Creates an instance and start to visit from node.
-    this(UnitContainerAstNode node)
-    {
-        if (node)
-            visit(node);
-    }
-
     void visit(AstNode node){node.accept(this);}
+    ///
     void visit(ClassDeclarationAstNode node){node.accept(this);}
+    ///
     void visit(DeclarationAstNode node){node.accept(this);}
+    ///
     void visit(StatementAstNode node){node.accept(this);}
+    ///
     void visit(DeclarationOrStatementAstNode node){node.accept(this);}
+    ///
+    void visit(EmptyStatementAstNode node){node.accept(this);}
+    ///
+    void visit(ExpressionAstNode node){node.accept(this);}
+    ///
+    void visit(AssignExpressionAstNode node){node.accept(this);}
+    ///
+    void visit(BinaryExpressionAstNode node){node.accept(this);}
+    ///
+    void visit(ParenExpressionAstNode node){node.accept(this);}
+    ///
+    void visit(UnaryExpressionAstNode node){node.accept(this);}
+    ///
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
+    ///
     void visit(FunctionHeaderAstNode node){node.accept(this);}
+    ///
     void visit(FunctionTypeAstNode node){node.accept(this);}
+    ///
     void visit(ImportDeclarationAstNode node){node.accept(this);}
+    ///
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
+    ///
     void visit(NumberLiteralAstNode node){node.accept(this);}
+    ///
     void visit(ProtectionDeclarationAstNode node){node.accept(this);}
+    ///
     void visit(ScopeDeclarationAstNode node){node.accept(this);}
+    ///
     void visit(StructDeclarationAstNode node){node.accept(this);}
+    ///
     void visit(TypeAstNode node){node.accept(this);}
+    ///
     void visit(TypedVariableListAstNode node){node.accept(this);}
+    ///
     void visit(TypeModifierAstNode node){node.accept(this);}
+    ///
     void visit(UnitAstNode node){node.accept(this);}
+    ///
     void visit(UnitContainerAstNode node){node.accept(this);}
 }
 
@@ -52,18 +73,17 @@ class AstVisitor
  */
 class AstVisitorNone: AstVisitor
 {
-    /// Creates an instance and start to visit from node.
-    this(UnitContainerAstNode node)
-    {
-        if (node)
-            visit(node);
-    }
-
     override void visit(AstNode node){}
     override void visit(ClassDeclarationAstNode node){}
     override void visit(DeclarationAstNode node){}
     override void visit(StatementAstNode node){}
     override void visit(DeclarationOrStatementAstNode node){}
+    override void visit(EmptyStatementAstNode node){}
+    override void visit(ExpressionAstNode node){}
+    override void visit(AssignExpressionAstNode node){}
+    override void visit(BinaryExpressionAstNode node){}
+    override void visit(ParenExpressionAstNode node){}
+    override void visit(UnaryExpressionAstNode node){}
     override void visit(FunctionDeclarationAstNode node){}
     override void visit(FunctionHeaderAstNode node){}
     override void visit(FunctionTypeAstNode node){}
@@ -379,26 +399,147 @@ class DeclarationAstNode: AstNode
     override bool isTerminal() {return false;}
 }
 
+/// UnaryExpression
 class UnaryExpressionAstNode: AstNode
 {
-    /// the expression prefix
+    /// the expression prefix.
     Token* prefix;
-    /// the expression suffix
+    /// the expression suffix.
     Token* suffix;
+    /// the nested unary expression.
+    UnaryExpressionAstNode unary;
     /// Assigned when no identifierChain.
     NumberLiteralAstNode numberLitteral;
     /// Assigned when no numberLitteral.
     Token*[] identifierChain;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (unary)
+            visitor.visit(unary);
+        if (numberLitteral)
+            visitor.visit(numberLitteral);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
 }
 
+/// ExpressionStatement
 class ExpressionStatementAstNode: AstNode
 {
-
+    /// The expression.
+    ExpressionAstNode expression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (expression)
+            visitor.visit(expression);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
 }
 
+/// Expression
+class ExpressionAstNode: AstNode
+{
+    /// Assigned if this expression is an AssignExpression.
+    AssignExpressionAstNode assignExpression;
+    /// Assigned if this expression is a BinaryExpression.
+    BinaryExpressionAstNode binaryExpression;
+    /// Assigned if this expression is a ParenExpression.
+    ParenExpressionAstNode parenExpression;
+    /// Assigned if this expression is an UnaryExpression
+    UnaryExpressionAstNode unaryExpression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (assignExpression)
+            visitor.visit(assignExpression);
+        else if (binaryExpression)
+            visitor.visit(binaryExpression);
+        else if (parenExpression)
+            visitor.visit(parenExpression);
+        else if (unaryExpression)
+            visitor.visit(unaryExpression);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// AssignExpression
+class AssignExpressionAstNode: AstNode
+{
+    /// The equal LHS.
+    ExpressionAstNode left;
+    /// The equal RHS.
+    ExpressionAstNode right;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (left)
+            visitor.visit(left);
+        if (right)
+            visitor.visit(right);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// BinaryExpression
+class BinaryExpressionAstNode: AstNode
+{
+    /// The operator.
+    Token* operator;
+    /// The operator LHS.
+    ExpressionAstNode left;
+    /// The operator RHS.
+    ExpressionAstNode right;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (left)
+            visitor.visit(left);
+        if (right)
+            visitor.visit(right);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// ParenExpression
+class ParenExpressionAstNode: AstNode
+{
+    /// The surrounded expression
+    ExpressionAstNode expression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (expression)
+            visitor.visit(expression);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// EmptyStatement
 class EmptyStatementAstNode: AstNode
 {
-
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return true;}
 }
 
 /// Statement
@@ -412,6 +553,14 @@ class StatementAstNode: AstNode
     EmptyStatementAstNode emptyStatement;
     /// Assigned if this statement is an Expression.
     ExpressionStatementAstNode expression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (emptyStatement)
+            visitor.visit(emptyStatement);
+        else if (expression)
+            visitor.visit(expression);
+    }
 }
 
 /// DeclarationOrStatement

@@ -546,6 +546,7 @@ public:
     /// Returns: The tokens produced after lexing.
     Tokens tokens() {return _tokens;}
 
+    /// Returns: The name of the life that's been lexed.
     char[] filename() {return _filename;}
 
     version(all)

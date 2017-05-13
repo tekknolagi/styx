@@ -98,14 +98,6 @@ private:
 
 public:
 
-    /// Creates an instance and start to visit from node.
-    this(UnitContainerAstNode node)
-    {
-
-        assert(node);
-        visitImpl(node);
-    }
-
     void printText()
     {
         writeln(_text);
@@ -202,6 +194,42 @@ public:
     }
 
     override void visit(FunctionTypeAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(EmptyStatementAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(ExpressionAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(AssignExpressionAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(BinaryExpressionAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(ParenExpressionAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
+
+    override void visit(UnaryExpressionAstNode node)
     {
         assert(node);
         visitImpl(node);

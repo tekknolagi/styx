@@ -816,6 +816,106 @@ private:
         return true;
     }
 
+
+    /**
+     * Parses an paren expression
+     *
+     * Returns: a $(D ParenExpressionAstNode) on success, $(D null) otherwise.
+     */
+    ParenExpressionAstNode parseParenExpression()
+    {
+        advance();
+        if (ExpressionAstNode ex = parseExpression())
+        {
+            ParenExpressionAstNode result = new ParenExpressionAstNode;
+            result.expression = ex;
+            if (!current.isTokRightParen)
+            {
+                expected(TokenType.rightParen);
+                return null;
+            }
+            else
+            {
+                advance();
+                return result;
+            }
+        }
+        else return null;
+    }
+
+    /**
+     * Parses an unary expression.
+     *
+     * Returns: a $(D UnaryExpressionAstNode) on success, $(D null) otherwise.
+     */
+    UnaryExpressionAstNode parseUnaryExpression()
+    {
+        UnaryExpressionAstNode result = new UnaryExpressionAstNode;
+        if (current.isTokPlusPlus || current.isTokMinusMinus)
+        {
+            result.prefix = current();
+            advance();
+            if (current.isTokPlusPlus || current.isTokMinusMinus)
+            {
+                if (UnaryExpressionAstNode u = parseUnaryExpression())
+                {
+                    result.unary = u;
+                    return result;
+                }
+                else return null;
+            }
+        }
+        if (current.isTokIdentifier)
+        {
+            if (Token*[] idc = parseIdentifierChain())
+                result.identifierChain = idc;
+            else return null;
+            // + function call...
+        }
+        // + else if current is literal...
+        if (current.isTokPlusPlus || current.isTokMinusMinus)
+        {
+             result.suffix = current();
+             advance();
+             if (current.isTokPlusPlus || current.isTokMinusMinus)
+             {
+                unexpected();
+                return null;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Parses an expression.
+     *
+     * Returns: a $(D ExpressionAstNode) on success, $(D null) otherwise.
+     */
+    ExpressionAstNode parseExpression()
+    {
+        ExpressionAstNode result = new ExpressionAstNode;
+
+        with(TokenType) switch(current.type)
+        {
+        case plusPlus, minusMinus, identifier:
+            if (UnaryExpressionAstNode u = parseUnaryExpression)
+            {
+                result.unaryExpression = u;
+                return result;
+            }
+            break;
+        case leftParen:
+            if (ParenExpressionAstNode p = parseParenExpression)
+            {
+                result.parenExpression = p;
+                return result;
+            }
+            break;
+        default:
+        }
+        return null;
+    }
+
     /**
      * Parses an expression statement
      *
@@ -823,18 +923,19 @@ private:
      */
     ExpressionStatementAstNode parseExpressionStatement()
     {
-        advance();
-        with(TokenType) switch(current.type)
+        if (ExpressionAstNode ex = parseExpression)
         {
-            case equal: // a =
-                break;
-            case plusPlus, minusMinus: // a unarySuffix
-                break;
-            case leftParen: // a(  : unary call expr
-                break;
-            default:
+            ExpressionStatementAstNode result = new ExpressionStatementAstNode;
+            result.expression = ex;
+            writeln(current.text);
+            if (!current.isTokSemicolon)
+            {
+                expected(TokenType.semiColon);
+                return null;
+            }
+            else return result;
         }
-        return null;
+        else return null;
     }
 
     /**
@@ -852,11 +953,10 @@ private:
             result.emptyStatement = new EmptyStatementAstNode;
             return result;
         }
-        case leftParen:
-        {
-            return null;
-        }
-        case identifier:
+        /*
+        other cases are for statements starting witha keyword
+        */
+        default:
         {
             if (ExpressionStatementAstNode es = parseExpressionStatement())
             {
@@ -866,8 +966,6 @@ private:
             }
             else return null;
         }
-        default:
-            return null;
         }
     }
 
@@ -1010,7 +1108,7 @@ public:
     }
 
     /**
-     * Main parser function. The function trie to parse from the main unit to
+     * Main parser function. The function tries to parse from the main unit to
      * the last virtual unit (if any).
      *
      * Returns: An $(D UnitContainerAstNode) on success, $(D null) otherwise.
@@ -1070,7 +1168,7 @@ public:
         import std.string: endsWith;
         static assert(T.stringof.endsWith("AstNode"), "expected an AstNode");
         enum fun = T.stringof[0..T.stringof.length - "AstNode".length];
-        mixin( "return parse" ~ fun ~ "(a[0..$]);");
+        mixin("return parse" ~ fun ~ "(a[0..$]);");
     }
 }
 
@@ -1141,7 +1239,7 @@ unittest
         function of2(): u32
         {
             import c.v.b;
-            function local(): c.v.b.FooBar {}
+            function local(): c.v.b.FooBar {;;}
         }
     }
     interface Pig
@@ -1150,14 +1248,19 @@ unittest
         function pig2(): s64;
     }
     import (10101) a.b, c.d.r;
+    function exp()
+    {
+        ++--++a.a.a;
+        (a++);
+    }
 `;
-
     Lexer lx;
     lx.setSourceFromText(source, __FILE__, line + 1, 1);
     lx.lex;
 
     Parser pr = Parser(&lx);
-    DebugVisitor dv = new DebugVisitor(pr.parse);
+    DebugVisitor dv = new DebugVisitor();
+    dv.visit(pr.parse);
     dv.printText();
 }
 
