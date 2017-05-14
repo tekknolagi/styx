@@ -246,5 +246,11 @@ public:
         assert(node);
         visitImpl(node);
     }
+
+    override void visit(IndexExpressionAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
 }
 

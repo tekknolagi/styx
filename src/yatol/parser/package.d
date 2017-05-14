@@ -123,7 +123,7 @@ private:
                 else
                 {
                     if (_declarationLevels > 1)
-                        parseError("unclosed scope(s), class(es) or struct(s)");
+                        parseError("unclosed scope(s), class(es), struct(s) or interface(s)");
                     return null;
                 }
             }
@@ -188,7 +188,7 @@ private:
             advance();
             if (!current.isTokBasicType)
             {
-                parseError("expcted a basic type as number literal suffix");
+                parseError("expected a basic type as number literal suffix");
                 return null;
             }
             result.literalType = current;
@@ -356,14 +356,12 @@ private:
         if (!current.isTokLeftCurly)
         {
             expected(TokenType.leftCurly);
-            destroy(result);
             return null;
         }
         parseDeclarations(result.declarations);
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
-            destroy(result);
             return null;
         }
         return result;
@@ -394,14 +392,12 @@ private:
         if (!current.isTokLeftCurly)
         {
             expected(TokenType.leftCurly);
-            destroy(result);
             return null;
         }
         parseDeclarations(result.declarations);
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
-            destroy(result);
             return null;
         }
         return result;
@@ -432,14 +428,12 @@ private:
         if (!current.isTokLeftCurly)
         {
             expected(TokenType.leftCurly);
-            destroy(result);
             return null;
         }
         parseDeclarations(result.declarations);
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
-            destroy(result);
             return null;
         }
         return result;
@@ -522,7 +516,6 @@ private:
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
-            destroy(result);
             return null;
         }
         return result;
@@ -673,8 +666,7 @@ private:
         result.header = header;
         if (!current.isTokLeftCurly && !current.isTokSemicolon)
         {
-            expected(TokenType.leftCurly);
-            parseError("expected `;` or `{` as function body");
+            parseError("expected `;` or `{` to skip or start the function body");
             return null;
         }
         result.firstBodyToken = current();
@@ -683,13 +675,11 @@ private:
             if (!parseDeclarationsOrStatements(result.declarationsOrStatements))
             {
                 parseError("invalid declarations or statements");
-                destroy(result);
                 return null;
             }
             if (!current.isTokRightCurly)
             {
                 expected(TokenType.rightCurly);
-                destroy(result);
                 return null;
             }
         }
@@ -727,7 +717,6 @@ private:
         if (!current.isTokRightParen)
         {
             expected(TokenType.rightParen);
-            destroy(result);
             return null;
         }
         return result;
@@ -975,7 +964,7 @@ private:
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 result.unaryExpression = u;
-                if (current.type.among(semiColon, rightCurly, rightParen, comma))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma))
                 {
                     return result;
                 }
@@ -997,7 +986,7 @@ private:
                 ae.left = exp;
                 ae.right = r;
                 result.assignExpression = ae;
-                if (current.type.among(semiColon, rightCurly, rightParen, comma))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma))
                 {
                     return result;
                 }
@@ -1021,7 +1010,7 @@ private:
                 be.operator = op;
                 be.right = r;
                 result.binaryExpression = be;
-                if (current.type.among(semiColon, rightCurly, rightParen, comma))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma))
                 {
                     return result;
                 }
@@ -1033,13 +1022,36 @@ private:
             }
         }
 
+        with(TokenType) if (current.isTokLeftSquare)
+        {
+            advance();
+            if (ExpressionAstNode i = parseExpression(null))
+            {
+                ExpressionAstNode result = new ExpressionAstNode;
+                IndexExpressionAstNode ie = new IndexExpressionAstNode;
+                ie.indexed = exp;
+                ie.index = i;
+                result.indexExpression = ie;
+                if (current.isTokRightSquare)
+                {
+                    advance();
+                    return result;
+                }
+                else
+                {
+                    expected(rightSquare);
+                    return null;
+                }
+            }
+        }
+
         with(TokenType) if (current.isTokLeftParen)
         {
             if (ParenExpressionAstNode p = parseParenExpression)
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 result.parenExpression = p;
-                if (current.type.among(semiColon, rightCurly, rightParen, comma))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma))
                 {
                     return result;
                 }
@@ -1066,7 +1078,7 @@ private:
                 ce.expression = exp;
                 ce.type = t;
                 result.castExpression = ce;
-                if (current.type.among(semiColon, rightCurly, rightParen, comma))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma))
                 {
                     return result;
                 }
@@ -1433,6 +1445,7 @@ unittest
         a = b(c++);
         a = b + a(&c(*p.m));
         a = d:u32 + c;
+        a = b[c+d:u8];
     }
 `;
     Lexer lx;
@@ -1484,7 +1497,7 @@ void assertNotParse(const(char)[] code, string file = __FILE_FULL_PATH__,
     assert(pr.parse() is null, "code parsed but should not be");
 }
 
-//version(none):
+version(all):
 
 unittest
 {
@@ -1634,6 +1647,28 @@ unittest
         {
             a = b + c(d);
             d(a) = d(j);
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar()
+        {
+            a = array[table[b + c(d)]];
+        }
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        function bar()
+        {
+            a = array[table[[b + c(d)]];
         }
     });
 }

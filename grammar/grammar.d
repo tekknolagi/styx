@@ -120,11 +120,15 @@ Yatol:
 
     Expression  < AssignExpression
                 / BinaryExpression
+                / IndexExpression
                 / ParenExpression
                 / CastExpression
                 / UnaryExpression
                 / ConditionExpression
                 #/ PolishExpression
+
+    #BUG: Expression LeftSquare, parse only if space seprated.
+    IndexExpression < Expression LeftSquare Expression RightSquare
 
     ParenExpression < LeftParen Expression RightParen
 
@@ -357,10 +361,10 @@ enum source1 = `
         ++a = b + c;
         a = ++++b;
         a = b = c + d;
+        a = b [c];
     }
     s16 signed1 = 42, signed2 = 355;
 `;
-
 auto s =
 q{
 

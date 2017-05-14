@@ -28,6 +28,7 @@ class AstVisitor
     void visit(FunctionHeaderAstNode node){node.accept(this);}
     void visit(FunctionTypeAstNode node){node.accept(this);}
     void visit(ImportDeclarationAstNode node){node.accept(this);}
+    void visit(IndexExpressionAstNode node){node.accept(this);}
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
     void visit(NumberLiteralAstNode node){node.accept(this);}
     void visit(ParenExpressionAstNode node){node.accept(this);}
@@ -64,6 +65,7 @@ class AstVisitorNone: AstVisitor
     override void visit(FunctionHeaderAstNode node){}
     override void visit(FunctionTypeAstNode node){}
     override void visit(ImportDeclarationAstNode node){}
+    override void visit(IndexExpressionAstNode node){}
     override void visit(InterfaceDeclarationAstNode node){}
     override void visit(NumberLiteralAstNode node){}
     override void visit(ParenExpressionAstNode node){}
@@ -447,6 +449,8 @@ class ExpressionAstNode: AstNode
     AssignExpressionAstNode assignExpression;
     /// Assigned if this expression is a BinaryExpression.
     BinaryExpressionAstNode binaryExpression;
+    /// Assigned if this expression is an IndexExpression.
+    IndexExpressionAstNode indexExpression;
     /// Assigned if this expression is a ParenExpression.
     ParenExpressionAstNode parenExpression;
     /// Assigned if this expression is an UnaryExpression
@@ -460,6 +464,8 @@ class ExpressionAstNode: AstNode
             visitor.visit(assignExpression);
         else if (binaryExpression)
             visitor.visit(binaryExpression);
+        else if (indexExpression)
+            visitor.visit(indexExpression);
         else if (parenExpression)
             visitor.visit(parenExpression);
         else if (unaryExpression)
@@ -510,6 +516,27 @@ class BinaryExpressionAstNode: AstNode
             visitor.visit(left);
         if (right)
             visitor.visit(right);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// IndexExpression
+class IndexExpressionAstNode: AstNode
+{
+    /// The expression that's indexed.
+    ExpressionAstNode indexed;
+    /// The expression that gives the index.
+    ExpressionAstNode index;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (indexed)
+            visitor.visit(indexed);
+        if (index)
+            visitor.visit(index);
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}
