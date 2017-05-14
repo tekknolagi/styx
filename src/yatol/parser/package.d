@@ -1410,8 +1410,8 @@ unittest
         function of1(): s32;
         function of2(): u32
         {
-            //import c.v.b;
-            //function local(): c.v.b.FooBar {;;}
+            import c.v.b;
+            function local(): c.v.b.FooBar {;;}
         }
     }
     interface Pig
@@ -1463,7 +1463,7 @@ void assertParse(const(char)[] code, string file = __FILE_FULL_PATH__,
     lx.setSourceFromText(code, file, line, 1);
     lx.lex;
     Parser pr = Parser(&lx);
-    assert(pr.parse() !is null, "code not parsed but should");
+    assert(pr.parse() !is null, "code not parsed but should be");
 }
 
 /**
@@ -1481,7 +1481,7 @@ void assertNotParse(const(char)[] code, string file = __FILE_FULL_PATH__,
     lx.setSourceFromText(code, file, line, 1);
     lx.lex;
     Parser pr = Parser(&lx);
-    assert(pr.parse() is null, "code parsed but should not");
+    assert(pr.parse() is null, "code parsed but should not be");
 }
 
 //version(none):
@@ -1633,7 +1633,20 @@ unittest
         function bar()
         {
             a = b + c(d);
+            d(a) = d(j);
         }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar(u32 a,b,c; u64 d);
+        function bar(u32 a,b,c; u64 d){}
+        function bar(u32 a,b,c; u64 d): u64;
+        function bar(u32 a,b,c; u64 d): u64 {}
+        function bar(function*(u32 a) callback): function*();
     });
 }
 
