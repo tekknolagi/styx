@@ -18,6 +18,7 @@ class AstVisitor
     void visit(AstNode node){node.accept(this);}
     void visit(BinaryExpressionAstNode node){node.accept(this);}
     void visit(CallParametersAstNode node){node.accept(this);}
+    void visit(CastExpressionAstNode node){node.accept(this);}
     void visit(ClassDeclarationAstNode node){node.accept(this);}
     void visit(DeclarationAstNode node){node.accept(this);}
     void visit(DeclarationOrStatementAstNode node){node.accept(this);}
@@ -53,6 +54,7 @@ class AstVisitorNone: AstVisitor
     override void visit(AstNode node){}
     override void visit(BinaryExpressionAstNode node){}
     override void visit(CallParametersAstNode node){}
+    override void visit(CastExpressionAstNode node){}
     override void visit(ClassDeclarationAstNode node){}
     override void visit(DeclarationAstNode node){}
     override void visit(DeclarationOrStatementAstNode node){}
@@ -449,6 +451,8 @@ class ExpressionAstNode: AstNode
     ParenExpressionAstNode parenExpression;
     /// Assigned if this expression is an UnaryExpression
     UnaryExpressionAstNode unaryExpression;
+    /// Assigned if this expression is a CastExpression
+    CastExpressionAstNode castExpression;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -460,6 +464,8 @@ class ExpressionAstNode: AstNode
             visitor.visit(parenExpression);
         else if (unaryExpression)
             visitor.visit(unaryExpression);
+        else if (castExpression)
+            visitor.visit(castExpression);
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}
@@ -528,6 +534,27 @@ class ParenExpressionAstNode: AstNode
     override bool isTerminal() {return false;}
 }
 
+/// CastExpressionAstNode
+class CastExpressionAstNode: AstNode
+{
+    /// The reinterpreted expression
+    ExpressionAstNode expression;
+    /// The target type
+    TypeAstNode type;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (expression)
+            visitor.visit(expression);
+        if (type)
+            visitor.visit(type);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
 /// EmptyStatement
 class EmptyStatementAstNode: AstNode
 {
@@ -536,6 +563,9 @@ class EmptyStatementAstNode: AstNode
     /// Returns: $(D true) if the node has no children.
     override bool isTerminal() {return true;}
 }
+
+///
+final class ErroneousStatement : StatementAstNode {}
 
 /// Statement
 class StatementAstNode: AstNode

@@ -529,5 +529,18 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokEllipsis() const {return type == TokenType.ellipsis;}
+
+    /// Conveniance function used by the parser.
+    bool isUnaryPrefix() const
+    {
+        return type == TokenType.plusPlus || type == TokenType.minusMinus ||
+            type == TokenType.mul || type == TokenType.amp;
+    }
+
+    /// Conveniance function used by the parser.
+    bool isUnarySuffix() const
+    {
+        return type == TokenType.plusPlus || type == TokenType.minusMinus;
+    }
 }
 

@@ -240,5 +240,11 @@ public:
         assert(node);
         visitImpl(node);
     }
+
+    override void visit(CastExpressionAstNode node)
+    {
+        assert(node);
+        visitImpl(node);
+    }
 }
 

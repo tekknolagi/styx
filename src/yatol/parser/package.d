@@ -1,12 +1,12 @@
+#!runnable: -g -gs
 module yatol.parser;
 
 //TODO-cparser todo: check when advance() reaches the EOF.
-//TODO-cparser todo: parseFunctionHeader, handle static.
 
 import
     core.stdc.stdlib;
 import
-    std.stdio, std.format;
+    std.stdio, std.format, std.algorithm;
 import
     yatol.lexer.types, yatol.lexer, yatol.parser.ast;
 
@@ -19,6 +19,7 @@ private:
     Lexer* _lexer;
     Token* _current;
     ptrdiff_t _declarationLevels;
+    size_t _errorCount;
     UnitContainerAstNode _uc;
 
     alias Range = TokenRange!(TokenType.lineComment, TokenType.starComment,
@@ -36,13 +37,15 @@ private:
     void parseError(const(char[]) message)
     {
         assert(_current);
+        ++_errorCount;
         writefln("%s(%d,%d): error, %s", _lexer.filename, _current.line,
             _current.column, message);
         stdout.flush;
     }
 
-    void expected(TokenType expected)
+    void expected(TokenType expected, string loc = __FUNCTION__)
     {
+        ++_errorCount;
         static immutable string specifierDiff = "expected `%s` instead of `%s`";
         static immutable string specifierSame = "expected supplemental `%s`";
         if (current.type != expected)
@@ -51,8 +54,10 @@ private:
             parseError(specifierSame.format(tokenString(expected)));
     }
 
-    void unexpected()
+    void unexpected(string loc = __FUNCTION__)
     {
+        writeln(loc);
+        ++_errorCount;
         static immutable string specifier = "unexpected `%s`";
         parseError(specifier.format(_current.text));
     }
@@ -316,6 +321,11 @@ private:
                     break;
                 advance();
             }
+        }
+        else
+        {
+            expected(TokenType.identifier);
+            return null;
         }
         result.type = type;
         return result;
@@ -616,15 +626,17 @@ private:
             return null;
         }
         advance();
-        if (!current.isTokRightParen) while (true)
+        while (!current.isTokRightParen)
         {
-            if (TypedVariableListAstNode tvl = parseTypedVariableList())
+            TypedVariableListAstNode tvl = parseTypedVariableList();
+            if (tvl)
             {
                 result.parameters ~= tvl;
-            if (!current.isTokSemicolon)
-                break;
+                if (!current.isTokSemicolon)
+                    break;
+                advance();
             }
-            advance();
+            else break;
         }
         if (!current.isTokRightParen)
         {
@@ -668,7 +680,12 @@ private:
         result.firstBodyToken = current();
         if (current.isTokLeftCurly)
         {
-            parseDeclarationsOrStatements(result.declarationsOrStatements);
+            if (!parseDeclarationsOrStatements(result.declarationsOrStatements))
+            {
+                parseError("invalid declarations or statements");
+                destroy(result);
+                return null;
+            }
             if (!current.isTokRightCurly)
             {
                 expected(TokenType.rightCurly);
@@ -729,6 +746,7 @@ private:
     {
         const ptrdiff_t oldDeclLvl = _declarationLevels;
         ++_declarationLevels;
+
         while (advance())
         {
             if (DeclarationAstNode d = parseDeclaration())
@@ -739,12 +757,17 @@ private:
             }
             else if (StatementAstNode s = parseStatement())
             {
+                // advance() bug in parseExpression(): one possible fix,
+                // if cast(ErrorStatement) s ...
                 DeclarationOrStatementAstNode dos = new DeclarationOrStatementAstNode;
                 dos.statement  = s;
                 declsOrStatements ~= dos;
             }
             else
             {
+                // advance() bug in parseExpression(): this branch maybe reached
+                // because "null" returned by parseStatement() can say either "error"
+                // or "no statement found".
                 with (TokenType) switch (current.type)
                 {
                 case virtual:
@@ -808,14 +831,13 @@ private:
                     }
                     else return true;
                 default:
-                    unexpected();
+                    //unexpected();
                     return false;
                 }
             }
         }
         return true;
     }
-
 
     /**
      * Parses an paren expression
@@ -825,7 +847,7 @@ private:
     ParenExpressionAstNode parseParenExpression()
     {
         advance();
-        if (ExpressionAstNode ex = parseExpression())
+        if (ExpressionAstNode ex = parseExpression(null))
         {
             ParenExpressionAstNode result = new ParenExpressionAstNode;
             result.expression = ex;
@@ -859,7 +881,7 @@ private:
         CallParametersAstNode result = new CallParametersAstNode;
         while (true)
         {
-            if (ExpressionAstNode ex = parseExpression)
+            if (ExpressionAstNode ex = parseExpression(null))
             {
                 result.parameters ~= ex;
                 with(TokenType) switch (current.type)
@@ -887,11 +909,11 @@ private:
     UnaryExpressionAstNode parseUnaryExpression()
     {
         UnaryExpressionAstNode result = new UnaryExpressionAstNode;
-        if (current.isTokPlusPlus || current.isTokMinusMinus)
+        if (current.isUnaryPrefix)
         {
             result.prefix = current();
             advance();
-            if (current.isTokPlusPlus || current.isTokMinusMinus)
+            if (current.isUnaryPrefix)
             {
                 if (UnaryExpressionAstNode u = parseUnaryExpression())
                 {
@@ -916,7 +938,14 @@ private:
             }
         }
         // + else if current is literal...
-        if (current.isTokPlusPlus || current.isTokMinusMinus)
+
+        if (!result.identifierChain.length && !result.numberLitteral)
+        {
+            parseError("expected identifier or literal");
+            return null;
+        }
+
+        if (current.isUnarySuffix)
         {
              result.suffix = current();
              advance();
@@ -934,70 +963,119 @@ private:
      *
      * Returns: a $(D ExpressionAstNode) on success, $(D null) otherwise.
      */
-    ExpressionAstNode parseExpression(string callSite = __FUNCTION__)
+    ExpressionAstNode parseExpression(ExpressionAstNode exp)
     {
-        ExpressionAstNode result = new ExpressionAstNode;
-
-        with(TokenType) switch(current.type)
+        with(TokenType) if (current.type.among(plusPlus, minusMinus, amp, mul, identifier))
         {
-        case plusPlus, minusMinus, identifier:
+            if (exp && (exp.unaryExpression || exp.castExpression))
+            {
+                return null;
+            }
             if (UnaryExpressionAstNode u = parseUnaryExpression)
             {
-                switch (current.type)
+                ExpressionAstNode result = new ExpressionAstNode;
+                result.unaryExpression = u;
+                if (current.type.among(semiColon, rightCurly, rightParen, comma))
                 {
-                case equal:
-                    AssignExpressionAstNode ae = new AssignExpressionAstNode;
-                    result.assignExpression = ae;
-                    ae.left = new ExpressionAstNode;
-                    ae.left.unaryExpression = u;
-                    advance();
-                    if (ExpressionAstNode r = parseExpression())
-                    {
-                        ae.right = r;
-                        return result;
-                    }
-                    else
-                    {
-                        unexpected();
-                        advance(); // FIXME-cparser bug: otherwise does not stop parsing on exit
-                        return null;
-                    }
-                case firstOperator: .. case lastOperator:
-                    BinaryExpressionAstNode be = new BinaryExpressionAstNode;
-                    result.binaryExpression = be;
-                    be.operator = current();
-                    be.left = new ExpressionAstNode;
-                    be.left.unaryExpression = u;
-                    advance();
-                    if (ExpressionAstNode r = parseExpression())
-                    {
-                        be.right = r;
-                        return result;
-                    }
-                    else
-                    {
-                        unexpected();
-                        advance(); // FIXME-cparser bug: otherwise does not stop parsing on exit
-                        return null;
-                    }
-                case rightParen, semiColon, comma:
-                    result.unaryExpression = u;
                     return result;
-                default:
-                    writeln(callSite);
-                    unexpected();
-                    return null;
+                }
+                else
+                {
+                    result = parseExpression(result);
+                    return result;
                 }
             }
-            break;
-        case leftParen:
+        }
+
+        with(TokenType) if (current.isTokEqual)
+        {
+            advance();
+            if (ExpressionAstNode r = parseExpression(null))
+            {
+                ExpressionAstNode result = new ExpressionAstNode;
+                AssignExpressionAstNode ae = new AssignExpressionAstNode;
+                ae.left = exp;
+                ae.right = r;
+                result.assignExpression = ae;
+                if (current.type.among(semiColon, rightCurly, rightParen, comma))
+                {
+                    return result;
+                }
+                else
+                {
+                    result = parseExpression(result);
+                    return result;
+                }
+            }
+        }
+
+        with(TokenType) if (firstOperator <= current.type && current.type <= lastOperator)
+        {
+            Token* op = current();
+            advance();
+            if (ExpressionAstNode r = parseExpression(null))
+            {
+                ExpressionAstNode result = new ExpressionAstNode;
+                BinaryExpressionAstNode be = new BinaryExpressionAstNode;
+                be.left = exp;
+                be.operator = op;
+                be.right = r;
+                result.binaryExpression = be;
+                if (current.type.among(semiColon, rightCurly, rightParen, comma))
+                {
+                    return result;
+                }
+                else
+                {
+                    result = parseExpression(result);
+                    return result;
+                }
+            }
+        }
+
+        with(TokenType) if (current.isTokLeftParen)
+        {
             if (ParenExpressionAstNode p = parseParenExpression)
             {
+                ExpressionAstNode result = new ExpressionAstNode;
                 result.parenExpression = p;
-                return result;
+                if (current.type.among(semiColon, rightCurly, rightParen, comma))
+                {
+                    return result;
+                }
+                else
+                {
+                    result = parseExpression(result);
+                    return result;
+                }
             }
-            break;
-        default:
+        }
+
+        with(TokenType) if (current.isTokColon)
+        {
+            if (!exp)
+            {
+                parseError("no left expression to cast");
+                return null;
+            }
+            advance();
+            if (TypeAstNode t = parseType)
+            {
+                ExpressionAstNode result = new ExpressionAstNode;
+                CastExpressionAstNode ce = new CastExpressionAstNode;
+                ce.expression = exp;
+                ce.type = t;
+                result.castExpression = ce;
+                if (current.type.among(semiColon, rightCurly, rightParen, comma))
+                {
+                    return result;
+                }
+                else
+                {
+                    result = parseExpression(result);
+                    return result;
+                }
+            }
         }
         return null;
     }
@@ -1009,7 +1087,7 @@ private:
      */
     ExpressionStatementAstNode parseExpressionStatement()
     {
-        if (ExpressionAstNode ex = parseExpression())
+        if (ExpressionAstNode ex = parseExpression(null))
         {
             ExpressionStatementAstNode result = new ExpressionStatementAstNode;
             result.expression = ex;
@@ -1049,7 +1127,10 @@ private:
                 result.expression = es;
                 return result;
             }
-            else return null;
+            else
+            {
+                return null;
+            }
         }
         }
     }
@@ -1156,16 +1237,19 @@ private:
         }
         case identifier:
         {
-            if (lookup(1).isTokIdentifier)
-            {
-                return null;
-            }
-            else
+            if (lookup(1).isTokIdentifier) // if parseType...
             {
                 // TODO-cparser todo: parseVariableDeclaration
-                // VariableDeclaration
+                return null;
             }
-            return null;
+            else return null; // ident chain of unary
+        }
+        case u8, u16, u32, u64, s8, s16, s32, s64, ureg, sreg, f32, f64:
+        {
+            if (lookup(1).isTokIdentifier) // if parseType...
+            {
+                // TODO-cparser todo: parseVariableDeclaration
+            }
         }
         default:
             return null;
@@ -1227,7 +1311,10 @@ public:
                 unexpected;
                 return null;
             }
-            return _uc;
+            if (_errorCount)
+                return null;
+            else
+                return _uc;
         }
     }
 
@@ -1257,7 +1344,7 @@ public:
     }
 }
 
-unittest
+version(none) unittest
 {
     enum line = __LINE__;
     enum source = `
@@ -1270,7 +1357,7 @@ unittest
     assert(tan);
 }
 
-unittest
+version(none) unittest
 {
     enum line = __LINE__;
     enum source = `
@@ -1283,7 +1370,7 @@ unittest
     assert(!tman);
 }
 
-unittest
+version(none) unittest
 {
     enum line = __LINE__;
     enum source = `
@@ -1323,8 +1410,8 @@ unittest
         function of1(): s32;
         function of2(): u32
         {
-            import c.v.b;
-            function local(): c.v.b.FooBar {;;}
+            //import c.v.b;
+            //function local(): c.v.b.FooBar {;;}
         }
     }
     interface Pig
@@ -1333,15 +1420,20 @@ unittest
         function pig2(): s64;
     }
     import (10101) a.b, c.d.r;
-    function exp()
+    static function exp()
     {
+        a++;
+        a = b + c;
+        ++a;
+        a++;
+        a = b + c;
         ++--++a.a.a;
-        (a++);
+        (++a);
         call(a++,--b);
         a = b(c++);
-        a = b + a(p0++);
+        a = b + a(&c(*p.m));
+        a = d:u32 + c;
     }
-    struct Bug {}
 `;
     Lexer lx;
     lx.setSourceFromText(source, __FILE__, line + 1, 1);
@@ -1354,5 +1446,194 @@ unittest
         dv.visit(uc);
         dv.printText();
     }
+}
+
+/**
+ * Tests valid code.
+ *
+ * Used to test that the input code can be parsed.
+ *
+ * Params:
+ *     code = The source code.
+ */
+void assertParse(const(char)[] code, string file = __FILE_FULL_PATH__,
+    size_t line = __LINE__)
+{
+    Lexer lx;
+    lx.setSourceFromText(code, file, line, 1);
+    lx.lex;
+    Parser pr = Parser(&lx);
+    assert(pr.parse() !is null, "code not parsed but should");
+}
+
+/**
+ * Tests invalid code.
+ *
+ * Used to test that the input code cant be parsed.
+ *
+ * Params:
+ *     code = The source code.
+ */
+void assertNotParse(const(char)[] code, string file = __FILE_FULL_PATH__,
+    size_t line = __LINE__)
+{
+    Lexer lx;
+    lx.setSourceFromText(code, file, line, 1);
+    lx.lex;
+    Parser pr = Parser(&lx);
+    assert(pr.parse() is null, "code parsed but should not");
+}
+
+//version(none):
+
+unittest
+{
+    assertParse(q{
+        unit a;
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        virtual unit b;
+        virtual unit c;
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit ;
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        unit b;
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        virtual unit b;
+        unit c;
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        virtual unit b;
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        virtual unit c;
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        struct Foo struct Foo {class Foo {struct Foo {interface Foo {}}}}
+    });
+}
+
+
+unittest
+{
+    assertParse(q{
+        unit a.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z;
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a.c;
+        protection(private)
+        protection(public)
+        virtual unit v;
+        protection(private)
+        protection(public)
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit struct.class.function;
+    });
+}
+
+version(all) unittest
+{
+    assertParse(q{
+        unit a;
+        function bar()
+        {
+            ++a;
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar()
+        {
+            a = b;
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar()
+        {
+            a = b + c(d);
+        }
+    });
 }
 
