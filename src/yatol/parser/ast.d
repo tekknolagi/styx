@@ -1,12 +1,47 @@
 module yatol.parser.ast;
 
 import
-    std.conv, std.algorithm.iteration, std.stdio;
+    std.conv, std.algorithm.iteration, std.meta, std.stdio;
 import
     yatol.lexer.types;
 
 /// Used to annotate the fields set by the semantic.
 enum Semantic;
+
+private string astNodesClasses()
+{
+    import std.algorithm.sorting: sort;
+    string result = "private alias AstNodesSeq = AliasSeq!(";
+    foreach (member; __traits(allMembers, yatol.parser.ast))
+    {
+        if (member.length > 6 && member[$-7..$] == "AstNode")
+            result ~= member ~ ",\n";
+    }
+    return result ~ ");";
+}
+
+mixin(astNodesClasses);
+
+/// Sequence of alias that contains each AST node.
+alias AstNodes = AstNodesSeq;
+
+/**
+ * Generates all the $(D visit()) overrides as a text ready to be mixed
+ * in an $(D AstVisitor()) class.
+ *
+ * Params:
+ *      statements = The statements called in each function.
+ */
+string genVisitMethods(string statements)
+{
+    string result;
+    foreach (Node; AstNodes)
+    {
+        result ~= "override void visit(" ~ Node.stringof ~ " node)\n" ~
+            "{\n    " ~ statements ~ "\n}\n";
+    }
+    return result;
+}
 
 /**
  * The AST visitor.
@@ -24,6 +59,7 @@ class AstVisitor
     void visit(DeclarationOrStatementAstNode node){node.accept(this);}
     void visit(EmptyStatementAstNode node){node.accept(this);}
     void visit(ExpressionAstNode node){node.accept(this);}
+    void visit(ExpressionStatementAstNode node){node.accept(this);}
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
     void visit(FunctionHeaderAstNode node){node.accept(this);}
     void visit(FunctionTypeAstNode node){node.accept(this);}
@@ -37,8 +73,8 @@ class AstVisitor
     void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
     void visit(TypeAstNode node){node.accept(this);}
-    void visit(TypedVariableListAstNode node){node.accept(this);}
     void visit(TypeModifierAstNode node){node.accept(this);}
+    void visit(TypedVariableListAstNode node){node.accept(this);}
     void visit(UnaryExpressionAstNode node){node.accept(this);}
     void visit(UnitAstNode node){node.accept(this);}
     void visit(UnitContainerAstNode node){node.accept(this);}
@@ -61,6 +97,7 @@ class AstVisitorNone: AstVisitor
     override void visit(DeclarationOrStatementAstNode node){}
     override void visit(EmptyStatementAstNode node){}
     override void visit(ExpressionAstNode node){}
+    override void visit(ExpressionStatementAstNode node){}
     override void visit(FunctionDeclarationAstNode node){}
     override void visit(FunctionHeaderAstNode node){}
     override void visit(FunctionTypeAstNode node){}
@@ -74,8 +111,8 @@ class AstVisitorNone: AstVisitor
     override void visit(StatementAstNode node){}
     override void visit(StructDeclarationAstNode node){}
     override void visit(TypeAstNode node){}
-    override void visit(TypedVariableListAstNode node){}
     override void visit(TypeModifierAstNode node){}
+    override void visit(TypedVariableListAstNode node){}
     override void visit(UnaryExpressionAstNode node){}
     override void visit(UnitAstNode node){node.accept(this);}
     override void visit(UnitContainerAstNode node){node.accept(this);}
@@ -590,9 +627,6 @@ class EmptyStatementAstNode: AstNode
     /// Returns: $(D true) if the node has no children.
     override bool isTerminal() {return true;}
 }
-
-///
-final class ErroneousStatement : StatementAstNode {}
 
 /// Statement
 class StatementAstNode: AstNode

@@ -1446,6 +1446,7 @@ unittest
         a = b + a(&c(*p.m));
         a = d:u32 + c;
         a = b[c+d:u8];
+        a = call(param)[call(param)];
     }
 `;
     Lexer lx;
@@ -1457,7 +1458,9 @@ unittest
     if (UnitContainerAstNode uc = pr.parse())
     {
         dv.visit(uc);
-        dv.printText();
+        import std.process;
+        if ("CI" !in environment)
+            dv.printText();
     }
 }
 
@@ -1669,6 +1672,28 @@ unittest
         function bar()
         {
             a = array[table[[b + c(d)]];
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar()
+        {
+            a = array[call(param)];
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar()
+        {
+            a = call(param)[call(param)];
         }
     });
 }
