@@ -964,7 +964,7 @@ private:
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 result.unaryExpression = u;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis))
                 {
                     return result;
                 }
@@ -986,7 +986,7 @@ private:
                 ae.left = exp;
                 ae.right = r;
                 result.assignExpression = ae;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis))
                 {
                     return result;
                 }
@@ -1010,7 +1010,7 @@ private:
                 be.operator = op;
                 be.right = r;
                 result.binaryExpression = be;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis))
                 {
                     return result;
                 }
@@ -1028,18 +1028,37 @@ private:
             if (ExpressionAstNode i = parseExpression(null))
             {
                 ExpressionAstNode result = new ExpressionAstNode;
-                IndexExpressionAstNode ie = new IndexExpressionAstNode;
-                ie.indexed = exp;
-                ie.index = i;
-                result.indexExpression = ie;
                 if (current.isTokRightSquare)
                 {
+                    IndexExpressionAstNode ie = new IndexExpressionAstNode;
+                    ie.indexed = exp;
+                    ie.index = i;
+                    result.indexExpression = ie;
                     advance();
                     return result;
                 }
+                else if (current.isTokEllipsis)
+                {
+                    advance();
+                    if (ExpressionAstNode r = parseExpression(null))
+                        if (current.isTokRightSquare)
+                    {
+                        RangeExpressionAstNode re = new RangeExpressionAstNode;
+                        re.indexed = exp;
+                        re.left = i;
+                        re.right = r;
+                        result.rangeExpression = re;
+                        advance();
+                        return result;
+                    }
+                    if (!current.isTokRightSquare)
+                        expected(TokenType.rightSquare);
+                    // else other error ?
+                    return null;
+                }
                 else
                 {
-                    expected(rightSquare);
+                    parseError("expected either `]` or `..` to define an index or a range");
                     return null;
                 }
             }
@@ -1051,7 +1070,7 @@ private:
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 result.parenExpression = p;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis))
                 {
                     return result;
                 }
@@ -1078,7 +1097,7 @@ private:
                 ce.expression = exp;
                 ce.type = t;
                 result.castExpression = ce;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis))
                 {
                     return result;
                 }
@@ -1447,6 +1466,7 @@ unittest
         a = d:u32 + c;
         a = b[c+d:u8];
         a = call(param)[call(param)];
+        a = b[c..d];
     }
 `;
     Lexer lx;
@@ -1694,6 +1714,28 @@ unittest
         function bar()
         {
             a = call(param)[call(param)];
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar()
+        {
+            a = array[a..b];
+        }
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        function bar()
+        {
+            a = array[a..];
         }
     });
 }
