@@ -57,6 +57,7 @@ class AstVisitor
     void visit(ClassDeclarationAstNode node){node.accept(this);}
     void visit(DeclarationAstNode node){node.accept(this);}
     void visit(DeclarationOrStatementAstNode node){node.accept(this);}
+    void visit(DotExpressionAstNode node){node.accept(this);}
     void visit(EmptyStatementAstNode node){node.accept(this);}
     void visit(ExpressionAstNode node){node.accept(this);}
     void visit(ExpressionStatementAstNode node){node.accept(this);}
@@ -96,6 +97,7 @@ class AstVisitorNone: AstVisitor
     override void visit(ClassDeclarationAstNode node){}
     override void visit(DeclarationAstNode node){}
     override void visit(DeclarationOrStatementAstNode node){}
+    override void visit(DotExpressionAstNode node){}
     override void visit(EmptyStatementAstNode node){}
     override void visit(ExpressionAstNode node){}
     override void visit(ExpressionStatementAstNode node){}
@@ -468,12 +470,12 @@ class UnaryExpressionAstNode: AstNode
 class ExpressionStatementAstNode: AstNode
 {
     /// The expression.
-    ExpressionAstNode expression;
+    AssignExpressionAstNode assignExpression;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (expression)
-            visitor.visit(expression);
+        if (assignExpression)
+            visitor.visit(assignExpression);
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return true;}
@@ -484,27 +486,27 @@ class ExpressionStatementAstNode: AstNode
 /// Expression
 class ExpressionAstNode: AstNode
 {
-    /// Assigned if this expression is an AssignExpression.
-    AssignExpressionAstNode assignExpression;
     /// Assigned if this expression is a BinaryExpression.
     BinaryExpressionAstNode binaryExpression;
+    /// Assigned if this expression is a DotExpression.
+    DotExpressionAstNode dotExpression;
     /// Assigned if this expression is an IndexExpression.
     IndexExpressionAstNode indexExpression;
     /// Assigned if this expression is a RangeExpression.
     RangeExpressionAstNode rangeExpression;
     /// Assigned if this expression is a ParenExpression.
     ParenExpressionAstNode parenExpression;
-    /// Assigned if this expression is an UnaryExpression
+    /// Assigned if this expression is an UnaryExpression.
     UnaryExpressionAstNode unaryExpression;
-    /// Assigned if this expression is a CastExpression
+    /// Assigned if this expression is a CastExpression.
     CastExpressionAstNode castExpression;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (assignExpression)
-            visitor.visit(assignExpression);
-        else if (binaryExpression)
+        if (binaryExpression)
             visitor.visit(binaryExpression);
+        else if (dotExpression)
+            visitor.visit(dotExpression);
         else if (indexExpression)
             visitor.visit(indexExpression);
         else if (rangeExpression)
@@ -527,8 +529,10 @@ class AssignExpressionAstNode: AstNode
 {
     /// The equal LHS.
     ExpressionAstNode left;
+    ///The assignation operator
+    Token* operator;
     /// The equal RHS.
-    ExpressionAstNode right;
+    AssignExpressionAstNode right;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -551,6 +555,26 @@ class BinaryExpressionAstNode: AstNode
     /// The operator LHS.
     ExpressionAstNode left;
     /// The operator RHS.
+    ExpressionAstNode right;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (left)
+            visitor.visit(left);
+        if (right)
+            visitor.visit(right);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+class DotExpressionAstNode : AstNode
+{
+    /// Assigned if there's an expression before the dot.
+    ExpressionAstNode left;
+    /// The dot RHS.
     ExpressionAstNode right;
     ///
     override void accept(AstVisitor visitor)

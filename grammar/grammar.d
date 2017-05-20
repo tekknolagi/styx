@@ -111,22 +111,35 @@ Yatol:
 
     EmptyStatment < Semicolon
 
-    ExpressionStatement < Expression Semicolon
+    ExpressionStatement < AssignExpression Semicolon
 
-    IfElseStatement < If LeftParen ConditionExpression RightParen DeclarationOrStatementsBlock (Else DeclarationOrStatementsBlock)?
+    IfElseStatement < If IfCondition DeclarationOrStatementsBlock (Else DeclarationOrStatementsBlock)?
+
+
+
+    IfCondition < LeftParen RelationalExpressions RightParen
+                / LeftParen ConditionalIdentifierChain RightParen
+                / LeftParen VariableDeclaration RightParen
+                #/ RelationalExpression Then
+                #/ IdentifierChain Then
+
+    RelationalExpressions < RelationalExpression (RelOperator RelationalExpression)*
 
 ################################################################################
 # Expressions
 
-    Expression  < AssignExpression
-                / BinaryExpression
+    AssignExpression    < Expression Equal AssignExpression
+                        / Expression
+
+    Expression  < BinaryExpression
+                / DotExpression
                 / IndexExpression
                 / RangeExpression
                 / ParenExpression
                 / CastExpression
+                / OptionalExpression
                 / UnaryExpression
-                / ConditionExpression
-                #/ PolishExpression
+                / RelationalExpression
 
     #NOT ANYMORE ? BUG: Expression LeftSquare, parse only if space seprated.
     IndexExpression < Expression LeftSquare Expression RightSquare
@@ -134,8 +147,6 @@ Yatol:
     RangeExpression < Expression LeftSquare Expression Ellipsis Expression RightSquare
 
     ParenExpression < LeftParen Expression RightParen
-
-    AssignExpression < Expression Equal Expression
 
     BinaryExpression < Expression Operator Expression
 
@@ -149,16 +160,13 @@ Yatol:
 
     CallParameters < Expression (Comma Expression)*
 
-    ConditionExpression < Expression CmpOperator Expression
+    RelationalExpression    < Expression RelOperator Expression
+                            / ConditionalIdentifierChain RelOperator Expression
 
+    DotExpression < Expression Dot Expression
 
+    OptionalExpression  < Expression Qmark
 
-    # PolishExpression < "@PN" LeftParen PolishExpression* RightParen
-
-    # PolishExpression < Operator PolishOperand+
-
-    # PolishOperand   < NumberLiteral
-                    / IdentifierChain
 
 ################################################################################
 # Cast
@@ -181,6 +189,10 @@ Yatol:
 
 ################################################################################
 # List, chain, etc
+
+    ConditionalIdentifierChain < Identifier (ConditionalIdentifierChainKnot Identifier)*
+
+    ConditionalIdentifierChainKnot < Dot / OptAccess
 
     IdentifierChainList < IdentifierChain (Comma IdentifierChain)*
 
@@ -220,7 +232,7 @@ Yatol:
 
     Operator < Mul / Div / Plus / Minus
 
-    CmpOperator < EqualEqual
+    RelOperator < EqualEqual
                 / NotEqual
                 / Lesser
                 / Greater
@@ -231,6 +243,7 @@ Yatol:
 
     UnarySuffix < PlusPlus / MinusMinus
 
+    OptAccess   <~ Qmark Dot
     Ellipsis    <~ Dot Dot
     EqualEqual  <~ Equal Equal
     NotEqual    <~ Bang Equal
@@ -266,6 +279,7 @@ Yatol:
     At          <- '@'
     Bang        <- '!'
     Amp         <- '&'
+    Qmark       <- '?'
 
     HexPrefix   <- "0x" / "0X"
 
@@ -342,15 +356,16 @@ enum source1 = `
     virtual unit d;
     @const @inline function bar()
     {
-        a = 8;
-        a = unary;
-        a = a + a;
+        a;
+        a = b;
+        a = b + c;
         ++a;
         --a;
         a = a++;
         a = *derefer;
         a = b:ToType;
-        a = b:ToType + b:ToType;;
+        a = b:ToType + c:ToType;;
+
         s8 a = 8;
 
         if (a == 0) {call(a);}
@@ -366,9 +381,22 @@ enum source1 = `
         a = b = c + d;
         a = b[c];
         a = b[c..d];
+
+        if (a[8]?.b?.c == 8)
+            callThis();
+        else
+            callThat();
+
+        instances[a].instances[b] = 8;
+        a = b[c].d[e].f[g];
     }
-    s16 signed1 = 42, signed2 = 355;
 `;
+
+/*
+        ++(a);
+    }
+*/
+
 auto s =
 q{
 

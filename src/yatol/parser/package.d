@@ -43,8 +43,9 @@ private:
         stdout.flush;
     }
 
-    void expected(TokenType expected, string loc = __FUNCTION__)
+    void expected(TokenType expected, string loc = __FUNCTION__, int line = __LINE__)
     {
+        writeln(loc, " ", line);
         ++_errorCount;
         static immutable string specifierDiff = "expected `%s` instead of `%s`";
         static immutable string specifierSame = "expected supplemental `%s`";
@@ -54,9 +55,9 @@ private:
             parseError(specifierSame.format(tokenString(expected)));
     }
 
-    void unexpected(string loc = __FUNCTION__)
+    void unexpected(string loc = __FUNCTION__, int line = __LINE__)
     {
-        writeln(loc);
+        writeln(loc, " ", line);
         ++_errorCount;
         static immutable string specifier = "unexpected `%s`";
         parseError(specifier.format(_current.text));
@@ -948,6 +949,87 @@ private:
     }
 
     /**
+     * Parses an AssignExpression.
+     *
+     * Returns: a $(D AssignExpressionAstNode) on success, $(D null) otherwise.
+     */
+    AssignExpressionAstNode parseAssignExpression()
+    {
+        if (ExpressionAstNode e = parseExpression(null))
+        {
+            AssignExpressionAstNode result = new AssignExpressionAstNode;
+            result.left = e;
+            if (current.isTokSemicolon)
+            {
+                return result;
+            }
+            else if (current.isTokEqual)
+            {
+                result.operator = current();
+                advance();
+                if (AssignExpressionAstNode ae = parseAssignExpression())
+                {
+                    result.right = ae;
+                    return result;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                unexpected();
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Parses a DotExpression.
+     *
+     * Returns: a $(D DotExpressionAstNode) on success, $(D null) otherwise.
+     */
+    DotExpressionAstNode parseDotExpression()
+    {
+        if (!current.isTokDot)
+        {
+            expected(TokenType.dot);
+            return null;
+        }
+        advance();
+        if (ExpressionAstNode e = parseExpression(null))
+        {
+            DotExpressionAstNode result = new DotExpressionAstNode;
+            result.right = e;
+            return result;
+        }
+        return null;
+    }
+
+    /**
+     * Sets an expression as the LHS of a DotExpression.
+     *
+     * Params:
+     *      exp = The current expression.
+     * Returns:
+     *      On success a n$(D ExpressionAstNode) with $(D dotExpression) assigned,
+     *          $(D null) otherwise.
+     */
+    ExpressionAstNode dotifyExpression(ExpressionAstNode exp)
+    {
+        if (exp) if (DotExpressionAstNode de = parseDotExpression())
+        {
+            ExpressionAstNode result = new ExpressionAstNode;
+            result.dotExpression = de;
+            de.left = exp;
+            return result;
+        }
+        return null;
+    }
+
+    /**
      * Parses an expression.
      *
      * Returns: a $(D ExpressionAstNode) on success, $(D null) otherwise.
@@ -964,31 +1046,13 @@ private:
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 result.unaryExpression = u;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
                 {
                     return result;
                 }
-                else
+                else if (current.isTokDot)
                 {
-                    result = parseExpression(result);
-                    return result;
-                }
-            }
-        }
-
-        with(TokenType) if (current.isTokEqual)
-        {
-            advance();
-            if (ExpressionAstNode r = parseExpression(null))
-            {
-                ExpressionAstNode result = new ExpressionAstNode;
-                AssignExpressionAstNode ae = new AssignExpressionAstNode;
-                ae.left = exp;
-                ae.right = r;
-                result.assignExpression = ae;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis))
-                {
-                    return result;
+                    return dotifyExpression(result);
                 }
                 else
                 {
@@ -1010,9 +1074,13 @@ private:
                 be.operator = op;
                 be.right = r;
                 result.binaryExpression = be;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
                 {
                     return result;
+                }
+                else if (current.isTokDot)
+                {
+                    return dotifyExpression(result);
                 }
                 else
                 {
@@ -1035,7 +1103,11 @@ private:
                     ie.index = i;
                     result.indexExpression = ie;
                     advance();
-                    return result;
+                    if (current.isTokDot)
+                    {
+                        return dotifyExpression(result);
+                    }
+                    else return result;
                 }
                 else if (current.isTokEllipsis)
                 {
@@ -1049,11 +1121,15 @@ private:
                         re.right = r;
                         result.rangeExpression = re;
                         advance();
-                        return result;
+                        if (current.isTokDot)
+                        {
+                            return dotifyExpression(result);
+                        }
+                        else return result;
                     }
                     if (!current.isTokRightSquare)
-                        expected(TokenType.rightSquare);
-                    // else other error ?
+                        expected(rightSquare);
+                    // else error emitted before ?
                     return null;
                 }
                 else
@@ -1070,9 +1146,13 @@ private:
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 result.parenExpression = p;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
                 {
                     return result;
+                }
+                else if (current.isTokDot)
+                {
+                    return dotifyExpression(result);
                 }
                 else
                 {
@@ -1097,9 +1177,13 @@ private:
                 ce.expression = exp;
                 ce.type = t;
                 result.castExpression = ce;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
                 {
                     return result;
+                }
+                else if (current.isTokDot)
+                {
+                    return dotifyExpression(result);
                 }
                 else
                 {
@@ -1108,6 +1192,7 @@ private:
                 }
             }
         }
+
         return null;
     }
 
@@ -1118,10 +1203,10 @@ private:
      */
     ExpressionStatementAstNode parseExpressionStatement()
     {
-        if (ExpressionAstNode ex = parseExpression(null))
+        if (AssignExpressionAstNode ae = parseAssignExpression())
         {
             ExpressionStatementAstNode result = new ExpressionStatementAstNode;
-            result.expression = ex;
+            result.assignExpression = ae;
             if (!current.isTokSemicolon)
             {
                 expected(TokenType.semiColon);
@@ -1467,6 +1552,8 @@ unittest
         a = b[c+d:u8];
         a = call(param)[call(param)];
         a = b[c..d];
+        a = b[c].d[e].f[g];
+        (b[c].d[e]) = a;
     }
 `;
     Lexer lx;
