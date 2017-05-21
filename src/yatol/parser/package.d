@@ -1233,7 +1233,7 @@ private:
     }
 
     /**
-     * Parses an return statement
+     * Parses a return statement
      *
      * Returns: a $(D ReturnStatementAstNode) on success, $(D null) otherwise.
      */
@@ -1245,21 +1245,98 @@ private:
             return null;
         }
         advance();
-        if (AssignExpressionAstNode ae = parseAssignExpression())
+        ReturnStatementAstNode result = new ReturnStatementAstNode;
+        if (!current.isTokSemicolon)
+            if (AssignExpressionAstNode ae = parseAssignExpression())
         {
-            ReturnStatementAstNode result = new ReturnStatementAstNode;
             result.expression = ae;
-            if (current.isTokSemicolon)
-            {
-                advance();
-                return result;
-            }
         }
         if (!current.isTokSemicolon)
         {
             expected(TokenType.semiColon);
+            return null;
         }
-        return null;
+        else
+        {
+            return result;
+        }
+    }
+
+    /**
+     * Parses a ContinueStatement
+     *
+     * Returns: a $(D ContinueStatementAstNode) on success, $(D null) otherwise.
+     */
+    ContinueStatementAstNode parseContinueStatement()
+    {
+        if (!current.isTokContinue)
+        {
+            expected(TokenType.continue_);
+            return null;
+        }
+        advance();
+        ContinueStatementAstNode result = new ContinueStatementAstNode;
+        if (!current.isTokSemicolon)
+            if (AssignExpressionAstNode ae = parseAssignExpression())
+        {
+            result.expression = ae;
+        }
+        if (!current.isTokSemicolon)
+        {
+            expected(TokenType.semiColon);
+            return null;
+        }
+        else
+        {
+            return result;
+        }
+    }
+
+    /**
+     * Parses a BreakStatement
+     *
+     * Returns: a $(D BreakStatementAstNode) on success, $(D null) otherwise.
+     */
+    BreakStatementAstNode parseBreakStatement()
+    {
+        if (!current.isTokBreak)
+        {
+            expected(TokenType.break_);
+            return null;
+        }
+        advance();
+        BreakStatementAstNode result = new BreakStatementAstNode;
+        if (current.isTokLeftParen)
+        {
+            advance();
+            if (!current.isTokIdentifier)
+            {
+                parseError("expected an identifier as break label");
+                return null;
+            }
+            result.label = current();
+            advance();
+            if (!current.isTokRightParen)
+            {
+                expected(TokenType.rightParen);
+                return null;
+            }
+            advance();
+        }
+        if (!current.isTokSemicolon)
+            if (AssignExpressionAstNode ae = parseAssignExpression())
+        {
+            result.expression = ae;
+        }
+        if (!current.isTokSemicolon)
+        {
+            expected(TokenType.semiColon);
+            return null;
+        }
+        else
+        {
+            return result;
+        }
     }
 
     /**
@@ -1291,9 +1368,34 @@ private:
                 return null;
             }
         }
-        /*
-        other cases are for statements starting witha keyword
-        */
+        case break_:
+        {
+            if (BreakStatementAstNode bs = parseBreakStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.breakStatement = bs;
+                return result;
+            }
+            else
+            {
+                parseError("invalid break statement");
+                return null;
+            }
+        }
+        case continue_:
+        {
+            if (ContinueStatementAstNode cs = parseContinueStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.continueStatement = cs;
+                return result;
+            }
+            else
+            {
+                parseError("invalid continue statement");
+                return null;
+            }
+        }
         default:
         {
             if (ExpressionStatementAstNode es = parseExpressionStatement())
@@ -1597,7 +1699,7 @@ unittest
     import (10101) a.b, c.d.r;
     static function exp(): s32
     {
-        a++;
+        /*a++;
         a = b + c;
         ++a;
         a++;
@@ -1613,8 +1715,14 @@ unittest
         a = b[c..d];
         a = b[c].d[e].f[g];
         (b[c].d[e]) = a;
-        a = a * u;
+        a = a * u;*/
+        return;
         return b + c;
+        break (Label1) a.call();
+        break a.call();
+        break;
+        continue a.call();
+        continue;
     }
 `;
     Lexer lx;
@@ -1935,7 +2043,7 @@ unittest
 
 unittest
 {
-    assertNotParse(q{
+    assertParse(q{
         unit a;
         function bar()
         {

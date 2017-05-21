@@ -536,6 +536,12 @@ public:
     bool isTokReturn() const {return type == TokenType.return_;}
 
     /// Conveniance function used by the parser.
+    bool isTokBreak() const {return type == TokenType.break_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokContinue() const {return type == TokenType.continue_;}
+
+    /// Conveniance function used by the parser.
     bool isUnaryPrefix() const
     {
         return type == TokenType.plusPlus || type == TokenType.minusMinus ||

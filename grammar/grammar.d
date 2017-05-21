@@ -104,10 +104,11 @@ Yatol:
                 / ReturnStatement
                 / ExpressionStatement
                 / IfElseStatement
+                / WhileStatement
+                / ContinueStatement
+                / BreakStatement
 #               / SwitchStatement
 #               / CaseStatement
-#               / ContinueStatement
-#               / BreakStatement
 
     EmptyStatment < Semicolon
 
@@ -115,7 +116,15 @@ Yatol:
 
     IfElseStatement < If IfCondition DeclarationOrStatementsBlock (Else DeclarationOrStatementsBlock)?
 
+    WhileStatement < While LeftParen IfCondition RightParen DeclarationOrStatementsBlock
+
     ReturnStatement < Return AssignExpression? Semicolon
+
+    ContinueStatement < Continue AssignExpression ? Semicolon
+
+    BreakStatement < Break AtLabel? AssignExpression? Semicolon
+
+    AtLabel < LeftParen Identifier RightParen
 
     IfCondition < LeftParen RelationalExpressions RightParen
                 / LeftParen ConditionalIdentifierChain RightParen
@@ -286,6 +295,28 @@ Yatol:
 ################################################################################
 # Keywords
 
+    Keyword < BasicType
+            / Unit
+            / Prot
+            / Else
+            / If
+            / Unit
+            / Prot
+            / Else
+            / If
+            / Import
+            / Interface
+            / Virtual
+            / Struct
+            / Class
+            / Function
+            / Static
+            / Return
+            / Break
+            / Continue
+            / While
+
+
     BasicType  < BasicFloatType
                 / BasicIntegerType
 
@@ -315,6 +346,9 @@ Yatol:
     Function<- "function"
     Static  <- "static"
     Return  <- "return"
+    Break   <- "break"
+    Continue<- "continue"
+    While   <- "while"
 
     SREG    <- "sreg"
     UREG    <- "ureg"
@@ -386,11 +420,18 @@ enum source1 = `
         instances[a].instances[b] = 8;
         a = b[c].d[e].f[g];
 
+
         return;
+        break a.call();
     }
 `;
 
 /*
+        while(call())
+        {
+            if (a)
+                break a.call();
+        }
         ++(a);
     }
 */
@@ -405,6 +446,29 @@ q{
         else return "yah";
     }
 };
+
+auto f =
+q{
+    L1:
+    foreach(t; ts)
+    {
+        if (t.call())
+        {
+            t.otherCall();
+            break L1;
+        }
+    }
+
+    // break after expression;
+    L1:
+    foreach(t; ts)
+    {
+        if (t.call())
+            break(L1) t.otherCall();
+    }
+};
+
+
 
 unittest
 {

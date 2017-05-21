@@ -52,9 +52,11 @@ class AstVisitor
     void visit(AssignExpressionAstNode node){node.accept(this);}
     void visit(AstNode node){node.accept(this);}
     void visit(BinaryExpressionAstNode node){node.accept(this);}
+    void visit(BreakStatementAstNode node){node.accept(this);}
     void visit(CallParametersAstNode node){node.accept(this);}
     void visit(CastExpressionAstNode node){node.accept(this);}
     void visit(ClassDeclarationAstNode node){node.accept(this);}
+    void visit(ContinueStatementAstNode node){node.accept(this);}
     void visit(DeclarationAstNode node){node.accept(this);}
     void visit(DeclarationOrStatementAstNode node){node.accept(this);}
     void visit(DotExpressionAstNode node){node.accept(this);}
@@ -93,9 +95,11 @@ class AstVisitorNone: AstVisitor
     override void visit(AssignExpressionAstNode node){}
     override void visit(AstNode node){}
     override void visit(BinaryExpressionAstNode node){}
+    override void visit(BreakStatementAstNode node){}
     override void visit(CallParametersAstNode node){}
     override void visit(CastExpressionAstNode node){}
     override void visit(ClassDeclarationAstNode node){}
+    override void visit(ContinueStatementAstNode node){}
     override void visit(DeclarationAstNode node){}
     override void visit(DeclarationOrStatementAstNode node){}
     override void visit(DotExpressionAstNode node){}
@@ -686,9 +690,9 @@ class EmptyStatementAstNode: AstNode
 }
 
 /// ReturnStatement
-class ReturnStatementAstNode: AstNode
+class FlowControlBaseNode: AstNode
 {
-    /// The expression that gives the return
+    /// The expression that gives the return or executed before the break/continue
     AssignExpressionAstNode expression;
     ///
     override void accept(AstVisitor visitor)
@@ -697,10 +701,31 @@ class ReturnStatementAstNode: AstNode
             visitor.visit(expression);
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
+    override bool isGrammatic() {return false;}
     /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return true;}
+    override bool isTerminal() {return false;}
 }
+
+class ReturnStatementAstNode: FlowControlBaseNode
+{
+    /// Returns: $(D true) if the node has no children.
+    override bool isGrammatic() {return true;}
+}
+
+class ContinueStatementAstNode: FlowControlBaseNode
+{
+    /// Returns: $(D true) if the node has no children.
+    override bool isGrammatic() {return true;}
+}
+
+/// ReturnStatement
+class BreakStatementAstNode: FlowControlBaseNode
+{
+    Token* label;
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+}
+
 
 /// Statement
 class StatementAstNode: AstNode
@@ -715,6 +740,10 @@ class StatementAstNode: AstNode
     ExpressionStatementAstNode expression;
     /// Assigned if this statement is a ReturnStatement.
     ReturnStatementAstNode returnStatement;
+    /// Assigned if this statement is a BreakStatement.
+    BreakStatementAstNode breakStatement;
+    /// Assigned if this statement is a ContinueStatement.
+    ContinueStatementAstNode continueStatement;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -724,6 +753,10 @@ class StatementAstNode: AstNode
             visitor.visit(expression);
         else if (returnStatement)
             visitor.visit(returnStatement);
+        else if (breakStatement)
+            visitor.visit(breakStatement);
+        else if (continueStatement)
+            visitor.visit(continueStatement);
     }
 }
 
