@@ -1036,16 +1036,20 @@ private:
      */
     ExpressionAstNode parseExpression(ExpressionAstNode exp)
     {
-        with(TokenType) if (current.type.among(plusPlus, minusMinus, amp, mul, identifier))
+
+        with(TokenType) if ((firstOperator <= current.type && current.type <= lastOperator)
+            || (current.isTokMul && !lookup(1).type.among(mul, semiColon )))
         {
-            if (exp && (exp.unaryExpression || exp.castExpression))
-            {
-                return null;
-            }
-            if (UnaryExpressionAstNode u = parseUnaryExpression)
+            Token* op = current();
+            advance();
+            if (ExpressionAstNode r = parseExpression(null))
             {
                 ExpressionAstNode result = new ExpressionAstNode;
-                result.unaryExpression = u;
+                BinaryExpressionAstNode be = new BinaryExpressionAstNode;
+                be.left = exp;
+                be.operator = op;
+                be.right = r;
+                result.binaryExpression = be;
                 if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
                 {
                     return result;
@@ -1062,18 +1066,16 @@ private:
             }
         }
 
-        with(TokenType) if (firstOperator <= current.type && current.type <= lastOperator)
+        with(TokenType) if (current.isUnaryPrefix || current.isTokIdentifier)
         {
-            Token* op = current();
-            advance();
-            if (ExpressionAstNode r = parseExpression(null))
+            if (exp && (exp.unaryExpression || exp.castExpression))
+            {
+                return null;
+            }
+            if (UnaryExpressionAstNode u = parseUnaryExpression)
             {
                 ExpressionAstNode result = new ExpressionAstNode;
-                BinaryExpressionAstNode be = new BinaryExpressionAstNode;
-                be.left = exp;
-                be.operator = op;
-                be.right = r;
-                result.binaryExpression = be;
+                result.unaryExpression = u;
                 if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
                 {
                     return result;
@@ -1107,6 +1109,14 @@ private:
                     {
                         return dotifyExpression(result);
                     }
+                    else if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
+                    {
+                        return result;
+                    }
+                    else if (firstOperator <= current.type && current.type <= lastOperator)
+                    {
+                        return parseExpression(result);
+                    }
                     else return result;
                 }
                 else if (current.isTokEllipsis)
@@ -1134,7 +1144,7 @@ private:
                 }
                 else
                 {
-                    parseError("expected either `]` or `..` to define an index or a range");
+                    parseError("expected either `]` or `..` to terminate an index or a range");
                     return null;
                 }
             }
@@ -1218,6 +1228,36 @@ private:
     }
 
     /**
+     * Parses an return statement
+     *
+     * Returns: a $(D ReturnStatementAstNode) on success, $(D null) otherwise.
+     */
+    ReturnStatementAstNode parseReturnStatement()
+    {
+        if (!current.isTokReturn)
+        {
+            expected(TokenType.return_);
+            return null;
+        }
+        advance();
+        if (AssignExpressionAstNode ae = parseAssignExpression())
+        {
+            ReturnStatementAstNode result = new ReturnStatementAstNode;
+            result.expression = ae;
+            if (current.isTokSemicolon)
+            {
+                advance();
+                return result;
+            }
+        }
+        if (!current.isTokSemicolon)
+        {
+            expected(TokenType.semiColon);
+        }
+        return null;
+    }
+
+    /**
      * Parses a statement.
      *
      * Returns: a $(D StatementAstNode) on success, $(D null) otherwise.
@@ -1231,6 +1271,20 @@ private:
             StatementAstNode result = new StatementAstNode;
             result.emptyStatement = new EmptyStatementAstNode;
             return result;
+        }
+        case return_:
+        {
+            if (ReturnStatementAstNode rs = parseReturnStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.returnStatement = rs;
+                return result;
+            }
+            else
+            {
+                parseError("invalid return statement");
+                return null;
+            }
         }
         /*
         other cases are for statements starting witha keyword
@@ -1536,7 +1590,7 @@ unittest
         function pig2(): s64;
     }
     import (10101) a.b, c.d.r;
-    static function exp()
+    static function exp(): s32
     {
         a++;
         a = b + c;
@@ -1554,6 +1608,8 @@ unittest
         a = b[c..d];
         a = b[c].d[e].f[g];
         (b[c].d[e]) = a;
+        a = a * u;
+        return b + c;
     }
 `;
     Lexer lx;
@@ -1818,6 +1874,17 @@ unittest
 
 unittest
 {
+    assertParse(q{
+        unit a;
+        function bar()
+        {
+            //a = array[a][b][c];
+        }
+    });
+}
+
+unittest
+{
     assertNotParse(q{
         unit a;
         function bar()
@@ -1831,11 +1898,66 @@ unittest
 {
     assertParse(q{
         unit a;
+        function bar()
+        {
+            a[a[a].a[a]].a[a] = b;
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
         function bar(u32 a,b,c; u64 d);
         function bar(u32 a,b,c; u64 d){}
         function bar(u32 a,b,c; u64 d): u64;
         function bar(u32 a,b,c; u64 d): u64 {}
         function bar(function*(u32 a) callback): function*();
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        function bar()
+        {
+            return
+        }
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        function bar()
+        {
+            return;
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar(): s8
+        {
+            return a[a[a]];
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar(): s8
+        {
+            return a[a] + c;
+        }
     });
 }
 

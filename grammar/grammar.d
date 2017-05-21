@@ -101,13 +101,13 @@ Yatol:
 # Statements
 
     Statement   < EmptyStatment
+                / ReturnStatement
                 / ExpressionStatement
                 / IfElseStatement
 #               / SwitchStatement
 #               / CaseStatement
 #               / ContinueStatement
 #               / BreakStatement
-#               / ReturnStatement
 
     EmptyStatment < Semicolon
 
@@ -115,7 +115,7 @@ Yatol:
 
     IfElseStatement < If IfCondition DeclarationOrStatementsBlock (Else DeclarationOrStatementsBlock)?
 
-
+    ReturnStatement < Return AssignExpression? Semicolon
 
     IfCondition < LeftParen RelationalExpressions RightParen
                 / LeftParen ConditionalIdentifierChain RightParen
@@ -286,11 +286,6 @@ Yatol:
 ################################################################################
 # Keywords
 
-    Keyword <  Unit
-            / Prot
-            / Import
-            / BasicType
-
     BasicType  < BasicFloatType
                 / BasicIntegerType
 
@@ -319,6 +314,7 @@ Yatol:
     Class   <- "class"
     Function<- "function"
     Static  <- "static"
+    Return  <- "return"
 
     SREG    <- "sreg"
     UREG    <- "ureg"
@@ -389,6 +385,8 @@ enum source1 = `
 
         instances[a].instances[b] = 8;
         a = b[c].d[e].f[g];
+
+        return;
     }
 `;
 

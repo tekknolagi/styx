@@ -9,6 +9,7 @@ if
 import
 interface
 protection
+return
 s16
 s32
 s64

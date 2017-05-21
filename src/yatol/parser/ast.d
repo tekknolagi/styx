@@ -71,6 +71,7 @@ class AstVisitor
     void visit(ParenExpressionAstNode node){node.accept(this);}
     void visit(ProtectionDeclarationAstNode node){node.accept(this);}
     void visit(RangeExpressionAstNode node){node.accept(this);}
+    void visit(ReturnStatementAstNode node){node.accept(this);}
     void visit(ScopeDeclarationAstNode node){node.accept(this);}
     void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
@@ -111,6 +112,7 @@ class AstVisitorNone: AstVisitor
     override void visit(ParenExpressionAstNode node){}
     override void visit(ProtectionDeclarationAstNode node){}
     override void visit(RangeExpressionAstNode node){}
+    override void visit(ReturnStatementAstNode node){}
     override void visit(ScopeDeclarationAstNode node){}
     override void visit(StatementAstNode node){}
     override void visit(StructDeclarationAstNode node){}
@@ -683,6 +685,23 @@ class EmptyStatementAstNode: AstNode
     override bool isTerminal() {return true;}
 }
 
+/// ReturnStatement
+class ReturnStatementAstNode: AstNode
+{
+    /// The expression that gives the return
+    AssignExpressionAstNode expression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (expression)
+            visitor.visit(expression);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return true;}
+}
+
 /// Statement
 class StatementAstNode: AstNode
 {
@@ -694,6 +713,8 @@ class StatementAstNode: AstNode
     EmptyStatementAstNode emptyStatement;
     /// Assigned if this statement is an Expression.
     ExpressionStatementAstNode expression;
+    /// Assigned if this statement is a ReturnStatement.
+    ReturnStatementAstNode returnStatement;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -701,6 +722,8 @@ class StatementAstNode: AstNode
             visitor.visit(emptyStatement);
         else if (expression)
             visitor.visit(expression);
+        else if (returnStatement)
+            visitor.visit(returnStatement);
     }
 }
 

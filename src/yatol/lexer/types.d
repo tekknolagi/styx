@@ -20,6 +20,7 @@ enum TokenType : ubyte
     import_,
     interface_,
     protection,
+    return_,
     static_,
     struct_,
     unit,
@@ -61,9 +62,9 @@ enum TokenType : ubyte
     // operators
     div,
     minus,
-    minusMinus,
     mul,
     plus,
+    minusMinus,
     plusPlus,
 }
 
@@ -95,6 +96,7 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     "import",
     "interface",
     "protection",
+    "return",
     "static",
     "struct",
     "unit",
@@ -136,9 +138,9 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     // operators
     "/",
     "-",
-    "--",
     "*",
     "+",
+    "--",
     "++",
 ];
 
@@ -197,7 +199,7 @@ private:
     static const string[64] _words =
     [
         "", "protection", "class", "", "f32", "", "f64", "",
-        "break", "virtual", "", "", "s32", "", "s64", "",
+        "break", "virtual", "", "", "s32", "return", "s64", "",
         "import", "u32", "", "u64", "", "", "sreg", "",
         "", "", "unit", "ureg", "", "interface", "", "",
         "if", "", "", "", "", "static", "s16", "",
@@ -529,6 +531,9 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokEllipsis() const {return type == TokenType.ellipsis;}
+
+    /// Conveniance function used by the parser.
+    bool isTokReturn() const {return type == TokenType.return_;}
 
     /// Conveniance function used by the parser.
     bool isUnaryPrefix() const
