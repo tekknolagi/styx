@@ -869,6 +869,11 @@ private:
         }
         advance();
         CallParametersAstNode result = new CallParametersAstNode;
+        if (current.isTokRightParen)
+        {
+            advance();
+            return result;
+        }
         while (true)
         {
             if (ExpressionAstNode ex = parseExpression(null))
