@@ -146,11 +146,7 @@ Yatol:
                 / UnaryExpression
                 / RelationalExpression
 
-    #NOT ANYMORE ? BUG: Expression LeftSquare, parse only if space seprated.
-
     BinaryExpression < Expression Operator Expression
-
-    CallParameters < Expression (Comma Expression)*
 
     RelationalExpression    < Expression RelOperator Expression
                             / ConditionalIdentifierChain RelOperator Expression
@@ -164,7 +160,9 @@ Yatol:
 
     ParenExpression < UnaryPrefix? LeftParen Expression RightParen PostfixExpression*
 
-    UnaryExpression < UnaryPrefix? IdentifierChain CallExpression? PostfixExpression*
+    CallParameters < LeftParen Expression? (Comma Expression)* RightParen
+
+    UnaryExpression < UnaryPrefix? IdentifierChain PostfixExpression*
                     / NumberLiteral UnarySuffix?
                     / UnaryPrefix? UnaryExpression
                     / UnaryPrefix? ParenExpression
@@ -176,7 +174,7 @@ Yatol:
                         / MinusMinus
                         / IndexExpression
                         / RangeExpression
-                        / callParameters
+                        / CallParameters
                         / Cast
 
     IndexExpression < LeftSquare Expression RightSquare
@@ -402,6 +400,7 @@ enum source1 = `
         a = *derefer;
         a = b:ToType;
         a = b:ToType + c:ToType;;
+        if (a == 0) {call(a);}
 
         s8 a = 8;
 
@@ -433,12 +432,16 @@ enum source1 = `
 
         a = b[c](param0).b[c](param0);
 
-        return;
-        break a.call();
+
     }
 `;
 
 /*
+
+
+
+        return;
+        break a.call();
         while(call())
         {
             if (a)
