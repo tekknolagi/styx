@@ -896,6 +896,76 @@ private:
         }
     }
 
+    PostfixExpressionAstNode parsePostfixExpression()
+    {
+        PostfixExpressionAstNode result = new PostfixExpressionAstNode;
+
+        if (current.isTokLeftSquare)
+        {
+            advance();
+            ExpressionAstNode e = parseExpression(null);
+            if (!e || current.isTokRightSquare)
+            {
+                result.indexExpression = new IndexExpressionAstNode;
+                if (e)
+                    result.indexExpression.index = e;
+                advance();
+                return result;
+            }
+            else if (current.isTokEllipsis)
+            {
+                advance();
+                if (ExpressionAstNode r = parseExpression(null))
+                    if (current.isTokRightSquare)
+                {
+                    RangeExpressionAstNode re = new RangeExpressionAstNode;
+                    re.left = e;
+                    re.right = r;
+                    result.rangeExpression = re;
+                    advance();
+                    return result;
+                }
+            }
+            parseError("invalid index or range expression");
+            return null;
+        }
+        else if (current.isUnarySuffix)
+        {
+            result.plusplusOrMinusMinus = current();
+            advance();
+            return result;
+        }
+        else if (current.isTokColon)
+        {
+            advance();
+            if (TypeAstNode t = parseType())
+            {
+                result.castToType = t;
+                advance();
+                return result;
+            }
+            else
+            {
+                parseError("invalid cast target type");
+                return null;
+            }
+        }
+        else if (current.isTokLeftParen)
+        {
+            if (CallParametersAstNode cp = parseCallParameters())
+            {
+                result.callParameters = cp;
+                return result;
+            }
+            else
+            {
+                parseError("invalid call parameters");
+                return null;
+            }
+        }
+        else return null;
+    }
+
     /**
      * Parses an unary expression.
      *
@@ -923,14 +993,6 @@ private:
             if (Token*[] idc = parseIdentifierChain())
                 result.identifierChain = idc;
             else return null;
-            if (current.isTokLeftParen)
-            {
-                if (CallParametersAstNode cp = parseCallParameters)
-                {
-                    result.callParameters = cp;
-                }
-                else return null;
-            }
         }
         else if (current.isNumberLiteral)
         {
@@ -938,18 +1000,23 @@ private:
             result.numberLitteral.literal = current();
             advance();
         }
-        if (!result.identifierChain.length && !result.numberLitteral)
+        else if (current.isTokLeftParen)
         {
-            parseError("expected identifier or literal");
-            return null;
+            if (ParenExpressionAstNode pe = parseParenExpression)
+            {
+                result.parenExpression = pe;
+                advance();
+            }
+            else return null;
         }
-        if (current.isUnarySuffix)
+        with(TokenType) while (current.type.among(colon, plusPlus, minusMinus, leftSquare, leftParen))
         {
-             result.suffix = current();
-             advance();
-             if (current.isTokPlusPlus || current.isTokMinusMinus)
-             {
-                unexpected();
+            if (PostfixExpressionAstNode pe = parsePostfixExpression)
+            {
+                result.postfixes ~= pe;
+            }
+            else
+            {
                 return null;
             }
         }
@@ -1077,7 +1144,7 @@ private:
         with(TokenType) if (current.isUnaryPrefix || current.isTokIdentifier ||
             current.isNumberLiteral)
         {
-            if (exp && (exp.unaryExpression || exp.castExpression))
+            if (exp && (exp.unaryExpression))
             {
                 return null;
             }
@@ -1085,117 +1152,6 @@ private:
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 result.unaryExpression = u;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
-                {
-                    return result;
-                }
-                else if (current.isTokDot)
-                {
-                    return dotifyExpression(result);
-                }
-                else
-                {
-                    result = parseExpression(result);
-                    return result;
-                }
-            }
-        }
-
-        with(TokenType) if (current.isTokLeftSquare)
-        {
-            advance();
-            if (ExpressionAstNode i = parseExpression(null))
-            {
-                ExpressionAstNode result = new ExpressionAstNode;
-                if (current.isTokRightSquare)
-                {
-                    IndexExpressionAstNode ie = new IndexExpressionAstNode;
-                    ie.indexed = exp;
-                    ie.index = i;
-                    result.indexExpression = ie;
-                    advance();
-                    if (current.isTokDot)
-                    {
-                        return dotifyExpression(result);
-                    }
-                    else if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
-                    {
-                        return result;
-                    }
-                    else if (firstOperator <= current.type && current.type <= lastOperator)
-                    {
-                        return parseExpression(result);
-                    }
-                    else return result;
-                }
-                else if (current.isTokEllipsis)
-                {
-                    advance();
-                    if (ExpressionAstNode r = parseExpression(null))
-                        if (current.isTokRightSquare)
-                    {
-                        RangeExpressionAstNode re = new RangeExpressionAstNode;
-                        re.indexed = exp;
-                        re.left = i;
-                        re.right = r;
-                        result.rangeExpression = re;
-                        advance();
-                        if (current.isTokDot)
-                        {
-                            return dotifyExpression(result);
-                        }
-                        else return result;
-                    }
-                    if (!current.isTokRightSquare)
-                        expected(rightSquare);
-                    // else error emitted before ?
-                    return null;
-                }
-                else
-                {
-                    parseError("expected either `]` or `..` to terminate an index or a range");
-                    return null;
-                }
-            }
-        }
-
-        with(TokenType) if (current.isTokLeftParen)
-        {
-            if (ParenExpressionAstNode p = parseParenExpression)
-            {
-                ExpressionAstNode result = new ExpressionAstNode;
-                result.parenExpression = p;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
-                {
-                    return result;
-                }
-                else if (current.isTokDot)
-                {
-                    return dotifyExpression(result);
-                }
-                else
-                {
-                    result = parseExpression(result);
-                    return result;
-                }
-            }
-        }
-
-        with(TokenType) if (current.isTokColon)
-        {
-            if (!exp)
-            {
-                parseError("no left expression to cast");
-                return null;
-            }
-            advance();
-            if (TypeAstNode t = parseType)
-            {
-                ExpressionAstNode result = new ExpressionAstNode;
-                CastExpressionAstNode ce = new CastExpressionAstNode;
-                ce.expression = exp;
-                ce.type = t;
-                result.castExpression = ce;
                 if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
                 {
                     return result;
@@ -1670,7 +1626,7 @@ unittest
     enum line = __LINE__;
     enum source = `
     unit a;
-    protection(private)
+    /*protection(private)
         function ant(s8 p1,p2; s16 p3,p4): s8***[];
         function bee(Rat p1,p2; a.Cow p3,p4): s8* {}
     protection(public)
@@ -1700,26 +1656,25 @@ unittest
         function pig1(): s32;
         function pig2(): s64;
     }
-    import (10101) a.b, c.d.r;
+    import (10101) a.b, c.d.r;*/
     static function exp(): s32
     {
-        /*a++;
         a = b + c;
         ++a;
         a++;
         a = b + c;
         ++--++a.a.a;
-        (++a);
+        //(++a);
         call(a++,--b);
         a = b(c++);
         a = b + a(&c(*p.m));
-        a = d:u32 + c;
-        a = b[c+d:u8];
+        //a = d:u32 + c;
+        //a = b[c+d:u8];
         a = call(param)[call(param)];
         a = b[c..d];
         a = b[c].d[e].f[g];
-        (b[c].d[e]) = a;
-        a = a * u;*/
+        //(b[c].d[e]) = a;
+        a = a * u;
         return;
         return b + c;
         break (Label1) a.call();
@@ -1781,7 +1736,7 @@ void assertNotParse(const(char)[] code, string file = __FILE_FULL_PATH__,
     assert(pr.parse() is null, "code parsed but should not be");
 }
 
-version(all):
+version(none):
 
 unittest
 {

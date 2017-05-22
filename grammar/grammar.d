@@ -135,37 +135,20 @@ Yatol:
     RelationalExpressions < RelationalExpression (RelOperator RelationalExpression)*
 
 ################################################################################
-# Expressions
+# Composites expressions
 
     AssignExpression    < Expression Equal AssignExpression
                         / Expression
 
     Expression  < BinaryExpression
                 / DotExpression
-                / IndexExpression
-                / RangeExpression
-                / ParenExpression
-                / CastExpression
                 / OptionalExpression
                 / UnaryExpression
                 / RelationalExpression
 
     #NOT ANYMORE ? BUG: Expression LeftSquare, parse only if space seprated.
-    IndexExpression < Expression LeftSquare Expression RightSquare
-
-    RangeExpression < Expression LeftSquare Expression Ellipsis Expression RightSquare
-
-    ParenExpression < LeftParen Expression RightParen
 
     BinaryExpression < Expression Operator Expression
-
-    CastExpression   < Expression Cast
-
-    UnaryExpression < UnaryPrefix? IdentifierChain CallExpression? UnarySuffix?
-                    / NumberLiteral UnarySuffix?
-                    / UnaryPrefix? UnaryExpression
-
-    CallExpression < LeftParen CallParameters? RightParen
 
     CallParameters < Expression (Comma Expression)*
 
@@ -176,6 +159,29 @@ Yatol:
 
     OptionalExpression  < Expression Qmark
 
+################################################################################
+# Postfixable single expression
+
+    ParenExpression < UnaryPrefix? LeftParen Expression RightParen PostfixExpression*
+
+    UnaryExpression < UnaryPrefix? IdentifierChain CallExpression? PostfixExpression*
+                    / NumberLiteral UnarySuffix?
+                    / UnaryPrefix? UnaryExpression
+                    / UnaryPrefix? ParenExpression
+
+################################################################################
+# PostfixExpression
+
+    PostfixExpression   < PlusPlus
+                        / MinusMinus
+                        / IndexExpression
+                        / RangeExpression
+                        / callParameters
+                        / Cast
+
+    IndexExpression < LeftSquare Expression RightSquare
+
+    RangeExpression < LeftSquare Expression Ellipsis Expression RightSquare
 
 ################################################################################
 # Cast
@@ -392,6 +398,7 @@ enum source1 = `
         ++a;
         --a;
         a = a++;
+        a = a[0][1];
         a = *derefer;
         a = b:ToType;
         a = b:ToType + c:ToType;;
@@ -420,6 +427,11 @@ enum source1 = `
         instances[a].instances[b] = 8;
         a = b[c].d[e].f[g];
 
+        (a + b)++;
+
+        a = (b[c](param0, param1 + stuff):u32):u64;
+
+        a = b[c](param0).b[c](param0);
 
         return;
         break a.call();
