@@ -175,8 +175,6 @@ private:
         _cached = true;
     }
 
-protected:
-
 public:
 
     /// The token that gives the type of literal.

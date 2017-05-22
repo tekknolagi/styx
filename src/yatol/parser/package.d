@@ -932,14 +932,17 @@ private:
                 else return null;
             }
         }
-        // + else if current is literal...
-
+        else if (current.isNumberLiteral)
+        {
+            result.numberLitteral = new NumberLiteralAstNode;
+            result.numberLitteral.literal = current();
+            advance();
+        }
         if (!result.identifierChain.length && !result.numberLitteral)
         {
             parseError("expected identifier or literal");
             return null;
         }
-
         if (current.isUnarySuffix)
         {
              result.suffix = current();
@@ -1071,7 +1074,8 @@ private:
             }
         }
 
-        with(TokenType) if (current.isUnaryPrefix || current.isTokIdentifier)
+        with(TokenType) if (current.isUnaryPrefix || current.isTokIdentifier ||
+            current.isNumberLiteral)
         {
             if (exp && (exp.unaryExpression || exp.castExpression))
             {
@@ -1723,6 +1727,7 @@ unittest
         break;
         continue a.call();
         continue;
+        a = b + 8;
     }
 `;
     Lexer lx;

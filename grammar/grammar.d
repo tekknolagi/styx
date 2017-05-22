@@ -120,7 +120,7 @@ Yatol:
 
     ReturnStatement < Return AssignExpression? Semicolon
 
-    ContinueStatement < Continue AssignExpression ? Semicolon
+    ContinueStatement < Continue AssignExpression? Semicolon
 
     BreakStatement < Break AtLabel? AssignExpression? Semicolon
 

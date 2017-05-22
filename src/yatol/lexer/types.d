@@ -180,6 +180,11 @@ static immutable firstOperator = TokenType.div;
 /// The value of the last operator.
 static immutable lastOperator = TokenType.plus;
 
+/// The value of the first number literal.
+static immutable firstNumberLiteral = TokenType.intLiteral;
+/// The value of the last number literal.
+static immutable lastNumberLiteral = TokenType.hexLiteral;
+
 /**
  * Hashset that allows to distinguish efficiently the identifiers
  * from the keywords.
@@ -552,6 +557,12 @@ public:
     bool isUnarySuffix() const
     {
         return type == TokenType.plusPlus || type == TokenType.minusMinus;
+    }
+
+    /// Conveniance function used by the parser.
+    bool isNumberLiteral() const
+    {
+        return firstNumberLiteral <= type && type <= lastNumberLiteral;
     }
 }
 
