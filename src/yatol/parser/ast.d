@@ -52,6 +52,7 @@ class AstVisitor
     void visit(AssignExpressionAstNode node){node.accept(this);}
     void visit(AstNode node){node.accept(this);}
     void visit(BinaryExpressionAstNode node){node.accept(this);}
+    void visit(BlockStatementAstNode node){node.accept(this);}
     void visit(BreakStatementAstNode node){node.accept(this);}
     void visit(CallParametersAstNode node){node.accept(this);}
     void visit(ClassDeclarationAstNode node){node.accept(this);}
@@ -74,7 +75,6 @@ class AstVisitor
     void visit(ProtectionDeclarationAstNode node){node.accept(this);}
     void visit(RangeExpressionAstNode node){node.accept(this);}
     void visit(ReturnStatementAstNode node){node.accept(this);}
-    void visit(ScopeDeclarationAstNode node){node.accept(this);}
     void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
     void visit(TypeAstNode node){node.accept(this);}
@@ -95,6 +95,7 @@ class AstVisitorNone: AstVisitor
     override void visit(AssignExpressionAstNode node){}
     override void visit(AstNode node){}
     override void visit(BinaryExpressionAstNode node){}
+    override void visit(BlockStatementAstNode node){}
     override void visit(BreakStatementAstNode node){}
     override void visit(CallParametersAstNode node){}
     override void visit(ClassDeclarationAstNode node){}
@@ -117,7 +118,6 @@ class AstVisitorNone: AstVisitor
     override void visit(ProtectionDeclarationAstNode node){}
     override void visit(RangeExpressionAstNode node){}
     override void visit(ReturnStatementAstNode node){}
-    override void visit(ScopeDeclarationAstNode node){}
     override void visit(StatementAstNode node){}
     override void visit(StructDeclarationAstNode node){}
     override void visit(TypeAstNode node){}
@@ -354,22 +354,6 @@ class InterfaceDeclarationAstNode: AstNode
     override bool isTerminal() {return false;}
 }
 
-/// Scope
-class ScopeDeclarationAstNode: AstNode
-{
-    /// The declarations located in the scope.
-    DeclarationAstNode[] declarations;
-    ///
-    override void accept(AstVisitor visitor)
-    {
-        declarations.each!(a => visitor.visit(a));
-    }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
-}
-
 /// ProtectionAttribute
 class ProtectionDeclarationAstNode: AstNode
 {
@@ -399,7 +383,7 @@ class DeclarationAstNode: AstNode
     /// Assigned if this declaration is a StructDeclarationAstNode.
     StructDeclarationAstNode structDeclaration;
     /// Assigned if this declaration is a Scope.
-    ScopeDeclarationAstNode scopeDeclaration;
+    BlockStatementAstNode declarationBlock;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -413,8 +397,8 @@ class DeclarationAstNode: AstNode
             visitor.visit(classDeclaration);
         else if (structDeclaration)
             visitor.visit(structDeclaration);
-        else if (scopeDeclaration)
-            visitor.visit(scopeDeclaration);
+        else if (declarationBlock)
+            visitor.visit(declarationBlock);
         else if (functionDeclaration)
             visitor.visit(functionDeclaration);
     }
@@ -677,6 +661,22 @@ class EmptyStatementAstNode: AstNode
     override bool isTerminal() {return true;}
 }
 
+/// BlockStatement
+class BlockStatementAstNode: AstNode
+{
+    /// Declarations or statement located in the block.
+    DeclarationOrStatementAstNode[] declarationsOrStatements;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        declarationsOrStatements.each!(a => visitor.visit(a));
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
 /// ReturnStatement
 class FlowControlBaseNode: AstNode
 {
@@ -732,6 +732,8 @@ class StatementAstNode: AstNode
     BreakStatementAstNode breakStatement;
     /// Assigned if this statement is a ContinueStatement.
     ContinueStatementAstNode continueStatement;
+    /// Assigned if this is a block statement.
+    BlockStatementAstNode block;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -745,15 +747,17 @@ class StatementAstNode: AstNode
             visitor.visit(breakStatement);
         else if (continueStatement)
             visitor.visit(continueStatement);
+        else if (block)
+            visitor.visit(block);
     }
 }
 
 /// DeclarationOrStatement
 class DeclarationOrStatementAstNode: AstNode
 {
-    /// Assigned if this is a declaration
+    /// Assigned if this is a declaration.
     DeclarationAstNode declaration;
-    /// Assigned if this is a statement
+    /// Assigned if this is a statement.
     StatementAstNode statement;
     ///
     override void accept(AstVisitor visitor)

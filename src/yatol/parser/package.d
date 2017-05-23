@@ -500,29 +500,6 @@ private:
     }
 
     /**
-     * Parses an ScopeDeclaration.
-     *
-     * Returns:
-     *      On success a $(D ScopeDeclarationAstNode) otherwise $(D null).
-     */
-    ScopeDeclarationAstNode parseScopeDeclaration()
-    {
-        if (!current.isTokLeftCurly)
-        {
-            expected(TokenType.leftCurly);
-            return null;
-        }
-        ScopeDeclarationAstNode result = new ScopeDeclarationAstNode;
-        parseDeclarations(result.declarations);
-        if (!current.isTokRightCurly)
-        {
-            expected(TokenType.rightCurly);
-            return null;
-        }
-        return result;
-    }
-
-    /**
      * Parses a FunctionType.
      *
      * Returns:
@@ -941,12 +918,11 @@ private:
             if (TypeAstNode t = parseType())
             {
                 result.castToType = t;
-                advance();
                 return result;
             }
             else
             {
-                parseError("invalid cast target type");
+                parseError("invalid cast type");
                 return null;
             }
         }
@@ -992,7 +968,8 @@ private:
         {
             if (Token*[] idc = parseIdentifierChain())
                 result.identifierChain = idc;
-            else return null;
+            else
+                return null;
         }
         else if (current.isNumberLiteral)
         {
@@ -1003,11 +980,9 @@ private:
         else if (current.isTokLeftParen)
         {
             if (ParenExpressionAstNode pe = parseParenExpression)
-            {
                 result.parenExpression = pe;
-                advance();
-            }
-            else return null;
+            else
+                return null;
         }
         with(TokenType) while (current.type.among(colon, plusPlus, minusMinus, leftSquare, leftParen))
         {
@@ -1015,10 +990,7 @@ private:
             {
                 result.postfixes ~= pe;
             }
-            else
-            {
-                return null;
-            }
+            else return null;
         }
         return result;
     }
@@ -1142,7 +1114,7 @@ private:
         }
 
         with(TokenType) if (current.isUnaryPrefix || current.isTokIdentifier ||
-            current.isNumberLiteral)
+            current.isNumberLiteral || current.isTokLeftParen)
         {
             if (exp && (exp.unaryExpression))
             {
@@ -1356,6 +1328,18 @@ private:
                 return null;
             }
         }
+        case leftCurly:
+        {
+            writeln("start block");
+            BlockStatementAstNode b = new BlockStatementAstNode;
+            if (parseDeclarationsOrStatements(b.declarationsOrStatements))
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.block = b;
+                return result;
+            }
+            else return null;
+        }
         default:
         {
             if (ExpressionStatementAstNode es = parseExpressionStatement())
@@ -1437,16 +1421,6 @@ private:
             {
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.protectionOverwrite = decl;
-                return result;
-            }
-            else return null;
-        }
-        case leftCurly:
-        {
-            if (ScopeDeclarationAstNode decl = parseScopeDeclaration())
-            {
-                DeclarationAstNode result = new DeclarationAstNode;
-                result.scopeDeclaration = decl;
                 return result;
             }
             else return null;
@@ -1664,16 +1638,16 @@ unittest
         a++;
         a = b + c;
         ++--++a.a.a;
-        //(++a);
+        (++a);
         call(a++,--b);
         a = b(c++);
         a = b + a(&c(*p.m));
-        //a = d:u32 + c;
-        //a = b[c+d:u8];
+        a = d:u32 + c;
+        a = b[c+d:u8];
         a = call(param)[call(param)];
         a = b[c..d];
         a = b[c].d[e].f[g];
-        //(b[c].d[e]) = a;
+        (b[c].d[e]) = a;
         a = a * u;
         return;
         return b + c;
@@ -1683,6 +1657,9 @@ unittest
         continue a.call();
         continue;
         a = b + 8;
+        {
+            foo.bar.baz();
+        }
     }
 `;
     Lexer lx;
@@ -1736,7 +1713,7 @@ void assertNotParse(const(char)[] code, string file = __FILE_FULL_PATH__,
     assert(pr.parse() is null, "code parsed but should not be");
 }
 
-version(none):
+version(all):
 
 unittest
 {
@@ -1951,7 +1928,7 @@ unittest
         unit a;
         function bar()
         {
-            //a = array[a][b][c];
+            a = array[a][b][c];
         }
     });
 }
@@ -2030,6 +2007,17 @@ unittest
         function bar(): s8
         {
             return a[a] + c;
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar(): s8
+        {
+            return a[a].a[a].b[0][1][2]++:u32:u64;
         }
     });
 }

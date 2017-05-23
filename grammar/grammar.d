@@ -28,14 +28,13 @@ Yatol:
                     / ClassDeclaration
                     / StructDeclaration
                     / FunctionDeclaration
-                    / ScopeDeclaration
                     / InterfaceDeclaration
+                    / BlockStatement
 
     ProtectionDeclaration   < Prot LeftParen Identifier RightParen
     StructDeclaration       < Struct Identifier LeftCurly Declarations? RightCurly
     ClassDeclaration        < Class Identifier LeftCurly Declarations? RightCurly
     InterfaceDeclaration    < Interface Identifier LeftCurly Declarations? RightCurly
-    ScopeDeclaration        < LeftCurly Declarations RightCurly
 
     VariableDeclaration     < Static? Type VariableDeclarationList Semicolon
 
@@ -90,7 +89,7 @@ Yatol:
 # DeclarationOrStatement
 
     DeclarationOrStatementsBlock < DeclarationOrStatement
-                                 / LeftCurly DeclarationOrStatements RightCurly
+                                 / BlockStatement
 
     DeclarationOrStatements < DeclarationOrStatement+
 
@@ -107,6 +106,7 @@ Yatol:
                 / WhileStatement
                 / ContinueStatement
                 / BreakStatement
+                / BlockStatement
 #               / SwitchStatement
 #               / CaseStatement
 
@@ -123,6 +123,8 @@ Yatol:
     ContinueStatement < Continue AssignExpression? Semicolon
 
     BreakStatement < Break AtLabel? AssignExpression? Semicolon
+
+    BlockStatement < LeftCurly DeclarationOrStatementsBlock RightCurly
 
     AtLabel < LeftParen Identifier RightParen
 
