@@ -889,7 +889,7 @@ private:
                 advance();
                 return result;
             }
-            else if (current.isTokEllipsis)
+            else if (current.isTokDotDot)
             {
                 advance();
                 if (ExpressionAstNode r = parseExpression(null))
@@ -1097,7 +1097,7 @@ private:
                 be.operator = op;
                 be.right = r;
                 result.binaryExpression = be;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal))
                 {
                     return result;
                 }
@@ -1124,7 +1124,7 @@ private:
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 result.unaryExpression = u;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, ellipsis, equal))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal))
                 {
                     return result;
                 }
@@ -1600,7 +1600,7 @@ unittest
     enum line = __LINE__;
     enum source = `
     unit a;
-    /*protection(private)
+    protection(private)
         function ant(s8 p1,p2; s16 p3,p4): s8***[];
         function bee(Rat p1,p2; a.Cow p3,p4): s8* {}
     protection(public)
@@ -1630,7 +1630,7 @@ unittest
         function pig1(): s32;
         function pig2(): s64;
     }
-    import (10101) a.b, c.d.r;*/
+    import (10101) a.b, c.d.r;
     static function exp(): s32
     {
         a = b + c;
@@ -1645,7 +1645,7 @@ unittest
         a = d:u32 + c;
         a = b[c+d:u8];
         a = call(param)[call(param)];
-        a = b[c..d];
+        //a = b[c..d];
         a = b[c].d[e].f[g];
         (b[c].d[e]) = a;
         a = a * u;

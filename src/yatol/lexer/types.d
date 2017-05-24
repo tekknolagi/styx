@@ -58,6 +58,7 @@ enum TokenType : ubyte
     rightParen,
     rightSquare,
     at,
+    dotDot,
     ellipsis,
     // operators
     div,
@@ -135,6 +136,7 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     "]",
     "@",
     "..",
+    "...",
     // operators
     "/",
     "-",
@@ -533,6 +535,9 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokMinusMinus() const {return type == TokenType.minusMinus;}
+
+    /// Conveniance function used by the parser.
+    bool isTokDotDot() const {return type == TokenType.dotDot;}
 
     /// Conveniance function used by the parser.
     bool isTokEllipsis() const {return type == TokenType.ellipsis;}

@@ -437,7 +437,12 @@ public:
                 {
                     advance();
                     advance();
-                    validateToken(TokenType.ellipsis);
+                    if (*_front == '.')
+                    {
+                        advance();
+                        validateToken(TokenType.ellipsis);
+                    }
+                    else validateToken(TokenType.dotDot);
                 }
                 else
                 {
@@ -571,7 +576,7 @@ unittest
         virtual unit d;
         // comment 3
         // comment 4
-        ;;;...};
+        ;;;.....};
 
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 7);
@@ -600,8 +605,8 @@ unittest
     assert(lx.tokens[17].text == ";");
     assert(lx.tokens[18].text == ";");
     assert(lx.tokens[19].text == ";");
-    assert(lx.tokens[20].text == "..");
-    assert(lx.tokens[21].text == ".");
+    assert(lx.tokens[20].text == "...");
+    assert(lx.tokens[21].text == "..");
 }
 
 /**
