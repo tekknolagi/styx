@@ -1330,7 +1330,6 @@ private:
         }
         case leftCurly:
         {
-            writeln("start block");
             BlockStatementAstNode b = new BlockStatementAstNode;
             if (parseDeclarationsOrStatements(b.declarationsOrStatements))
             {

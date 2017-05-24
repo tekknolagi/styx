@@ -104,7 +104,7 @@ int main(string[] args)
         }
         else if (arg[0] != '-')
         {
-            stderr.writefln(`error, the file "%s" cannot be found`, arg);
+            stderr.writefln(`error, the file "%s" does not seem to exist`, arg);
             return 1;
         }
     }

@@ -350,10 +350,19 @@ public:
                 processlineEnding;
                 continue;
             case '/':
-                if ( *lookup(1) == '/')
-                    lexLineComment();
-                else if (*lookup(1) == '*')
-                    lexStarComment;
+                if (_front <= _back)
+                {
+                    if ( *lookup(1) == '/')
+                        lexLineComment();
+                    else if (*lookup(1) == '*')
+                        lexStarComment;
+                    else
+                    {
+                        anticipateToken(TokenType.div);
+                        advance();
+                        validateToken();
+                    }
+                }
                 else
                 {
                     anticipateToken(TokenType.div);
@@ -367,7 +376,7 @@ public:
                 lexIdentifier();
                 continue;
             case '0':
-                if ( 'x' == *lookup(1) || *lookup(1) == 'X')
+                if (_front <= _back && ('x' == *lookup(1) || *lookup(1) == 'X'))
                 {
                     anticipateToken(TokenType.hexLiteral);
                     advance();
@@ -383,17 +392,26 @@ public:
                 lexIntegerLiteral();
                 continue;
             case '-':
-                if ( '0' <= *lookup(1) && *lookup(1) <= '9')
+                if (_front < _back)
                 {
-                    anticipateToken(TokenType.intLiteral);
-                    lexIntegerLiteral();
-                }
-                else if (*lookup(1) == '-')
-                {
-                    anticipateToken(TokenType.minusMinus);
-                    advance();
-                    advance();
-                    validateToken();
+                    if ( '0' <= *lookup(1) && *lookup(1) <= '9')
+                    {
+                        anticipateToken(TokenType.intLiteral);
+                        lexIntegerLiteral();
+                    }
+                    else if (*lookup(1) == '-')
+                    {
+                        anticipateToken(TokenType.minusMinus);
+                        advance();
+                        advance();
+                        validateToken();
+                    }
+                    else
+                    {
+                        anticipateToken(TokenType.minus);
+                        advance();
+                        validateToken();
+                    }
                 }
                 else
                 {
@@ -409,7 +427,7 @@ public:
                 continue;
             case '+':
                 anticipateToken(TokenType.plus);
-                if (*lookup(1) == '+')
+                if (*lookup(1) == '+' && _front <= _back)
                 {
                     advance();
                     advance();
@@ -433,7 +451,7 @@ public:
                 continue;
             case '.':
                 anticipateToken(TokenType.dot);
-                if (*lookup(1) == '.')
+                if (*lookup(1) == '.' && _front <= _back)
                 {
                     advance();
                     advance();
@@ -502,7 +520,7 @@ public:
                 continue;
             case '=':
                 anticipateToken(TokenType.equal);
-                if (*lookup(1) == '=')
+                if (*lookup(1) == '=' && _front <= _back)
                 {
                     advance();
                     advance();
@@ -516,7 +534,7 @@ public:
                 continue;
             case '>':
                 anticipateToken(TokenType.greater);
-                if (*lookup(1) == '=')
+                if (*lookup(1) == '=' && _front <= _back)
                 {
                     advance();
                     advance();
@@ -530,7 +548,7 @@ public:
                 continue;
             case '<':
                 anticipateToken(TokenType.lesser);
-                if (*lookup(1) == '=')
+                if (*lookup(1) == '=' && _front <= _back)
                 {
                     advance();
                     advance();
