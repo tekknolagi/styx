@@ -34,7 +34,7 @@ Yatol:
     ClassDeclaration        < Class Identifier LeftCurly Declarations? RightCurly
     InterfaceDeclaration    < Interface Identifier LeftCurly Declarations? RightCurly
 
-    VariableDeclaration     < Var Static? Type VariableDeclarationList Semicolon
+    VariableDeclaration     < ParameterStorageClass Static? Type VariableDeclarationList Semicolon
 
     VariableDeclarationList < VariableDeclarationItem (Comma VariableDeclarationItem)*
 
@@ -70,7 +70,7 @@ Yatol:
 ################################################################################
 # ParameterStorageClass
 
-
+    ParameterStorageClass < Var / Const
 
 ################################################################################
 # Initializer
@@ -189,7 +189,7 @@ Yatol:
 ################################################################################
 # Type
 
-    TypedVariableList < Type IdentifierList
+    TypedVariableList < ParameterStorageClass* Type IdentifierList
 
     Type < TypeIdentifier TypeModifiers?
     TypeIdentifier  <  BasicType
@@ -320,6 +320,7 @@ Yatol:
             / Continue
             / While
             / Var
+            / Const
 
 
     BasicType  < BasicFloatType
@@ -355,6 +356,7 @@ Yatol:
     Continue<- "continue"
     While   <- "while"
     Var     <- "var"
+    Const   <- "const"
 
     SREG    <- "sreg"
     UREG    <- "ureg"

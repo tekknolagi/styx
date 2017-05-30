@@ -395,6 +395,8 @@ class VariableDeclarationAstNode: AstNode
 {
     /// Indicates if the variables in the list are static.
     bool isStatic;
+    /// Indicates if the variables in the list are constants.
+    bool isConst;
     /// The type of the variables in the list.
     TypeAstNode type;
     /// The list of variables.
@@ -825,6 +827,10 @@ class DeclarationOrStatementAstNode: AstNode
 /// TypedVariableList
 class TypedVariableListAstNode: AstNode
 {
+    /// Indicates if the variables are passed by reference.
+    bool isVar;
+    /// Indicates if the variables are read-only
+    bool isConst;
     /// The variables list.
     Token*[] variableList;
     /// The variables common type.

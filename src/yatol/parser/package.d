@@ -299,7 +299,21 @@ private:
      */
     TypedVariableListAstNode parseTypedVariableList()
     {
-        TypedVariableListAstNode result;
+        TypedVariableListAstNode result = new TypedVariableListAstNode;
+        while (true)
+        {
+            if (current.isTokConst)
+            {
+                result.isConst = true;
+                advance();
+            }
+            else if (current.isTokVar)
+            {
+                result.isVar = true;
+                advance();
+            }
+            else break;
+        }
         TypeAstNode type = parseType();
         if (!type && current.isTokIdentifier)
         {
@@ -308,7 +322,6 @@ private:
         }
         if (current.isTokIdentifier)
         {
-            result = new TypedVariableListAstNode;
             while (true)
             {
                 if (!current.isTokIdentifier)
@@ -742,6 +755,20 @@ private:
     VariableDeclarationAstNode parseVariableDeclaration()
     {
         bool isStatic;
+        bool isConst;
+        if (current.isTokConst)
+        {
+            isConst = true;
+            advance();
+        }
+        else if (current.isTokVar)
+        {
+            advance();
+        }
+        else
+        {
+            expected(TokenType.var);
+        }
         if (current.isTokStatic)
         {
             isStatic = true;
@@ -757,6 +784,7 @@ private:
             VariableDeclarationAstNode result = new VariableDeclarationAstNode;
             result.type = t;
             result.isStatic = isStatic;
+            result.isConst = isConst;
             while (true)
             {
                 if (VariableDeclarationItemAstNode vdi = parseVariableDeclarationItem())
@@ -1515,9 +1543,8 @@ private:
             }
             return null;
         }
-        case var:
+        case var, const_:
         {
-            advance();
             if (VariableDeclarationAstNode vd = parseVariableDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
@@ -1706,7 +1733,7 @@ unittest
         function pig2(): s64;
     }
     import (10101) a.b, c.d.r;
-    static function exp(): s32
+    static function exp(const var u64 value): s32
     {
         a = b + c;
         ++a;
@@ -2037,8 +2064,8 @@ unittest
 {
     assertParse(q{
         unit a;
-        function bar(u32 a,b,c; u64 d);
-        function bar(u32 a,b,c; u64 d){}
+        function bar(const u32 a,b,c; u64 d);
+        function bar(u32 a,b,c; var u64 d){}
         function bar(u32 a,b,c; u64 d): u64;
         function bar(u32 a,b,c; u64 d): u64 {}
         function bar(function*(u32 a) callback): function*();
@@ -2117,3 +2144,4 @@ unittest
         s8 a = 8;
     });
 }
+

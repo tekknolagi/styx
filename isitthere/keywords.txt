@@ -1,6 +1,7 @@
 break
 class
 continue
+const
 else
 f32
 f64
