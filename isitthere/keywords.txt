@@ -23,5 +23,6 @@ u64
 u8
 unit
 ureg
+var
 virtual
 while

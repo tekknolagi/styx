@@ -19,8 +19,6 @@ Yatol:
 
     UnitDeclaration < Unit IdentifierChain Semicolon
 
-    # Statements should go with Declarations
-
     Declarations    < Declaration+
     Declaration     < ImportDeclaration
                     / ProtectionDeclaration
@@ -36,7 +34,7 @@ Yatol:
     ClassDeclaration        < Class Identifier LeftCurly Declarations? RightCurly
     InterfaceDeclaration    < Interface Identifier LeftCurly Declarations? RightCurly
 
-    VariableDeclaration     < Static? Type VariableDeclarationList Semicolon
+    VariableDeclaration     < Var Static? Type VariableDeclarationList Semicolon
 
     VariableDeclarationList < VariableDeclarationItem (Comma VariableDeclarationItem)*
 
@@ -80,10 +78,10 @@ Yatol:
     Initializer < BasicTypeInitializer
                 / ArrayDimInitializer
 
-    BasicTypeInitializer < Equal UnaryExpression
+    BasicTypeInitializer < Equal Expression
     ArrayDimInitializer < Equal LeftSquare ArrayInitializerElements? RightSquare
 
-    ArrayInitializerElements < UnaryExpression (Comma UnaryExpression)*
+    ArrayInitializerElements < Expression (Comma UnaryExpression)*
 
 ################################################################################
 # DeclarationOrStatement
@@ -226,7 +224,7 @@ Yatol:
     StarComment < : "/*" (!"*/" .)* :"*/"
 
 ################################################################################
-# Identifier and numbers
+# Identifier and literals
 
     NumberLiteral   < IntLiteral
                     / HexLiteral
@@ -321,6 +319,7 @@ Yatol:
             / Break
             / Continue
             / While
+            / Var
 
 
     BasicType  < BasicFloatType
@@ -355,6 +354,7 @@ Yatol:
     Break   <- "break"
     Continue<- "continue"
     While   <- "while"
+    Var     <- "var"
 
     SREG    <- "sreg"
     UREG    <- "ureg"
@@ -384,11 +384,11 @@ enum source1 = `
     import(0:s8) r.d, s.d,t;
     import(1) s1, s256yy;
     struct Foo{}
-    s8*[]*[] q,h; sreg j;
-    Foo[][] foo;
+    var s8*[]*[] q,h; var sreg j;
+    var Foo[][] foo;
     virtual unit c;
     protection(private)
-    protection(public) struct Foo { sreg a,b,c; }
+    protection(public) struct Foo { var sreg a,b,c; }
     virtual unit d;
     @const @inline function bar()
     {
@@ -404,7 +404,7 @@ enum source1 = `
         a = b:ToType + c:ToType;;
         if (a == 0) {call(a);}
 
-        s8 a = 8;
+        var s8 a = 8;
 
         if (a == 0) {call(a);}
         else {call(1);}

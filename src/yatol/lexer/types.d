@@ -8,6 +8,7 @@ enum TokenType : ubyte
     intLiteral,
     floatLiteral,
     hexLiteral,
+    stringLiteral,
     lineComment,
     starComment,
     // Keywords
@@ -37,6 +38,7 @@ enum TokenType : ubyte
     u64,
     u8,
     ureg,
+    var,
     while_,
     // symbols
     amp,
@@ -85,6 +87,7 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     "(integerLiteral)",
     "(floatLiteral)",
     "(hexLiteral)",
+    "(stringLiteral)",
     "(lineComment)",
     "(starComment)",
     // Keywords
@@ -114,6 +117,7 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     "u64",
     "u8",
     "ureg",
+    "var",
     "while",
     // symbols
     "&",
@@ -205,37 +209,33 @@ private:
 
     static const string[64] _words =
     [
-        "", "protection", "class", "", "f32", "", "f64", "",
-        "break", "virtual", "", "", "s32", "return", "s64", "",
-        "import", "u32", "", "u64", "", "", "sreg", "",
-        "", "", "unit", "ureg", "", "interface", "", "",
-        "if", "", "", "", "", "static", "s16", "",
-        "", "struct", "", "u16", "", "else", "s8", "",
-        "", "", "", "u8", "continue", "", "", "",
-        "", "", "", "", "", "while", "", "function"
+        "unit", "", "virtual", "", "", "", "", "", "", "f32", "", "", "f64", "",
+        "", "", "protection", "ureg", "", "", "", "", "", "function", "return",
+        "", "struct", "u8", "u32", "", "", "u64", "u16", "", "", "class", "",
+        "interface", "while", "", "continue", "", "", "", "", "", "import",
+        "sreg", "", "", "var", "if", "", "", "break", "else", "", "s8", "s32",
+        "", "", "s64", "s16", "static"
     ];
 
     static const ubyte[256] _coefficients =
     [
-        222, 14, 227, 135, 167, 188, 205, 95, 200, 202, 15, 63,
-        148, 183, 31, 42, 51, 32, 3, 214, 105, 84, 120, 51, 180,
-        46, 164, 228, 163, 73, 205, 56, 97, 211, 135, 129, 83,
-        85, 116, 234, 84, 122, 169, 242, 224, 223, 43, 20, 254,
-        79, 180, 176, 55, 47, 239, 59, 198, 173, 165, 220, 28,
-        226, 217, 14, 23, 115, 186, 38, 58, 143, 199, 106, 40,
-        116, 250, 192, 2, 65, 111, 116, 182, 49, 102, 152, 49,
-        11, 164, 0, 98, 184, 16, 222, 76, 51, 87, 14, 51, 56, 19,
-        31, 97, 21, 96, 10, 89, 192, 169, 153, 219, 188, 90, 12, 38,
-        126, 143, 168, 211, 45, 39, 52, 239, 240, 218, 106, 112, 63,
-        46, 36, 230, 94, 197, 40, 199, 97, 68, 255, 124, 139, 229, 13,
-        182, 170, 60, 181, 100, 52, 210, 25, 24, 10, 206, 75, 22, 164,
-        101, 145, 63, 95, 252, 95, 17, 151, 53, 46, 10, 203, 37, 19, 29,
-        6, 84, 157, 10, 249, 92, 108, 50, 41, 45, 105, 37, 198, 4, 220,
-        209, 47, 222, 55, 20, 200, 192, 244, 166, 48, 145, 80, 34, 57,
-        38, 43, 12, 40, 175, 186, 243, 61, 68, 70, 77, 254, 226, 173,
-        89, 83, 13, 24, 117, 5, 0, 184, 69, 210, 28, 225, 127, 79, 48,
-        189, 69, 240, 151, 0, 219, 123, 144, 23, 140, 101, 186, 103,
-        239, 142, 33, 22, 16, 70, 152, 169, 35, 157, 203, 85, 176, 60, 66, 107
+        166, 85, 251, 178, 59, 196, 222, 186, 69, 109, 241, 207, 155, 67, 65,
+        15, 127, 213, 54, 66, 38, 212, 223, 169, 238, 254, 130, 68, 115, 155,
+        14, 126, 103, 59, 247, 47, 2, 103, 245, 191, 3, 66, 80, 139, 205, 148,
+        98, 206, 82, 252, 40, 163, 123, 120, 211, 92, 138, 254, 77, 249, 122,
+        143, 51, 139, 219, 17, 124, 64, 143, 106, 39, 174, 161, 198, 37, 215,
+        153, 198, 10, 47, 102, 75, 157, 150, 191, 167, 205, 120, 143, 52, 95,
+        176, 8, 42, 34, 83, 103, 0, 50, 27, 159, 143, 126, 50, 192, 117, 154,
+        54, 234, 102, 26, 164, 16, 154, 255, 175, 32, 209, 115, 248, 16, 224,
+        254, 25, 90, 202, 78, 210, 244, 7, 13, 253, 21, 252, 241, 68, 214, 80,
+        140, 115, 107, 55, 189, 104, 22, 49, 88, 249, 173, 18, 96, 9, 171, 23,
+        89, 170, 238, 66, 32, 206, 196, 132, 113, 89, 122, 214, 83, 89, 174,
+        113, 72, 152, 74, 204, 73, 219, 54, 200, 185, 42, 191, 3, 197, 175, 192,
+        28, 79, 102, 224, 110, 230, 145, 89, 250, 95, 189, 189, 7, 137, 204, 76,
+        113, 38, 40, 211, 145, 155, 90, 90, 18, 138, 168, 148, 154, 29, 89, 171,
+        34, 59, 159, 65, 23, 190, 121, 174, 62, 255, 124, 99, 92, 158, 131, 150,
+        48, 140, 169, 6, 35, 59, 142, 67, 202, 43, 201, 109, 128, 65, 224, 231,
+        109, 170, 119, 113, 146, 110, 247
     ];
 
     static string generateFilledTable()
@@ -550,6 +550,18 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokContinue() const {return type == TokenType.continue_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokStringLiteral() const {return type == TokenType.stringLiteral;}
+
+    /// Conveniance function used by the parser.
+    bool isTokLineComment() const {return type == TokenType.lineComment;}
+
+    /// Conveniance function used by the parser.
+    bool isTokStarComment() const {return type == TokenType.starComment;}
+
+    /// Conveniance function used by the parser.
+    bool isTokVar() const {return type == TokenType.var;}
 
     /// Conveniance function used by the parser.
     bool isUnaryPrefix() const

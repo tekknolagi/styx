@@ -83,6 +83,8 @@ class AstVisitor
     void visit(UnaryExpressionAstNode node){node.accept(this);}
     void visit(UnitAstNode node){node.accept(this);}
     void visit(UnitContainerAstNode node){node.accept(this);}
+    void visit(VariableDeclarationAstNode node){node.accept(this);}
+    void visit(VariableDeclarationItemAstNode node){node.accept(this);}
 }
 
 /**
@@ -126,6 +128,8 @@ class AstVisitorNone: AstVisitor
     override void visit(UnaryExpressionAstNode node){}
     override void visit(UnitAstNode node){node.accept(this);}
     override void visit(UnitContainerAstNode node){node.accept(this);}
+    override void visit(VariableDeclarationAstNode node){}
+    override void visit(VariableDeclarationItemAstNode node){}
 }
 
 /// The base AST node.
@@ -367,6 +371,47 @@ class ProtectionDeclarationAstNode: AstNode
     override bool isTerminal() {return true;}
 }
 
+/// VariableDeclarationItem
+class VariableDeclarationItemAstNode: AstNode
+{
+    /// The expression that gives trhe initial value;
+    ExpressionAstNode initiliazer;
+    /// The variable name.
+    Token* name;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (initiliazer)
+            visitor.visit(initiliazer);
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
+/// VariableDeclaration
+class VariableDeclarationAstNode: AstNode
+{
+    /// Indicates if the variables in the list are static.
+    bool isStatic;
+    /// The type of the variables in the list.
+    TypeAstNode type;
+    /// The list of variables.
+    VariableDeclarationItemAstNode[] list;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (type)
+            visitor.visit(type);
+        list.each!(a => visitor.visit(a));
+    }
+    /// Returns: $(D true) if the node matches to a grammar rule.
+    override bool isGrammatic() {return true;}
+    /// Returns: $(D true) if the node has no children.
+    override bool isTerminal() {return false;}
+}
+
 /// Declaration
 class DeclarationAstNode: AstNode
 {
@@ -384,6 +429,8 @@ class DeclarationAstNode: AstNode
     StructDeclarationAstNode structDeclaration;
     /// Assigned if this declaration is a Scope.
     BlockStatementAstNode declarationBlock;
+    /// Assigned if this declaration is a VariableDeclaration.
+    VariableDeclarationAstNode variableDeclaration;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -401,6 +448,8 @@ class DeclarationAstNode: AstNode
             visitor.visit(declarationBlock);
         else if (functionDeclaration)
             visitor.visit(functionDeclaration);
+        else if (variableDeclaration)
+            visitor.visit(variableDeclaration);
     }
     /// Returns: $(D true) if the node matches to a grammar rule.
     override bool isGrammatic() {return false;}

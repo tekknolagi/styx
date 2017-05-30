@@ -701,6 +701,88 @@ private:
     }
 
     /**
+     * Parses a VariableDeclarationItem.
+     *
+     * Returns:
+     *      A $(D VariableDeclarationItemAstNode) on success, $(D null) otherwise.
+     */
+    VariableDeclarationItemAstNode parseVariableDeclarationItem()
+    {
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        VariableDeclarationItemAstNode result = new VariableDeclarationItemAstNode;
+        result.name = current();
+        advance();
+        if (current.isTokEqual)
+        {
+            advance();
+            if (ExpressionAstNode e = parseExpression(null))
+            {
+                result.initiliazer = e;
+            }
+            else return null;
+        }
+        if (!current.isTokComma && !current.isTokSemicolon)
+        {
+            parseError("expected colon or semicolon");
+            return null;
+        }
+        else return result;
+    }
+
+    /**
+     * Parses a VariableDeclaration.
+     *
+     * Returns:
+     *      A $(D VariableDeclaration) on success, $(D null) otherwise.
+     */
+    VariableDeclarationAstNode parseVariableDeclaration()
+    {
+        bool isStatic;
+        if (current.isTokStatic)
+        {
+            isStatic = true;
+            advance();
+        }
+        if (TypeAstNode t = parseType())
+        {
+            if (!current.isTokIdentifier)
+            {
+                expected(TokenType.identifier);
+                return null;
+            }
+            VariableDeclarationAstNode result = new VariableDeclarationAstNode;
+            result.type = t;
+            result.isStatic = isStatic;
+            while (true)
+            {
+                if (VariableDeclarationItemAstNode vdi = parseVariableDeclarationItem())
+                {
+                    result.list ~= vdi;
+                    if (current.isTokComma)
+                    {
+                        advance();
+                        continue;
+                    }
+                    else if (current.isTokSemicolon)
+                    {
+                        return result;
+                    }
+                }
+                else
+                {
+                    parseError("invalid variable declaration");
+                    return null;
+                }
+            }
+        }
+        else return null;
+    }
+
+    /**
      * Parses contiguous declarations or statements, a function body.
      *
      * Params:
@@ -798,7 +880,7 @@ private:
                     }
                     else return true;
                 default:
-                    //unexpected();
+                    unexpected();
                     return false;
                 }
             }
@@ -1433,6 +1515,17 @@ private:
             }
             return null;
         }
+        case var:
+        {
+            advance();
+            if (VariableDeclarationAstNode vd = parseVariableDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.variableDeclaration = vd;
+                return result;
+            }
+            else return null;
+        }
         case static_:
         {
             if (lookup(1).isTokFunction)
@@ -1441,24 +1534,7 @@ private:
             }
             else
             {
-                unexpected();
                 return null;
-            }
-        }
-        case identifier:
-        {
-            if (lookup(1).isTokIdentifier) // if parseType...
-            {
-                // TODO-cparser todo: parseVariableDeclaration
-                return null;
-            }
-            else return null; // ident chain of unary
-        }
-        case u8, u16, u32, u64, s8, s16, s32, s64, ureg, sreg, f32, f64:
-        {
-            if (lookup(1).isTokIdentifier) // if parseType...
-            {
-                // TODO-cparser todo: parseVariableDeclaration
             }
         }
         default:
@@ -1644,7 +1720,7 @@ unittest
         a = d:u32 + c;
         a = b[c+d:u8];
         a = call(param)[call(param)];
-        //a = b[c..d];
+        a = b[c..d];
         a = b[c].d[e].f[g];
         (b[c].d[e]) = a;
         a = a * u;
@@ -1659,6 +1735,9 @@ unittest
         {
             foo.bar.baz();
         }
+        var static s8 a = 8, b = 7;
+        var s8[][] a;
+        var MyInt mi = 8;
     }
 `;
     Lexer lx;
@@ -2021,3 +2100,20 @@ unittest
     });
 }
 
+unittest
+{
+    assertParse(q{
+        unit a;
+        var s8 a = 8, b = 7, c;
+        var SomeType[][] d, e, f;
+        var static s32 a;
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        s8 a = 8;
+    });
+}

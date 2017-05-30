@@ -106,6 +106,36 @@ private:
         }
     }
 
+    void lexStringLiteral()
+    {
+        advance();
+        anticipateToken(TokenType.stringLiteral);
+        while (true)
+        {
+            if (_front > _back)
+            {
+                validateToken();
+                return;
+            }
+            switch(*_front)
+            {
+            case 0:
+                error("null character encountered inside a string literal");
+                return;
+            case '\r', '\n':
+                processlineEnding;
+                advance();
+                continue;
+            case '"':
+                validateToken();
+                advance();
+                return;
+            default:
+                advance();
+            }
+        }
+    }
+
     // lexes a line comment
     void lexLineComment()
     {
@@ -316,6 +346,9 @@ public:
      *
      * Params:
      *      text = The string to parse.
+     *      filename = For the errors, the name of the file.
+     *      line = For the errors, the line where the text starts.
+     *      column = For the errors, the column where the text starts.
      */
     void setSourceFromText(const(char)[] text, const(char)[] filename = "",
         size_t line = 1, size_t column = 1)
@@ -419,6 +452,9 @@ public:
                     advance();
                     validateToken();
                 }
+                continue;
+            case '"':
+                lexStringLiteral();
                 continue;
             case '&':
                 anticipateToken(TokenType.amp);
@@ -603,7 +639,7 @@ unittest
     assert(lx.tokens.length == 22);
     assert(lx.tokens[0].text == "unit");
     assert(lx.tokens[0].isTokKeyword);
-    assert(lx.tokens[0].isTokUnit);
+    assert(lx.tokens[0].isTokUnit, lx.tokens[0].text);
     assert(lx.tokens[1].text == "a");
     assert(lx.tokens[2].text == ".");
     assert(lx.tokens[3].text == "b");
@@ -689,6 +725,24 @@ unittest
     lx.lex();
     assert(lx.tokens.length == 1);
     assert(lx.tokens[0].text == source);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `//
+    /*
+    */
+    //
+    /**/`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 4);
+    assert(lx.tokens[0].isTokLineComment);
+    assert(lx.tokens[1].isTokStarComment);
+    assert(lx.tokens[2].isTokLineComment);
+    assert(lx.tokens[3].isTokStarComment);
 }
 
 unittest
@@ -868,6 +922,20 @@ unittest
     assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokMinusMinus);
     assert(lx.tokens[1].isTokMinus);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `+ "abcdef" -`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokPlus);
+    assert(lx.tokens[1].isTokStringLiteral);
+    assert(lx.tokens[1].text == "abcdef");
+    assert(lx.tokens[2].isTokMinus);
 }
 
 /// Tests the symbols and single char operators.
