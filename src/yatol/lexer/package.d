@@ -43,7 +43,6 @@ private:
     }
 
     // Puts a bookmark when starting to lex something.
-    pragma(inline, true)
     void anticipateToken(TokenType type)
     {
         version(assert) if (type == TokenType.invalid)
@@ -56,7 +55,6 @@ private:
     }
 
     // Puts  a new token, as anticipated.
-    pragma(inline, true)
     void validateToken()
     {
         if (!_anticipated)
