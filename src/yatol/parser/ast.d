@@ -873,7 +873,7 @@ class TypeAstNode: AstNode
 /// Describes the type modifiers.
 enum ModifierKind
 {
-    /// modified by nested "[]"
+    /// modified by consecutive "[]"
     array,
     /// modified by consecutive "*"
     pointer,

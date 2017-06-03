@@ -61,7 +61,13 @@ private:
     {
         if (!_anticipated)
             error("INTERNAL, attempt to validate an unanticipated token");
-        _tokens.length += 1;
+        if (_tokens.length && _tokens[$-1].isTokDollar &&
+            _anticipated == TokenType.identifier &&
+            Keywords.isKeyword(_tokStart[0.._front-_tokStart]))
+        {
+            --_tokStart;
+        }
+        else _tokens.length += 1;
         _tokens[$-1] = Token(_tokStart, _front, _tokStartLine, _tokStartColumn,
             _anticipatedType);
         _anticipated = false;
@@ -463,7 +469,7 @@ public:
                 continue;
             case '+':
                 anticipateToken(TokenType.plus);
-                if (*lookup(1) == '+' && _front <= _back)
+                if (_front <= _back && *lookup(1) == '+')
                 {
                     advance();
                     advance();
@@ -487,7 +493,7 @@ public:
                 continue;
             case '.':
                 anticipateToken(TokenType.dot);
-                if (*lookup(1) == '.' && _front <= _back)
+                if (_front <= _back && *lookup(1) == '.')
                 {
                     advance();
                     advance();
@@ -554,9 +560,14 @@ public:
                 advance();
                 validateToken();
                 continue;
+            case '$':
+                anticipateToken(TokenType.dollar);
+                advance();
+                validateToken();
+                continue;
             case '=':
                 anticipateToken(TokenType.equal);
-                if (*lookup(1) == '=' && _front <= _back)
+                if (_front <= _back && *lookup(1) == '=')
                 {
                     advance();
                     advance();
@@ -570,7 +581,7 @@ public:
                 continue;
             case '>':
                 anticipateToken(TokenType.greater);
-                if (*lookup(1) == '=' && _front <= _back)
+                if (_front <= _back && *lookup(1) == '=')
                 {
                     advance();
                     advance();
@@ -584,7 +595,7 @@ public:
                 continue;
             case '<':
                 anticipateToken(TokenType.lesser);
-                if (*lookup(1) == '=' && _front <= _back)
+                if (_front <= _back && *lookup(1) == '=')
                 {
                     advance();
                     advance();
@@ -938,11 +949,26 @@ unittest
     assert(lx.tokens[2].isTokMinus);
 }
 
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `$function $identifier`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[0].keywordAsIdentifier);
+    assert(lx.tokens[0].text == "function");
+    assert(lx.tokens[1].isTokDollar);
+    assert(lx.tokens[2].isTokIdentifier);
+}
+
 /// Tests the symbols and single char operators.
 unittest
 {
     int line = __LINE__ + 1;
-    enum source = `.:;,()/[]{}*+-@!=><&`;
+    enum source = `.:;,()/[]{}*+-@!=><&$`;
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();

@@ -65,7 +65,7 @@ Yatol:
 # Attribute
 
     Attributes < Attribute*
-    Attribute <- At Identifier
+    Attribute <- At Identifier / At Keyword
 
 ################################################################################
 # ParameterStorageClass
@@ -242,6 +242,9 @@ Yatol:
     Eol <- "\r\n" / '\n'
 
     Identifier  <~ !Keyword (Alpha) (AlphaNum)*
+                /  DollarKw
+
+    DollarKw <~Dollar Keyword
 
     Operator < Mul / Div / Plus / Minus
 
@@ -293,6 +296,7 @@ Yatol:
     Bang        <- '!'
     Amp         <- '&'
     Qmark       <- '?'
+    Dollar      <- '$'
 
     HexPrefix   <- "0x" / "0X"
 
@@ -382,7 +386,7 @@ function*(): s8 memberFuncPtr;
 };
 
 enum source1 = `
-    unit a.b;
+    unit a.$function;
     import(0:s8) r.d, s.d,t;
     import(1) s1, s256yy;
     struct Foo{}
@@ -487,6 +491,36 @@ q{
     }
 };
 
+
+auto c =
+q{
+    class Foo
+    {
+        var s32 field;
+        @virtual void foo();
+        @abstract void foo();
+        @constructor Foo construct(s32 param)
+        {
+            /// auto generated alloc
+            this.field = param;
+            return this;
+        }
+        @destructor void destruct()
+        {
+
+        }
+
+
+    }
+
+    void foo()
+    {
+        Foo f = Foo.construct();
+        f.destruct();
+    }
+
+
+};
 
 
 unittest

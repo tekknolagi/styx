@@ -61,6 +61,7 @@ enum TokenType : ubyte
     rightParen,
     rightSquare,
     at,
+    dollar,
     dotDot,
     ellipsis,
     // operators
@@ -141,6 +142,7 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     ")",
     "]",
     "@",
+    "$",
     "..",
     "...",
     // operators
@@ -372,6 +374,7 @@ private:
     size_t _line;
     size_t _column;
     TokenType _type;
+    bool _kwAsIdent;
 
 public:
 
@@ -392,9 +395,18 @@ public:
         _line    = line;
         _column  = column;
         _type = type == TokenType.identifier ? text() in Keywords : type;
+        if (_length > 1 && _start[0] == '$')
+        {
+            ++_start;
+            --_length;
+            _kwAsIdent = true;
+        }
     }
 
-    /// Returns: The token text.
+    /// Returns: $(D true) if the identifier is a keyword prefixed with dollar.
+    bool keywordAsIdentifier() {return _kwAsIdent;}
+
+    /// Returns: The token type.
     TokenType type() const {return _type;}
 
     /// Returns: The line, 1 based, where the token starts.
@@ -567,6 +579,9 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokConst() const {return type == TokenType.const_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokDollar() const {return type == TokenType.dollar;}
 
     /// Conveniance function used by the parser.
     bool isUnaryPrefix() const
