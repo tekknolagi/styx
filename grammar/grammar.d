@@ -198,7 +198,9 @@ Yatol:
 
     TypeModifiers < TypeModifier TypeModifiers?
 
-    TypeModifier < LeftRightSquares / Mul
+    TypeModifier < LeftRightSquares / Mul / StaticArrayDim
+
+    StaticArrayDim < LeftSquare Expression RightSquare
 
 ################################################################################
 # List, chain, etc

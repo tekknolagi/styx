@@ -17,7 +17,7 @@ private:
 
     void visitImpl(Node)(Node node)
     {
-        if (!node.isGrammatic)
+        static if (!isGrammatic!Node)
         {
             node.accept(this);
         }
@@ -65,6 +65,11 @@ private:
                     else static if (isIntegral!NT)
                     {
                         _text ~= specifier3.format(_indentText, member,
+                            __traits(getMember, node, member));
+                    }
+                    else static if (!isCallable!(__traits(getMember, node, member)))
+                    {
+                        _text ~= specifier1.format(_indentText, member,
                             __traits(getMember, node, member));
                     }
                 }

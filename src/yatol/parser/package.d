@@ -79,9 +79,9 @@ private:
     Token* current() {return _current;}
 
     pragma(inline, true)
-    Token* lookup(size_t count)
+    Token* lookupNext()
     {
-        return _current + count;
+        return _current + 1;
     }
 
 private:
@@ -115,6 +115,7 @@ private:
             if (current.isTokSemicolon)
             {
                 UnitAstNode result = new UnitAstNode;
+                result.position = current.position;
                 result.unitDeclaration = toks;
                 if (parseDeclarations(result.declarations))
                 {
@@ -182,6 +183,7 @@ private:
             return null;
         }
         NumberLiteralAstNode result = new NumberLiteralAstNode;
+        result.position = current.position;
         result.literal = current();
         advance();
         if (current.isTokColon)
@@ -207,48 +209,45 @@ private:
     TypeModifierAstNode parseTypeModifier()
     {
         TypeModifierAstNode result = new TypeModifierAstNode;
-        if (current.isTokMul)
+        TypeModifierAstNode lastMd = result;
+        result.position = current.position;
+        while (current.isTokMul || current.isTokLeftSquare)
         {
-            ++result.count;
-            result.kind = ModifierKind.pointer;
-            while (true)
+            if (lastMd.kind != ModifierKind.none)
             {
-                advance();
-                if (!current.isTokMul)
-                {
-                    if (current.isTokLeftSquare)
-                        result.modifier = parseTypeModifier;
-                    break;
-                }
-                ++result.count;
+                lastMd.modifier = new TypeModifierAstNode;
+                lastMd = lastMd.modifier;
             }
-        }
-        else if (current.isTokLeftSquare)
-        {
-            ++result.count;
-            result.kind = ModifierKind.array;
-            while (true)
+            if (current.isTokMul)
+            {
+                lastMd.kind = ModifierKind.pointer;
+                advance();
+            }
+            else if (current.isTokLeftSquare)
             {
                 advance();
-                if (!current.isTokRightSquare)
+                if (current.isTokRightSquare)
                 {
-                    expected(TokenType.rightSquare);
+                    lastMd.kind = ModifierKind.arrayDynDim;
+                    advance();
+                }
+                else if (ExpressionAstNode e = parseExpression(null))
+                {
+                    lastMd.kind = ModifierKind.arrayStatDim;
+                    lastMd.staticDimension = e;
+                    if (!current.isTokRightSquare)
+                    {
+                        expected(TokenType.rightSquare);
+                        return null;
+                    }
+                    else advance();
+                }
+                else
+                {
+                    parseError("expected either an expression that gives a dimension or `]`");
                     return null;
                 }
-                advance();
-                if (!current.isTokLeftSquare)
-                {
-                    if (current.isTokMul)
-                        result.modifier = parseTypeModifier;
-                    break;
-                }
-                ++result.count;
             }
-        }
-        else if (current.isTokRightSquare)
-        {
-            unexpected;
-            return null;
         }
         return result;
     }
@@ -262,6 +261,7 @@ private:
     TypeAstNode parseType()
     {
         TypeAstNode result = new TypeAstNode;
+        result.position = current.position;
         if (current.isTokBasicType)
         {
             result.basicOrQualifiedType ~= current();
@@ -365,6 +365,7 @@ private:
             return null;
         }
         InterfaceDeclarationAstNode result = new InterfaceDeclarationAstNode;
+        result.position = current.position;
         result.name = current();
         advance();
         if (!current.isTokLeftCurly)
@@ -401,6 +402,7 @@ private:
             return null;
         }
         ClassDeclarationAstNode result = new ClassDeclarationAstNode;
+        result.position = current.position;
         result.name = current();
         advance();
         if (!current.isTokLeftCurly)
@@ -437,6 +439,7 @@ private:
             return null;
         }
         StructDeclarationAstNode result = new StructDeclarationAstNode;
+        result.position = current.position;
         result.name = current();
         advance();
         if (!current.isTokLeftCurly)
@@ -467,6 +470,7 @@ private:
             return null;
         }
         ImportDeclarationAstNode result = new ImportDeclarationAstNode;
+        result.position = current.position;
         advance();
         if (current.isTokLeftParen)
         {
@@ -544,6 +548,7 @@ private:
         }
         advance();
         FunctionTypeAstNode result = new FunctionTypeAstNode;
+        result.position = current.position;
         result.isStatic = isStatic;
         if (!current.isTokRightParen) while (true)
         {
@@ -601,6 +606,7 @@ private:
             return null;
         }
         FunctionHeaderAstNode result = new FunctionHeaderAstNode;
+        result.position = current.position;
         result.isStatic = isStatic;
         result.name = current();
         advance();
@@ -654,6 +660,7 @@ private:
         if (!header)
             return null;
         FunctionDeclarationAstNode result = new FunctionDeclarationAstNode;
+        result.position = current.position;
         result.header = header;
         if (!current.isTokLeftCurly && !current.isTokSemicolon)
         {
@@ -704,6 +711,7 @@ private:
         }
         ProtectionDeclarationAstNode result = new ProtectionDeclarationAstNode;
         result.protection = current();
+        result.position = current.position;
         advance();
         if (!current.isTokRightParen)
         {
@@ -727,6 +735,7 @@ private:
             return null;
         }
         VariableDeclarationItemAstNode result = new VariableDeclarationItemAstNode;
+        result.position = current.position;
         result.name = current();
         advance();
         if (current.isTokEqual)
@@ -768,6 +777,7 @@ private:
         else
         {
             expected(TokenType.var);
+            return null;
         }
         if (current.isTokStatic)
         {
@@ -785,6 +795,7 @@ private:
             result.type = t;
             result.isStatic = isStatic;
             result.isConst = isConst;
+            result.position = current.position;
             while (true)
             {
                 if (VariableDeclarationItemAstNode vdi = parseVariableDeclarationItem())
@@ -927,6 +938,7 @@ private:
         if (ExpressionAstNode ex = parseExpression(null))
         {
             ParenExpressionAstNode result = new ParenExpressionAstNode;
+            result.position = current.position;
             result.expression = ex;
             if (!current.isTokRightParen)
             {
@@ -954,8 +966,9 @@ private:
             expected(TokenType.leftParen);
             return null;
         }
-        advance();
         CallParametersAstNode result = new CallParametersAstNode;
+        result.position = current.position;
+        advance();
         if (current.isTokRightParen)
         {
             advance();
@@ -986,6 +999,7 @@ private:
     PostfixExpressionAstNode parsePostfixExpression()
     {
         PostfixExpressionAstNode result = new PostfixExpressionAstNode;
+        result.position = current.position;
 
         if (current.isTokLeftSquare)
         {
@@ -1060,6 +1074,7 @@ private:
     UnaryExpressionAstNode parseUnaryExpression()
     {
         UnaryExpressionAstNode result = new UnaryExpressionAstNode;
+        result.position = current.position;
         if (current.isUnaryPrefix)
         {
             result.prefix = current();
@@ -1116,6 +1131,7 @@ private:
         {
             AssignExpressionAstNode result = new AssignExpressionAstNode;
             result.left = e;
+            e.position = current.position;
             if (current.isTokSemicolon)
             {
                 return result;
@@ -1159,6 +1175,7 @@ private:
         if (ExpressionAstNode e = parseExpression(null))
         {
             DotExpressionAstNode result = new DotExpressionAstNode;
+            e.position = current.position;
             result.right = e;
             return result;
         }
@@ -1193,9 +1210,8 @@ private:
      */
     ExpressionAstNode parseExpression(ExpressionAstNode exp)
     {
-
         with(TokenType) if ((firstOperator <= current.type && current.type <= lastOperator)
-            || (current.isTokMul && !lookup(1).type.among(mul, semiColon )))
+            || (current.isTokMul && !lookupNext.type.among(mul, semiColon )))
         {
             Token* op = current();
             advance();
@@ -1203,6 +1219,7 @@ private:
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 BinaryExpressionAstNode be = new BinaryExpressionAstNode;
+                be.position = current.position;
                 be.left = exp;
                 be.operator = op;
                 be.right = r;
@@ -1234,6 +1251,7 @@ private:
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 result.unaryExpression = u;
+                u.position = current.position;
                 if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal))
                 {
                     return result;
@@ -1286,8 +1304,9 @@ private:
             expected(TokenType.return_);
             return null;
         }
-        advance();
         ReturnStatementAstNode result = new ReturnStatementAstNode;
+        result.position = current.position;
+        advance();
         if (!current.isTokSemicolon)
             if (AssignExpressionAstNode ae = parseAssignExpression())
         {
@@ -1316,8 +1335,9 @@ private:
             expected(TokenType.continue_);
             return null;
         }
-        advance();
         ContinueStatementAstNode result = new ContinueStatementAstNode;
+        result.position = current.position;
+        advance();
         if (!current.isTokSemicolon)
             if (AssignExpressionAstNode ae = parseAssignExpression())
         {
@@ -1346,8 +1366,9 @@ private:
             expected(TokenType.break_);
             return null;
         }
-        advance();
         BreakStatementAstNode result = new BreakStatementAstNode;
+        result.position = current.position;
+        advance();
         if (current.isTokLeftParen)
         {
             advance();
@@ -1394,6 +1415,7 @@ private:
         {
             StatementAstNode result = new StatementAstNode;
             result.emptyStatement = new EmptyStatementAstNode;
+            result.emptyStatement.position = current.position;
             return result;
         }
         case return_:
@@ -1555,7 +1577,7 @@ private:
         }
         case static_:
         {
-            if (lookup(1).isTokFunction)
+            if (lookupNext.isTokFunction)
             {
                 goto case function_;
             }
@@ -1765,6 +1787,7 @@ unittest
         var static s8 a = 8, b = 7;
         var s8[][] a;
         var MyInt mi = 8;
+        var s8[2][4] b;
     }
 `;
     Lexer lx;

@@ -1,5 +1,14 @@
 module yatol.lexer.types;
 
+/// Stores a position in the source code.
+struct Position
+{
+    /// The line, 1-based.
+    size_t line;
+    /// The column, 1-based.
+    size_t column;
+}
+
 /// Enumerates the different token
 enum TokenType : ubyte
 {
@@ -374,6 +383,7 @@ private:
     size_t _line;
     size_t _column;
     TokenType _type;
+    Position _pos;
     bool _kwAsIdent;
 
 public:
@@ -392,15 +402,15 @@ public:
     {
         _start   = start;
         _length  = stop - start;
-        _line    = line;
-        _column  = column;
         _type = type == TokenType.identifier ? text() in Keywords : type;
         if (_length > 1 && _start[0] == '$')
         {
             ++_start;
             --_length;
+            --column;
             _kwAsIdent = true;
         }
+        _pos = Position(line, column);
     }
 
     /// Returns: $(D true) if the identifier is a keyword prefixed with dollar.
@@ -409,11 +419,14 @@ public:
     /// Returns: The token type.
     TokenType type() const {return _type;}
 
+    /// Returns: The token position.
+    ref const(Position) position() const {return _pos;}
+
     /// Returns: The line, 1 based, where the token starts.
-    size_t line() const {return _line;}
+    size_t line() const {return _pos.line;}
 
     /// Returns: The column, 1 based, where the token starts.
-    size_t column() const {return _column;}
+    size_t column() const {return _pos.column;}
 
     /// Returns: The token text.
     const(char[]) text() const {return _start[0.._length];}

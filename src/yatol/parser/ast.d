@@ -135,30 +135,33 @@ class AstVisitorNone: AstVisitor
 /// The base AST node.
 class AstNode
 {
+    /// Information about the position
+    Position position;
     /// Gets visited by an AstVisitor.
     void accept(AstVisitor visitor) {}
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    bool isGrammatic() {return false;}
-    /// Returns: $(D true) if the node has no children.
-    bool isTerminal() {return false;}
-
-    /// Indicates if this node represents something public.
+    /// Set to $(D true) if this node represents something public.
     @Semantic bool isPublic;
-    /// Indicates $(D true) if this node represents something private.
+    /// Set to $(D true) if this node represents something private.
     @Semantic bool isPrivate;
-    /// Indicates $(D true) if this node represents something protected.
+    /// Set $(D true) if this node represents something protected.
     @Semantic bool isProtected;
 }
+
+
+/// Returns: $(D true) if the node passed as parameter matches to a grammar rule.
+enum isGrammatic(T) = T.stringof[$-7..$] == "AstNode";
 
 unittest
 {
     import std.traits;
     static assert(hasUDA!(AstNode.isPrivate, Semantic));
     static assert(hasUDA!(FunctionDeclarationAstNode.isPublic, Semantic));
+    static assert(isGrammatic!AstNode);
+    static assert(!isGrammatic!FlowControlBaseNode);
 }
 
 /// LiteralAstNode
-class NumberLiteralAstNode: AstNode
+final class NumberLiteralAstNode: AstNode
 {
 
 private:
@@ -185,12 +188,6 @@ public:
     Token* literalType;
     /// The token that gives the literal text.
     Token* literal;
-
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return true;}
-
     /// Returns: The literal interpreted as a u8.
     ubyte asU8(){tryCacheValue(); return cast(ubyte) _asInt;}
     /// Returns: The literal interpreted as a u16.
@@ -216,7 +213,7 @@ public:
 }
 
 /// FunctionType
-class FunctionTypeAstNode: AstNode
+final class FunctionTypeAstNode: AstNode
 {
     /// Indicates wether the function type needs a context.
     bool isStatic;
@@ -231,14 +228,10 @@ class FunctionTypeAstNode: AstNode
         if (returnType)
             visitor.visit(returnType);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// FunctionDeclaration
-class FunctionHeaderAstNode: AstNode
+final class FunctionHeaderAstNode: AstNode
 {
     /// The function name.
     Token* name;
@@ -255,14 +248,10 @@ class FunctionHeaderAstNode: AstNode
         if (returnType)
             visitor.visit(returnType);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// FunctionDeclaration
-class FunctionDeclarationAstNode: AstNode
+final class FunctionDeclarationAstNode: AstNode
 {
     /// The function header.
     FunctionHeaderAstNode header;
@@ -277,16 +266,10 @@ class FunctionDeclarationAstNode: AstNode
             visitor.visit(header);
         declarationsOrStatements.each!(a => visitor.visit(a));
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
-    /// Returns: $(D true) if the function is implemented.
-    bool isImplemented() {return firstBodyToken.isTokLeftCurly;}
 }
 
 /// ImportDeclaration, list of prioritized imports.
-class ImportDeclarationAstNode: AstNode
+final class ImportDeclarationAstNode: AstNode
 {
     /// The imports priority.
     NumberLiteralAstNode priority;
@@ -298,14 +281,10 @@ class ImportDeclarationAstNode: AstNode
         if (priority)
             visitor.visit(priority);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// StructDeclaration
-class StructDeclarationAstNode: AstNode
+final class StructDeclarationAstNode: AstNode
 {
     /// The struct name.
     Token* name;
@@ -316,14 +295,10 @@ class StructDeclarationAstNode: AstNode
     {
         declarations.each!(a => visitor.visit(a));
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// ClassDeclaration
-class ClassDeclarationAstNode: AstNode
+final class ClassDeclarationAstNode: AstNode
 {
     /// The class name.
     Token* name;
@@ -334,14 +309,10 @@ class ClassDeclarationAstNode: AstNode
     {
         declarations.each!(a => visitor.visit(a));
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// InterfaceDeclaration
-class InterfaceDeclarationAstNode: AstNode
+final class InterfaceDeclarationAstNode: AstNode
 {
     /// The interface name.
     Token* name;
@@ -352,27 +323,19 @@ class InterfaceDeclarationAstNode: AstNode
     {
         declarations.each!(a => visitor.visit(a));
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// ProtectionAttribute
-class ProtectionDeclarationAstNode: AstNode
+final class ProtectionDeclarationAstNode: AstNode
 {
     /// The token that specifies the new protection.
     Token* protection;
     ///
     override void accept(AstVisitor visitor) {}
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return true;}
 }
 
 /// VariableDeclarationItem
-class VariableDeclarationItemAstNode: AstNode
+final class VariableDeclarationItemAstNode: AstNode
 {
     /// The expression that gives trhe initial value;
     ExpressionAstNode initiliazer;
@@ -384,14 +347,10 @@ class VariableDeclarationItemAstNode: AstNode
         if (initiliazer)
             visitor.visit(initiliazer);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// VariableDeclaration
-class VariableDeclarationAstNode: AstNode
+final class VariableDeclarationAstNode: AstNode
 {
     /// Indicates if the variables in the list are static.
     bool isStatic;
@@ -408,14 +367,10 @@ class VariableDeclarationAstNode: AstNode
             visitor.visit(type);
         list.each!(a => visitor.visit(a));
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// Declaration
-class DeclarationAstNode: AstNode
+final class DeclarationAstNode: AstNode
 {
     /// Assigned if this declaration is a FunctionDeclaration.
     FunctionDeclarationAstNode functionDeclaration;
@@ -453,13 +408,9 @@ class DeclarationAstNode: AstNode
         else if (variableDeclaration)
             visitor.visit(variableDeclaration);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return false;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
-class CallParametersAstNode: AstNode
+final class CallParametersAstNode: AstNode
 {
     /// The parameters
     ExpressionAstNode[] parameters;
@@ -468,14 +419,10 @@ class CallParametersAstNode: AstNode
     {
         parameters.each!(a => visitor.visit(a));
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// PostfixExpressionAst
-class PostfixExpressionAstNode: AstNode
+final class PostfixExpressionAstNode: AstNode
 {
     /// Assigned if this postfix is a ++/--.
     Token* plusplusOrMinusMinus;
@@ -499,14 +446,10 @@ class PostfixExpressionAstNode: AstNode
         else if (castToType)
             visitor.visit(castToType);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// UnaryExpression
-class UnaryExpressionAstNode: AstNode
+final class UnaryExpressionAstNode: AstNode
 {
     /// the expression prefix.
     Token* prefix;
@@ -532,14 +475,10 @@ class UnaryExpressionAstNode: AstNode
 
         postfixes.each!(a => visitor.visit(a));
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// ExpressionStatement
-class ExpressionStatementAstNode: AstNode
+final class ExpressionStatementAstNode: AstNode
 {
     /// The expression.
     AssignExpressionAstNode assignExpression;
@@ -549,14 +488,10 @@ class ExpressionStatementAstNode: AstNode
         if (assignExpression)
             visitor.visit(assignExpression);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// Expression
-class ExpressionAstNode: AstNode
+final class ExpressionAstNode: AstNode
 {
     /// Assigned if this expression is a BinaryExpression.
     BinaryExpressionAstNode binaryExpression;
@@ -574,14 +509,10 @@ class ExpressionAstNode: AstNode
         else if (unaryExpression)
             visitor.visit(unaryExpression);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// AssignExpression
-class AssignExpressionAstNode: AstNode
+final class AssignExpressionAstNode: AstNode
 {
     /// The equal LHS.
     ExpressionAstNode left;
@@ -597,14 +528,10 @@ class AssignExpressionAstNode: AstNode
         if (right)
             visitor.visit(right);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// BinaryExpression
-class BinaryExpressionAstNode: AstNode
+final class BinaryExpressionAstNode: AstNode
 {
     /// The operator.
     Token* operator;
@@ -620,13 +547,9 @@ class BinaryExpressionAstNode: AstNode
         if (right)
             visitor.visit(right);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
-class DotExpressionAstNode : AstNode
+final class DotExpressionAstNode : AstNode
 {
     /// Assigned if there's an expression before the dot.
     ExpressionAstNode left;
@@ -640,14 +563,10 @@ class DotExpressionAstNode : AstNode
         if (right)
             visitor.visit(right);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// IndexExpression
-class IndexExpressionAstNode: AstNode
+final class IndexExpressionAstNode: AstNode
 {
     /// The expression that gives the index.
     ExpressionAstNode index;
@@ -657,14 +576,10 @@ class IndexExpressionAstNode: AstNode
         if (index)
             visitor.visit(index);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// IndexExpression
-class RangeExpressionAstNode: AstNode
+final class RangeExpressionAstNode: AstNode
 {
     /// The expression that gives the left index.
     ExpressionAstNode left;
@@ -678,14 +593,10 @@ class RangeExpressionAstNode: AstNode
         if (right)
             visitor.visit(right);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// ParenExpression
-class ParenExpressionAstNode: AstNode
+final class ParenExpressionAstNode: AstNode
 {
     /// the expression prefix.
     Token* prefix;
@@ -697,23 +608,13 @@ class ParenExpressionAstNode: AstNode
         if (expression)
             visitor.visit(expression);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// EmptyStatement
-class EmptyStatementAstNode: AstNode
-{
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return true;}
-}
+final class EmptyStatementAstNode: AstNode {}
 
 /// BlockStatement
-class BlockStatementAstNode: AstNode
+final class BlockStatementAstNode: AstNode
 {
     /// Declarations or statement located in the block.
     DeclarationOrStatementAstNode[] declarationsOrStatements;
@@ -722,10 +623,6 @@ class BlockStatementAstNode: AstNode
     {
         declarationsOrStatements.each!(a => visitor.visit(a));
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// ReturnStatement
@@ -739,40 +636,23 @@ class FlowControlBaseNode: AstNode
         if (expression)
             visitor.visit(expression);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return false;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
-}
-
-class ReturnStatementAstNode: FlowControlBaseNode
-{
-    /// Returns: $(D true) if the node has no children.
-    override bool isGrammatic() {return true;}
-}
-
-class ContinueStatementAstNode: FlowControlBaseNode
-{
-    /// Returns: $(D true) if the node has no children.
-    override bool isGrammatic() {return true;}
 }
 
 /// ReturnStatement
-class BreakStatementAstNode: FlowControlBaseNode
+final class ReturnStatementAstNode: FlowControlBaseNode {}
+
+/// ContinueStatement
+final class ContinueStatementAstNode: FlowControlBaseNode {}
+
+/// BreakStatement
+final class BreakStatementAstNode: FlowControlBaseNode
 {
     Token* label;
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
 }
 
-
 /// Statement
-class StatementAstNode: AstNode
+final class StatementAstNode: AstNode
 {
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return false;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
     /// Assigned if this statement is an EmptyStatementAstNode.
     EmptyStatementAstNode emptyStatement;
     /// Assigned if this statement is an Expression.
@@ -804,7 +684,7 @@ class StatementAstNode: AstNode
 }
 
 /// DeclarationOrStatement
-class DeclarationOrStatementAstNode: AstNode
+final class DeclarationOrStatementAstNode: AstNode
 {
     /// Assigned if this is a declaration.
     DeclarationAstNode declaration;
@@ -818,14 +698,10 @@ class DeclarationOrStatementAstNode: AstNode
         else if (statement)
             visitor.visit(statement);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// TypedVariableList
-class TypedVariableListAstNode: AstNode
+final class TypedVariableListAstNode: AstNode
 {
     /// Indicates if the variables are passed by reference.
     bool isVar;
@@ -841,14 +717,10 @@ class TypedVariableListAstNode: AstNode
         if (type)
             visitor.visit(type);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// Type
-class TypeAstNode: AstNode
+final class TypeAstNode: AstNode
 {
     /// The basic type or a qualified custom type
     Token*[] basicOrQualifiedType;
@@ -864,44 +736,41 @@ class TypeAstNode: AstNode
         if (functionType)
             visitor.visit(functionType);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// Describes the type modifiers.
 enum ModifierKind
 {
-    /// modified by consecutive "[]"
-    array,
-    /// modified by consecutive "*"
+    none,
+    /// modified by "[]"
+    arrayDynDim,
+    /// modified by a static array dimension. "[<staticDimension>]"
+    arrayStatDim,
+    /// modified by "*"
     pointer,
 }
 
 /// TypeModifier
-class TypeModifierAstNode: AstNode
+final class TypeModifierAstNode: AstNode
 {
     /// The modifier kind.
     ModifierKind kind;
-    /// The count of modifiers.
-    size_t count;
-    /// Next modifications, always of a different kind.
+    /// The expression that gives the dimension when $(D kind) is set to $(D arrayStatDim).
+    ExpressionAstNode staticDimension;
+    /// Assigned if there are more modifiers.
     TypeModifierAstNode modifier;
     ///
     override void accept(AstVisitor visitor)
     {
+        if (staticDimension)
+            visitor.visit(staticDimension);
         if (modifier)
             visitor.visit(modifier);
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
 /// Either a MainUnit or a VirtualUnit
-class UnitAstNode: AstNode
+final class UnitAstNode: AstNode
 {
     /// The chain of tokens used in the UnitDeclaration.
     Token*[] unitDeclaration;
@@ -918,15 +787,10 @@ class UnitAstNode: AstNode
     {
         declarations.each!(a => visitor.visit(a));
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
-
 }
 
 /// The AST root node
-class UnitContainerAstNode: AstNode
+final class UnitContainerAstNode: AstNode
 {
     /// The main unit.
     UnitAstNode mainUnit;
@@ -939,9 +803,5 @@ class UnitContainerAstNode: AstNode
             visitor.visit(mainUnit);
         virtualUnits.each!(a => visitor.visit(a));
     }
-    /// Returns: $(D true) if the node matches to a grammar rule.
-    override bool isGrammatic() {return true;}
-    /// Returns: $(D true) if the node has no children.
-    override bool isTerminal() {return false;}
 }
 
