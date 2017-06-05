@@ -465,6 +465,11 @@ public:
                 advance();
                 validateToken();
                 continue;
+            case '|':
+                anticipateToken(TokenType.pipe);
+                advance();
+                validateToken();
+                continue;
             case '+':
                 anticipateToken(TokenType.plus);
                 if (_front <= _back && *lookup(1) == '+')
@@ -945,6 +950,20 @@ unittest
     assert(lx.tokens[1].isTokStringLiteral);
     assert(lx.tokens[1].text == "abcdef");
     assert(lx.tokens[2].isTokMinus);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `is s64 aka a`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 4);
+    assert(lx.tokens[0].isTokIs);
+    assert(lx.tokens[1].isTokBasicType);
+    assert(lx.tokens[2].isTokAka);
+    assert(lx.tokens[3].isTokIdentifier);
 }
 
 unittest

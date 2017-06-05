@@ -28,6 +28,7 @@ Yatol:
                     / FunctionDeclaration
                     / InterfaceDeclaration
                     / BlockStatement
+                    / AkaDeclaration
 
     ProtectionDeclaration   < Prot LeftParen Identifier RightParen
     StructDeclaration       < Struct Identifier LeftCurly Declarations? RightCurly
@@ -39,6 +40,9 @@ Yatol:
     VariableDeclarationList < VariableDeclarationItem (Comma VariableDeclarationItem)*
 
     VariableDeclarationItem < Identifier Initializer?
+
+    #The IdentifierChain in Type may represent a symbol
+    AkaDeclaration  < Is Type Aka Identifier
 
 ################################################################################
 # Imports declaration
@@ -191,10 +195,12 @@ Yatol:
 
     TypedVariableList < ParameterStorageClass* Type IdentifierList
 
-    Type < TypeIdentifier TypeModifiers?
-    TypeIdentifier  <  BasicType
-                    /  IdentifierChain
-                    /  FunctionPointerType
+    Type    < TypeIdentifier TypeModifiers?
+            / Auto
+
+    TypeIdentifier  < BasicType
+                    / IdentifierChain
+                    / FunctionPointerType
 
     TypeModifiers < TypeModifier TypeModifiers?
 
@@ -327,6 +333,13 @@ Yatol:
             / While
             / Var
             / Const
+            / Aka
+            / Auto
+            / Is
+            / Foreach
+            / Switch
+            / Null
+            / On
 
 
     BasicType  < BasicFloatType
@@ -363,6 +376,13 @@ Yatol:
     While   <- "while"
     Var     <- "var"
     Const   <- "const"
+    Aka     <- "aka"
+    Auto    <- "auto"
+    Is      <- "is"
+    Foreach <- "foreach"
+    On      <- "on"
+    Switch  <- "switch"
+    Null    <- "null"
 
     SREG    <- "sreg"
     UREG    <- "ureg"
@@ -461,17 +481,19 @@ enum source1 = `
     }
 */
 
+// use "on" instead of "case" ?
 auto s =
 q{
 
     switch (value)
     {
-        case(0,8,9) return "flûte";
-        case(10..20) return "nay";
+        on 0,8,9: return "flûte";
+        on 10..20: return "nay";
         else return "yah";
     }
 };
 
+// done
 auto f =
 q{
     L1:
@@ -523,6 +545,45 @@ q{
 
 
 };
+
+// reuse "on" instead of "catch" ?
+auto h =
+q{
+
+    try
+    {
+
+    }
+    on(Exception e)
+    {
+
+    }
+
+};
+
+// use pipe operator to make unions/algebraic ?
+auto u =
+q{
+    struct SomeUnion
+    {
+        s8 a | s32 b | SomeType c;
+    }
+}
+
+// done
+auto a =
+q{
+    is void* aka Ptr ;
+}
+
+// function composition ?
+auto f =
+q{
+    function foo1(s8 p): s8;
+    function foo2(s8 p): s8;
+    is foo1 + foo2 aka f1 ;
+    is foo1(foo2) aka f2 ;
+}
 
 
 unittest

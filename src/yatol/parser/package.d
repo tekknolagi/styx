@@ -267,6 +267,12 @@ private:
             result.basicOrQualifiedType ~= current();
             advance();
         }
+        else if (current.isTokAuto)
+        {
+            result.basicOrQualifiedType ~= current();
+            advance();
+            return result;
+        }
         else if (current.isTokFunction || current.isTokStatic)
         {
             result.functionType = parseFunctionType();
@@ -588,7 +594,6 @@ private:
      */
     FunctionHeaderAstNode parseFunctionHeader()
     {
-
         const bool isStatic = current.isTokStatic;
         if (isStatic)
         {
@@ -817,6 +822,41 @@ private:
                     return null;
                 }
             }
+        }
+        else return null;
+    }
+
+    AkaDeclarationAstNode parseAkaDeclaration()
+    {
+        if (!current.isTokIs)
+        {
+            expected(TokenType.is_);
+            return null;
+        }
+        advance();
+        if (TypeAstNode t = parseType())
+        {
+            if (!current.isTokAka)
+            {
+                expected(TokenType.aka);
+                return null;
+            }
+            advance();
+            if (!current.isTokIdentifier)
+            {
+                expected(TokenType.identifier);
+                return null;
+            }
+            AkaDeclarationAstNode result = new AkaDeclarationAstNode;
+            result.type = t;
+            result.name = current();
+            advance();
+            if (!current.isTokSemicolon)
+            {
+                expected(TokenType.semiColon);
+                return null;
+            }
+            return result;
         }
         else return null;
     }
@@ -1575,6 +1615,16 @@ private:
             }
             else return null;
         }
+        case is_:
+        {
+            if (AkaDeclarationAstNode ad = parseAkaDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.akaDeclaration = ad;
+                return result;
+            }
+            else return null;
+        }
         case static_:
         {
             if (lookupNext.isTokFunction)
@@ -1788,6 +1838,12 @@ unittest
         var s8[][] a;
         var MyInt mi = 8;
         var s8[2][4] b;
+        var auto a = 8:s64;
+
+        function a(s64 param): auto
+        {}
+
+        is function*(s64 p): s64 aka Prototype;
     }
 `;
     Lexer lx;

@@ -10,9 +10,9 @@ enum Semantic;
 
 private string astNodesClasses()
 {
-    import std.algorithm.sorting: sort;
     string result = "private alias AstNodesSeq = AliasSeq!(";
-    foreach (member; __traits(allMembers, yatol.parser.ast))
+    mixin("alias m = " ~ __MODULE__ ~ ";");
+    foreach (member; __traits(allMembers, m))
     {
         if (member.length > 6 && member[$-7..$] == "AstNode")
             result ~= member ~ ",\n";
@@ -49,6 +49,7 @@ string genVisitMethods(string statements)
  */
 class AstVisitor
 {
+    void visit(AkaDeclarationAstNode node){node.accept(this);}
     void visit(AssignExpressionAstNode node){node.accept(this);}
     void visit(AstNode node){node.accept(this);}
     void visit(BinaryExpressionAstNode node){node.accept(this);}
@@ -94,6 +95,7 @@ class AstVisitor
  */
 class AstVisitorNone: AstVisitor
 {
+    override void visit(AkaDeclarationAstNode node){}
     override void visit(AssignExpressionAstNode node){}
     override void visit(AstNode node){}
     override void visit(BinaryExpressionAstNode node){}
@@ -148,7 +150,10 @@ class AstNode
 }
 
 
-/// Returns: $(D true) if the node passed as parameter matches to a grammar rule.
+/**
+ * Returns: $(D true) if the node passed as parameter matches to a grammar rule
+ * and $(D false) if it's a helper node used to propagate fields by inheritance.
+ */
 enum isGrammatic(T) = T.stringof[$-7..$] == "AstNode";
 
 unittest
@@ -369,6 +374,21 @@ final class VariableDeclarationAstNode: AstNode
     }
 }
 
+/// AkaDeclaration
+final class AkaDeclarationAstNode: AstNode
+{
+    /// The target name.
+    Token* name;
+    /// The source type or the source symbol.
+    TypeAstNode type;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (type)
+            visitor.visit(type);
+    }
+}
+
 /// Declaration
 final class DeclarationAstNode: AstNode
 {
@@ -388,6 +408,8 @@ final class DeclarationAstNode: AstNode
     BlockStatementAstNode declarationBlock;
     /// Assigned if this declaration is a VariableDeclaration.
     VariableDeclarationAstNode variableDeclaration;
+    /// Assigned if this declaration is an akaDeclaration.
+    AkaDeclarationAstNode akaDeclaration;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -407,6 +429,8 @@ final class DeclarationAstNode: AstNode
             visitor.visit(functionDeclaration);
         else if (variableDeclaration)
             visitor.visit(variableDeclaration);
+        else if (akaDeclaration)
+            visitor.visit(akaDeclaration);
     }
 }
 

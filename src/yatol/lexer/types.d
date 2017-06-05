@@ -14,28 +14,41 @@ enum TokenType : ubyte
 {
     invalid,
     identifier,
+    //
     intLiteral,
     floatLiteral,
     hexLiteral,
     stringLiteral,
+    //
     lineComment,
     starComment,
     // Keywords
+    aka,
+    auto_,
     break_,
     class_,
     const_,
     continue_,
     else_,
+    foreach_,
     function_,
     if_,
     import_,
+    in_,
     interface_,
+    is_,
+    null_,
+    on,
     protection,
     return_,
     static_,
     struct_,
+    switch_,
     unit,
+    var,
     virtual,
+    while_,
+    // basic types
     f32,
     f64,
     s16,
@@ -48,10 +61,7 @@ enum TokenType : ubyte
     u64,
     u8,
     ureg,
-    var,
-    while_,
     // symbols
-    amp,
     bang,
     colon,
     comma,
@@ -74,6 +84,8 @@ enum TokenType : ubyte
     dotDot,
     ellipsis,
     // operators
+    amp,
+    pipe,
     div,
     minus,
     mul,
@@ -95,28 +107,41 @@ static immutable string[TokenType.max + 1] tokenStringTable =
 [
     "(invalid)",
     "(identifier)",
+    //
     "(integerLiteral)",
     "(floatLiteral)",
     "(hexLiteral)",
     "(stringLiteral)",
+    //
     "(lineComment)",
     "(starComment)",
     // Keywords
+    "aka",
+    "auto",
     "break",
     "class",
     "const",
     "continue",
     "else",
+    "foreach",
     "function",
     "if",
     "import",
+    "in",
     "interface",
+    "is",
+    "null",
+    "on",
     "protection",
     "return",
     "static",
     "struct",
+    "switch",
     "unit",
+    "var",
     "virtual",
+    "while",
+    // basic types
     "f32",
     "f64",
     "s16",
@@ -129,10 +154,7 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     "u64",
     "u8",
     "ureg",
-    "var",
-    "while",
     // symbols
-    "&",
     "!",
     ":",
     ",",
@@ -155,10 +177,13 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     "..",
     "...",
     // operators
+    "&",
+    "|",
     "/",
     "-",
     "*",
     "+",
+    //
     "--",
     "++",
 ];
@@ -180,22 +205,22 @@ string tokenString(TokenType type)
 }
 
 /// The value of the first keyword.
-static immutable firstKeyword = TokenType.break_;
+static immutable ptrdiff_t firstKeyword = TokenType.aka;
 /// The value of the last keyword.
-static immutable lastKeyword = TokenType.while_;
+static immutable ptrdiff_t lastKeyword = TokenType.while_;
 
 /// The value of the first basic type.
-static immutable firstBasicType = TokenType.f32;
+static immutable ptrdiff_t firstBasicType = TokenType.f32;
 /// The value of the last keyword.
-static immutable lastBasicType = TokenType.ureg;
+static immutable ptrdiff_t lastBasicType = TokenType.ureg;
 
 /// The value of the first symbol.
-static immutable firstSymbol = TokenType.amp;
+static immutable firstSymbol = TokenType.bang;
 /// The value of the last symbol.
 static immutable lastSymbol = TokenType.ellipsis;
 
 /// The value of the first operator.
-static immutable firstOperator = TokenType.div;
+static immutable firstOperator = TokenType.amp;
 /// The value of the last operator.
 static immutable lastOperator = TokenType.plus;
 
@@ -222,33 +247,34 @@ private:
 
     static const string[64] _words =
     [
-        "", "", "unit", "", "continue", "", "function", "f32", "", "s16", "",
-        "static", "", "", "const", "", "u16", "if", "s32", "return", "class",
-        "", "protection", "s8", "", "u32", "", "", "", "", "u8", "interface",
-        "", "", "while", "sreg", "else", "var", "", "", "f64", "", "ureg", "",
-        "", "", "", "", "", "", "", "s64", "virtual", "break", "", "", "", "",
-        "u64", "struct", "", "", "import", ""
+        "", "function", "unit", "f32", "", "", "u32", "", "s8", "", "f64",
+        "u16", "protection", "u64", "return", "null", "switch", "", "const",
+        "foreach", "", "on", "", "interface", "var", "break", "", "", "auto",
+        "while", "", "ureg", "", "is", "in", "", "", "", "s32", "", "u8", "",
+        "", "s16", "", "s64", "", "import", "virtual", "aka", "", "", "", "",
+        "static", "continue", "", "", "struct", "", "class", "else", "if",
+        "sreg"
     ];
 
     static const ubyte[256] _coefficients =
     [
-        87, 0, 60, 217, 28, 39, 73, 244, 7, 60, 180, 44, 254, 16, 112, 197, 195,
-        203, 67, 7, 125, 144, 213, 49, 126, 57, 134, 125, 53, 96, 87, 172, 39,
-        177, 105, 4, 116, 137, 241, 78, 40, 173, 41, 126, 196, 223, 162, 21,
-        181, 118, 70, 177, 32, 65, 248, 156, 188, 238, 72, 244, 53, 96, 16, 167,
-        177, 97, 231, 224, 25, 161, 217, 163, 210, 54, 196, 57, 233, 199, 147,
-        66, 12, 207, 84, 155, 4, 186, 82, 223, 237, 245, 104, 68, 203, 189, 65,
-        188, 177, 83, 23, 158, 162, 14, 80, 88, 37, 193, 239, 155, 173, 169,
-        160, 54, 253, 245, 226, 27, 127, 226, 176, 65, 155, 103, 98, 95, 12,
-        140, 242, 98, 235, 194, 82, 64, 110, 71, 169, 83, 107, 80, 99, 90, 69,
-        182, 126, 42, 193, 198, 98, 165, 169, 232, 190, 25, 47, 249, 76, 64,
-        120, 163, 10, 187, 204, 162, 249, 116, 219, 92, 206, 159, 91, 115, 252,
-        71, 41, 128, 34, 95, 50, 177, 121, 79, 242, 17, 63, 128, 229, 108, 45,
-        166, 182, 210, 46, 74, 20, 121, 133, 46, 203, 155, 24, 22, 137, 82, 127,
-        15, 36, 223, 250, 122, 52, 207, 32, 17, 133, 177, 187, 99, 108, 36, 154,
-        151, 73, 126, 93, 93, 79, 70, 183, 58, 193, 113, 204, 6, 180, 183, 205,
-        209, 38, 252, 123, 124, 182, 167, 221, 246, 158, 104, 224, 145, 23, 41,
-        173, 238, 210, 135, 170, 123
+        89, 193, 210, 37, 171, 229, 29, 211, 144, 176, 208, 85, 0, 148, 184,
+        227, 69, 6, 186, 95, 97, 250, 19, 197, 211, 3, 11, 230, 15, 146, 137,
+        249, 192, 234, 74, 43, 147, 179, 39, 203, 118, 208, 91, 201, 210, 40,
+        46, 254, 45, 254, 111, 103, 128, 86, 157, 125, 56, 86, 11, 47, 186, 113,
+        77, 62, 210, 46, 48, 65, 236, 154, 255, 66, 76, 26, 157, 49, 62, 57,
+        183, 137, 119, 68, 52, 232, 158, 158, 151, 202, 120, 44, 193, 135, 202,
+        48, 199, 21, 125, 248, 224, 125, 0, 35, 109, 111, 109, 209, 143, 193,
+        231, 200, 81, 68, 69, 120, 221, 80, 176, 176, 67, 21, 145, 0, 190, 34,
+        242, 174, 167, 237, 69, 136, 88, 129, 183, 158, 4, 232, 109, 201, 245,
+        109, 81, 77, 244, 50, 104, 192, 201, 240, 36, 125, 62, 187, 73, 110,
+        254, 57, 38, 173, 184, 134, 104, 236, 178, 32, 141, 71, 214, 77, 153,
+        151, 106, 26, 249, 129, 5, 147, 66, 246, 37, 210, 100, 179, 254, 254,
+        27, 152, 148, 19, 128, 147, 3, 54, 179, 95, 166, 233, 129, 157, 89, 17,
+        115, 202, 231, 229, 29, 139, 125, 106, 90, 215, 93, 54, 83, 199, 217,
+        169, 229, 62, 160, 89, 97, 196, 68, 225, 169, 164, 131, 189, 132, 168,
+        174, 103, 141, 55, 50, 223, 63, 224, 52, 134, 139, 199, 242, 167, 102,
+        187, 211, 100, 74, 7, 156, 50, 62, 219, 41, 131
     ];
 
     static string generateFilledTable()
@@ -259,10 +285,10 @@ private:
         foreach(w; _words)
         {
             ptrdiff_t index = tokenStringTable[].countUntil(w);
-            if (firstKeyword > index || index > lastKeyword)
-                result ~= "TokenType.invalid, ";
-            else
+            if (index >= firstKeyword && index <= lastBasicType)
                 result ~= "TokenType." ~ to!string(cast(TokenType) index) ~ ", ";
+            else
+                result ~= "TokenType.invalid, ";
         }
         result ~= "];";
         return result;
@@ -308,6 +334,7 @@ public:
 ///
 unittest
 {
+    static assert(TokenType.f32 > firstKeyword && TokenType.f32 < lastBasicType);
     assert(("blalba" in Keywords) == TokenType.identifier);
     assert(("protection" in Keywords) == TokenType.protection);
     assert(("f32" in Keywords) == TokenType.f32);
@@ -595,6 +622,30 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokDollar() const {return type == TokenType.dollar;}
+
+    /// Conveniance function used by the parser.
+    bool isTokPipe() const {return type == TokenType.pipe;}
+
+    /// Conveniance function used by the parser.
+    bool isTokAka() const {return type == TokenType.aka;}
+
+    /// Conveniance function used by the parser.
+    bool isTokAuto() const {return type == TokenType.auto_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokIs() const {return type == TokenType.is_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokForeach() const {return type == TokenType.foreach_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokSwitch() const {return type == TokenType.switch_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokNull() const {return type == TokenType.null_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokIn() const {return type == TokenType.in_;}
 
     /// Conveniance function used by the parser.
     bool isUnaryPrefix() const
