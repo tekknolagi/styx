@@ -110,7 +110,10 @@ Yatol:
                 / BreakStatement
                 / BlockStatement
 #               / SwitchStatement
-#               / CaseStatement
+#               / OnStatement
+#               / TryStatement
+#               / OnTriedStatement
+#               / FinallyStatement
 
     EmptyStatment < Semicolon
 
@@ -183,7 +186,7 @@ Yatol:
 
     IndexExpression < LeftSquare Expression RightSquare
 
-    RangeExpression < LeftSquare Expression Ellipsis Expression RightSquare
+    RangeExpression < LeftSquare Expression DotDot Expression RightSquare
 
 ################################################################################
 # Cast
@@ -268,7 +271,8 @@ Yatol:
     UnarySuffix < PlusPlus / MinusMinus
 
     OptAccess   <~ Qmark Dot
-    Ellipsis    <~ Dot Dot
+    Ellipsis    <~ Dot Dot Dot
+    DotDot      <~ Dot Dot
     EqualEqual  <~ Equal Equal
     NotEqual    <~ Bang Equal
     Lesser      <- '<'
@@ -462,24 +466,13 @@ enum source1 = `
 
         a = b[c](param0).b[c](param0);
 
+        var auto a = 8;
+
+        is function*() aka FuncPtr;
+
 
     }
 `;
-
-/*
-
-
-
-        return;
-        break a.call();
-        while(call())
-        {
-            if (a)
-                break a.call();
-        }
-        ++(a);
-    }
-*/
 
 // use "on" instead of "case" ?
 auto s =
@@ -523,18 +516,16 @@ q{
         var s32 field;
         @virtual void foo();
         @abstract void foo();
-        @constructor Foo construct(s32 param)
+        @constructor @virtual Foo construct(s32 param)
         {
             /// auto generated alloc
             this.field = param;
             return this;
         }
-        @destructor void destruct()
+        @destructor @virtual void destruct()
         {
 
         }
-
-
     }
 
     void foo()
@@ -542,21 +533,16 @@ q{
         Foo f = Foo.construct();
         f.destruct();
     }
-
-
 };
 
 // reuse "on" instead of "catch" ?
 auto h =
 q{
-
     try
     {
-
     }
     on(Exception e)
     {
-
     }
 
 };
@@ -568,22 +554,22 @@ q{
     {
         s8 a | s32 b | SomeType c;
     }
-}
+};
 
 // done
 auto a =
 q{
     is void* aka Ptr ;
-}
+};
 
 // function composition ?
-auto f =
+auto k =
 q{
     function foo1(s8 p): s8;
     function foo2(s8 p): s8;
     is foo1 + foo2 aka f1 ;
     is foo1(foo2) aka f2 ;
-}
+};
 
 
 unittest
