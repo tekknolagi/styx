@@ -1857,8 +1857,8 @@ unittest
     if (UnitContainerAstNode uc = pr.parse())
     {
         dv.visit(uc);
-        import std.process;
-        if ("CI" !in environment)
+        //import std.process;
+        //if ("CI" !in environment)
             dv.printText();
     }
 }
