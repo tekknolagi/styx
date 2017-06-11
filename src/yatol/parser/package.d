@@ -1844,6 +1844,8 @@ unittest
         {}
 
         is function*(s64 p): s64 aka Prototype;
+
+        const auto a = (b[0].b[1].b[2])(8);
     }
 `;
     Lexer lx;
@@ -2221,6 +2223,23 @@ unittest
     assertNotParse(q{
         unit a;
         s8 a = 8;
+    });
+}
+
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        var auto a = b[0..8];
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        const auto a = (b[0].b[1].b[2])(8);
     });
 }
 

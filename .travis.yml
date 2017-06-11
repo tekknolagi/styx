@@ -12,6 +12,6 @@ d:
  - ldc-beta 
  
 script:
- - dub --build=unittest --config=compiler
- - dub --build=release --config=compiler
- - dub build --build=release --config=library
+ - dub --build=unittest --config=compiler --compiler=${DC}
+ - dub --build=release --config=compiler --compiler=${DC}
+ - dub build --build=release --config=library --compiler=${DC}
