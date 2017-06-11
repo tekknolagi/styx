@@ -1,0 +1,17 @@
+dist: trusty
+sudo: false
+
+language: d
+os:
+ - linux
+ - osx
+d:
+ - dmd
+ - dmd-nightly
+ - ldc
+ - ldc-beta 
+ 
+script:
+ - dub --build=unittest --config=compiler
+ - dub --build=release --config=compiler
+ - dub build --build=release --config=library
