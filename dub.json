@@ -22,7 +22,4 @@
   ],
   "description" : "YATOL is Yet Another TOy Language",
   "license" : "BSD 3-clause",
-  "dflags" : [
-    "-vtls"
-  ]
 }
