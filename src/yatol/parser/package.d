@@ -528,6 +528,19 @@ private:
         EnumDeclarationAstNode result = new EnumDeclarationAstNode;
         result.name = current();
         advance();
+        if (current.isTokColon)
+        {
+            advance();
+            if (TypeAstNode t = parseType())
+            {
+                result.type = t;
+            }
+            else
+            {
+                parseError("invalid enum type");
+                return null;
+            }
+        }
         if (!current.isTokLeftCurly)
         {
             expected(TokenType.leftCurly);
@@ -547,7 +560,6 @@ private:
             }
             else
             {
-                parseError("invalid enum item");
                 return null;
             }
         }
@@ -1948,11 +1960,7 @@ unittest
 
         const auto a = (b[0].b[1].b[2])(8);
 
-        // there will be bugs for sure...
-        // fixed but i have to... change the formal grammar to make
-        // last comma optional...
-        // maybe another day...
-        enum A
+        enum A : s8
         {
             a,
             b = 8,

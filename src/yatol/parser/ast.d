@@ -326,11 +326,15 @@ final class EnumDeclarationAstNode: AstNode
 {
     /// The enum name.
     Token* name;
+    /// The enum type
+    TypeAstNode type;
     /// The enum members.
     EnumItemAstNode[] members;
     ///
     override void accept(AstVisitor visitor)
     {
+        if (type)
+            visitor.visit(type);
         members.each!(a => visitor.visit(a));
     }
 }
