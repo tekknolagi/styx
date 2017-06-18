@@ -478,7 +478,7 @@ private:
         EnumMemberAstNode result = new EnumMemberAstNode;
         result.identifier = current();
         advance();
-        if (current.isTokComma)
+        if (current.isTokComma || current.isTokRightCurly)
         {
             advance();
             return result;
@@ -489,19 +489,14 @@ private:
             if (ExpressionAstNode e = parseExpression(null))
             {
                 result.value = e;
-                if (current.isTokComma)
-                {
-                    advance();
-                    return result;
-                }
-                else if (current.isTokRightCurly)
+                if (current.isTokComma || current.isTokRightCurly)
                 {
                     advance();
                     return result;
                 }
                 else
                 {
-                    expected(TokenType.comma);
+                    parseError("expected `,` or `}` after declaring an enum member");
                     return null;
                 }
             }
@@ -2379,6 +2374,30 @@ unittest
     assertParse(q{
         unit a;
         const auto a = (b[0].b[1].b[2])(8);
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        enum A {a}
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        enum A {a,b = call(), c = 8, d}
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        enum A {a,b = }
     });
 }
 
