@@ -42,9 +42,9 @@ Yatol:
 
     VariableDeclarationItem < Identifier Initializer?
 
-    EnumDeclaration < Enum Identifier Cast? LeftCurly EnumItem (Comma EnumItem)* Comma? RightCurly
+    EnumDeclaration < Enum Identifier Cast? LeftCurly EnumMember (Comma EnumMember)* Comma? RightCurly
 
-    EnumItem    < Identifier BasicTypeInitializer?
+    EnumMember    < Identifier BasicTypeInitializer?
 
     #The IdentifierChain in Type may represent a symbol
     AkaDeclaration  < Is Type Aka Identifier

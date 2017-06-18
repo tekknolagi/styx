@@ -462,14 +462,20 @@ private:
         return result;
     }
 
-    EnumItemAstNode parseEnumItem()
+    /**
+     * Parses an EnumItem
+     *
+     * Returns:
+     *      On success a $(D EnumMemberAstNode) otherwise $(D null).
+     */
+    EnumMemberAstNode parseEnumMember()
     {
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
             return null;
         }
-        EnumItemAstNode result = new EnumItemAstNode;
+        EnumMemberAstNode result = new EnumMemberAstNode;
         result.identifier = current();
         advance();
         if (current.isTokComma)
@@ -512,6 +518,12 @@ private:
         }
     }
 
+    /**
+     * Parses an EnumDeclaration
+     *
+     * Returns:
+     *      On success a $(D EnumDeclarationAstNode) otherwise $(D null).
+     */
     EnumDeclarationAstNode parseEnumDeclaration()
     {
         if (!current.isTokEnum)
@@ -554,7 +566,7 @@ private:
                 advance();
                 return result;
             }
-            if (EnumItemAstNode ei = parseEnumItem())
+            if (EnumMemberAstNode ei = parseEnumMember())
             {
                 result.members ~= ei;
             }
@@ -867,7 +879,7 @@ private:
      * Parses a VariableDeclaration.
      *
      * Returns:
-     *      A $(D VariableDeclaration) on success, $(D null) otherwise.
+     *      A $(D VariableDeclarationAstNode) on success, $(D null) otherwise.
      */
     VariableDeclarationAstNode parseVariableDeclaration()
     {
@@ -929,6 +941,12 @@ private:
         else return null;
     }
 
+    /**
+     * Parses an AkaDeclaration.
+     *
+     * Returns:
+     *      A $(D AkaDeclarationAstNode) on success, $(D null) otherwise.
+     */
     AkaDeclarationAstNode parseAkaDeclaration()
     {
         if (!current.isTokIs)

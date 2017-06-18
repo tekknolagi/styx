@@ -63,7 +63,7 @@ class AstVisitor
     void visit(DotExpressionAstNode node){node.accept(this);}
     void visit(EmptyStatementAstNode node){node.accept(this);}
     void visit(EnumDeclarationAstNode node){node.accept(this);}
-    void visit(EnumItemAstNode node){node.accept(this);}
+    void visit(EnumMemberAstNode node){node.accept(this);}
     void visit(ExpressionAstNode node){node.accept(this);}
     void visit(ExpressionStatementAstNode node){node.accept(this);}
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
@@ -111,7 +111,7 @@ class AstVisitorNone: AstVisitor
     override void visit(DotExpressionAstNode node){}
     override void visit(EmptyStatementAstNode node){}
     override void visit(EnumDeclarationAstNode node){}
-    override void visit(EnumItemAstNode node){}
+    override void visit(EnumMemberAstNode node){}
     override void visit(ExpressionAstNode node){}
     override void visit(ExpressionStatementAstNode node){}
     override void visit(FunctionDeclarationAstNode node){}
@@ -307,7 +307,7 @@ final class StructDeclarationAstNode: AstNode
 }
 
 /// EnumItem
-final class EnumItemAstNode: AstNode
+final class EnumMemberAstNode: AstNode
 {
     /// The enum member name.
     Token* identifier;
@@ -329,7 +329,7 @@ final class EnumDeclarationAstNode: AstNode
     /// The enum type
     TypeAstNode type;
     /// The enum members.
-    EnumItemAstNode[] members;
+    EnumMemberAstNode[] members;
     ///
     override void accept(AstVisitor visitor)
     {
