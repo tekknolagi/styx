@@ -462,6 +462,97 @@ private:
         return result;
     }
 
+    EnumItemAstNode parseEnumItem()
+    {
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        EnumItemAstNode result = new EnumItemAstNode;
+        result.identifier = current();
+        advance();
+        if (current.isTokComma)
+        {
+            advance();
+            return result;
+        }
+        else if (current.isTokEqual)
+        {
+            advance();
+            if (ExpressionAstNode e = parseExpression(null))
+            {
+                result.value = e;
+                if (current.isTokComma)
+                {
+                    advance();
+                    return result;
+                }
+                else if (current.isTokRightCurly)
+                {
+                    advance();
+                    return result;
+                }
+                else
+                {
+                    expected(TokenType.comma);
+                    return null;
+                }
+            }
+            else
+            {
+                parseError("invalid enum value");
+                return null;
+            }
+        }
+        else
+        {
+            unexpected();
+            return null;
+        }
+    }
+
+    EnumDeclarationAstNode parseEnumDeclaration()
+    {
+        if (!current.isTokEnum)
+        {
+            expected(TokenType.enum_);
+            return null;
+        }
+        advance();
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        EnumDeclarationAstNode result = new EnumDeclarationAstNode;
+        result.name = current();
+        advance();
+        if (!current.isTokLeftCurly)
+        {
+            expected(TokenType.leftCurly);
+            return null;
+        }
+        advance();
+        while (true)
+        {
+            if (current.isTokRightCurly)
+            {
+                advance();
+                return result;
+            }
+            if (EnumItemAstNode ei = parseEnumItem())
+            {
+                result.members ~= ei;
+            }
+            else
+            {
+                parseError("invalid enum item");
+                return null;
+            }
+        }
+    }
+
     /**
      * Parses an ImportDeclaration.
      *
@@ -1536,6 +1627,16 @@ private:
     {
         with(TokenType) switch(current.type)
         {
+        case enum_:
+        {
+            if (EnumDeclarationAstNode decl = parseEnumDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.enumDeclaration = decl;
+                return result;
+            }
+            else return null;
+        }
         case interface_:
         {
             if (InterfaceDeclarationAstNode decl = parseInterfaceDeclaration())
@@ -1846,6 +1947,18 @@ unittest
         is function*(s64 p): s64 aka Prototype;
 
         const auto a = (b[0].b[1].b[2])(8);
+
+        // there will be bugs for sure...
+        // fixed but i have to... change the formal grammar to make
+        // last comma optional...
+        // maybe another day...
+        enum A
+        {
+            a,
+            b = 8,
+            c,
+            d = call()
+        }
     }
 `;
     Lexer lx;

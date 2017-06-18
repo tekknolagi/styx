@@ -62,6 +62,8 @@ class AstVisitor
     void visit(DeclarationOrStatementAstNode node){node.accept(this);}
     void visit(DotExpressionAstNode node){node.accept(this);}
     void visit(EmptyStatementAstNode node){node.accept(this);}
+    void visit(EnumDeclarationAstNode node){node.accept(this);}
+    void visit(EnumItemAstNode node){node.accept(this);}
     void visit(ExpressionAstNode node){node.accept(this);}
     void visit(ExpressionStatementAstNode node){node.accept(this);}
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
@@ -108,6 +110,8 @@ class AstVisitorNone: AstVisitor
     override void visit(DeclarationOrStatementAstNode node){}
     override void visit(DotExpressionAstNode node){}
     override void visit(EmptyStatementAstNode node){}
+    override void visit(EnumDeclarationAstNode node){}
+    override void visit(EnumItemAstNode node){}
     override void visit(ExpressionAstNode node){}
     override void visit(ExpressionStatementAstNode node){}
     override void visit(FunctionDeclarationAstNode node){}
@@ -302,6 +306,35 @@ final class StructDeclarationAstNode: AstNode
     }
 }
 
+/// EnumItem
+final class EnumItemAstNode: AstNode
+{
+    /// The enum member name.
+    Token* identifier;
+    /// The member value.
+    ExpressionAstNode value;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (value)
+            visitor.visit(value);
+    }
+}
+
+/// EnumDeclaration
+final class EnumDeclarationAstNode: AstNode
+{
+    /// The enum name.
+    Token* name;
+    /// The enum members.
+    EnumItemAstNode[] members;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        members.each!(a => visitor.visit(a));
+    }
+}
+
 /// ClassDeclaration
 final class ClassDeclarationAstNode: AstNode
 {
@@ -404,6 +437,8 @@ final class DeclarationAstNode: AstNode
     ClassDeclarationAstNode classDeclaration;
     /// Assigned if this declaration is a StructDeclarationAstNode.
     StructDeclarationAstNode structDeclaration;
+    /// Assigned if this declaration is an EnumDeclarationAstNode.
+    EnumDeclarationAstNode enumDeclaration;
     /// Assigned if this declaration is a Scope.
     BlockStatementAstNode declarationBlock;
     /// Assigned if this declaration is a VariableDeclaration.
@@ -423,6 +458,8 @@ final class DeclarationAstNode: AstNode
             visitor.visit(classDeclaration);
         else if (structDeclaration)
             visitor.visit(structDeclaration);
+        else if (enumDeclaration)
+            visitor.visit(enumDeclaration);
         else if (declarationBlock)
             visitor.visit(declarationBlock);
         else if (functionDeclaration)
@@ -803,9 +840,9 @@ final class UnitAstNode: AstNode
     /// The declarations located in the unit.
     DeclarationAstNode[] declarations;
     /// Indicates if this is a VirtualUnit.
-    final bool isVirtual() const {return mainUnit !is null;}
+    bool isVirtual() const {return mainUnit !is null;}
     /// Indicates if this is a MainUnit.
-    final bool isMain() const {return !isVirtual;}
+    bool isMain() const {return !isVirtual;}
     ///
     override void accept(AstVisitor visitor)
     {

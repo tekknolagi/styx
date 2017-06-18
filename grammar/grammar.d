@@ -25,6 +25,7 @@ Yatol:
                     / VariableDeclaration
                     / ClassDeclaration
                     / StructDeclaration
+                    / EnumDeclaration
                     / FunctionDeclaration
                     / InterfaceDeclaration
                     / BlockStatement
@@ -40,6 +41,11 @@ Yatol:
     VariableDeclarationList < VariableDeclarationItem (Comma VariableDeclarationItem)*
 
     VariableDeclarationItem < Identifier Initializer?
+
+    #big bloody idiot...
+    EnumDeclaration < Enum Identifier Cast? LeftCurly EnumItem (Comma EnumItem)* RightCurly
+
+    EnumItem    < Identifier BasicTypeInitializer?
 
     #The IdentifierChain in Type may represent a symbol
     AkaDeclaration  < Is Type Aka Identifier
@@ -387,6 +393,7 @@ Yatol:
     On      <- "on"
     Switch  <- "switch"
     Null    <- "null"
+    Enum    <- "enum"
 
     SREG    <- "sreg"
     UREG    <- "ureg"
@@ -472,6 +479,15 @@ enum source1 = `
 
         const auto a = (b[0].b[1].b[2])(8);
 
+    }
+
+    #ok, the peg is used to have a "formal" grammar
+    # now let's write this by hand
+    enum A
+    {
+        a = 0,
+        b,
+        c = 2
     }
 `;
 

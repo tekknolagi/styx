@@ -5,6 +5,7 @@ class
 const
 continue
 else
+enum
 foreach
 function
 if
