@@ -26,13 +26,13 @@ private:
         TokenType.invalid);
     Range _range;
 
-    void warning(const(char[]) message)
+    /*void warning(const(char[]) message)
     {
         assert(_current);
         writefln("%s(%d,%d): warning, %s", _lexer.filename, _current.line,
             _current.column, message);
         stdout.flush;
-    }
+    }*/
 
     void parseError(const(char[]) message)
     {
@@ -242,6 +242,10 @@ private:
         TypeModifierAstNode result = new TypeModifierAstNode;
         TypeModifierAstNode lastMd = result;
         result.position = current.position;
+        if (!current.isTokMul && !current.isTokLeftSquare)
+        {
+            return null;
+        }
         while (current.isTokMul || current.isTokLeftSquare)
         {
             if (lastMd.kind != ModifierKind.none)
@@ -1861,36 +1865,28 @@ public:
     {
         if (!current)
             return null;
-        if (!current.isTokUnit)
+        _uc = new UnitContainerAstNode;
+        _uc.mainUnit = parseUnit();
+        if (!_uc.mainUnit)
         {
-            expected(TokenType.unit);
             return null;
         }
-        else
+        while (current.isTokVirtual)
         {
-            _uc = new UnitContainerAstNode;
-            _uc.mainUnit = parseUnit();
-            if (!_uc.mainUnit)
-            {
+            advance();
+            _uc.virtualUnits ~= parseUnit;
+            if (!_uc.virtualUnits[$-1])
                 return null;
-            }
-            while (current.isTokVirtual)
-            {
-                advance();
-                _uc.virtualUnits ~= parseUnit;
-                if (!_uc.virtualUnits[$-1])
-                    return null;
-            }
-            if (!_range.empty)
-            {
-                unexpected;
-                return null;
-            }
-            if (_errorCount)
-                return null;
-            else
-                return _uc;
         }
+        if (!_range.empty)
+        {
+            unexpected;
+            return null;
+        }
+        if (_errorCount)
+            return null;
+        else
+            return _uc;
     }
 
     /// Returns: The AST for the unit being parsed.
@@ -1932,7 +1928,7 @@ unittest
     assert(tan);
 }
 
-version(none) unittest
+unittest
 {
     enum line = __LINE__;
     enum source = `
@@ -2480,6 +2476,87 @@ unittest
     assertNotParse(q{
         unit a;
         class Foo : Foo, Bar.Bar, {}
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        a;
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a-a;
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a.+;
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            {
+                statement = good;
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            {
+                wrong statement
+            }
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        var auto a = b;
+    });
+    assertNotParse(q{
+        unit a;
+        var auto a = b+;
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        var auto a =+;
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            a = a[a..a];
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            a = a[a..a..a];
+        }
     });
 }
 

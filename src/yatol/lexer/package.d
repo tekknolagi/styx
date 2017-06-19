@@ -38,15 +38,11 @@ private:
     {
         stderr.writefln("%s(%d,%d): error, %s", _filename, _frontLine,
             _frontColumn, message);
-        version(assert) {}
-        else exit(1);
     }
 
     // Puts a bookmark when starting to lex something.
     void anticipateToken(TokenType type)
     {
-        version(assert) if (type == TokenType.invalid)
-            error("INTERNAL: attempt to anticipate an invalid token");
         _tokStart = _front;
         _tokStartLine = _frontLine;
         _tokStartColumn = _frontColumn;
@@ -125,6 +121,8 @@ private:
             {
             case 0:
                 error("null character encountered inside a string literal");
+                advance();
+                validateToken(TokenType.invalid);
                 return;
             case '\r', '\n':
                 processlineEnding;
@@ -157,6 +155,8 @@ private:
             {
             case 0:
                 error("null character encountered inside a comment");
+                advance();
+                validateToken(TokenType.invalid);
                 return;
             case '\r', '\n':
                 validateToken();
@@ -178,6 +178,7 @@ private:
             if (_front > _back)
             {
                 error("unterminated star comment");
+                validateToken(TokenType.invalid);
                 return;
             }
             switch(*_front)
@@ -185,7 +186,8 @@ private:
             case 0:
                 error("null character encountered inside a star comment");
                 advance();
-                continue;
+                validateToken(TokenType.invalid);
+                return;
             case '\r', '\n':
                 processlineEnding;
                 break;
@@ -211,6 +213,11 @@ private:
         {
             switch(*_front)
             {
+            case 0:
+                error("null character encountered inside an hex literal");
+                advance();
+                validateToken(TokenType.invalid);
+                return;
             case '0': .. case '9':
             case 'a': .. case 'f':
             case 'A': .. case 'F':
@@ -244,6 +251,11 @@ private:
         {
             switch(*_front)
             {
+            case 0:
+                error("null character encountered inside an int literal");
+                advance();
+                validateToken(TokenType.invalid);
+                return;
             case '0': .. case '9':
             case '_':
                 advance();
@@ -285,6 +297,11 @@ private:
         {
             switch(*_front)
             {
+            case 0:
+                error("null character encountered inside a float literal");
+                advance();
+                validateToken(TokenType.invalid);
+                return;
             case '0': .. case '9':
             case '_':
                 advance();
@@ -310,7 +327,8 @@ private:
             case 0:
                 error("null character encountered inside an identifier");
                 advance();
-                continue;
+                validateToken(TokenType.invalid);
+                return;
             case 'a': .. case 'z':
             case 'A': .. case 'Z':
             case '0': .. case '9':
@@ -611,7 +629,10 @@ public:
                 }
                 continue;
             default:
+                anticipateToken(TokenType.invalid);
                 error("invalid input character");
+                advance();
+                validateToken();
             }
         }
     }
@@ -722,6 +743,32 @@ unittest
 unittest
 {
     int line = __LINE__ + 1;
+    enum source = `"
+    multiple lines
+    "`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokStringLiteral);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "s8\r\ns16";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].type == TokenType.s8);
+    assert(lx.tokens[1].type == TokenType.s16);
+    assert(lx.tokens[1].line == lx.tokens[0].line + 1);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
     enum source = `//`;
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
@@ -757,6 +804,39 @@ unittest
     assert(lx.tokens[1].isTokStarComment);
     assert(lx.tokens[2].isTokLineComment);
     assert(lx.tokens[3].isTokStarComment);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `/*`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "\xFF";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "/*nullchar\x00";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokInvalid);
 }
 
 unittest
@@ -808,19 +888,6 @@ unittest
     assert(lx.tokens[0].isTokLeftParen);
     assert(lx.tokens[1].isTokIntegerLiteral);
     assert(lx.tokens[2].isTokRightParen);
-}
-
-unittest
-{
-    int line = __LINE__ + 1;
-    enum source = `1a b`;
-    Lexer lx;
-    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
-    lx.lex();
-    assert(lx.tokens.length == 2);
-    assert(lx.tokens[0].text == "1a");
-    assert(lx.tokens[1].isTokIdentifier);
-    assert(lx.tokens[1].text == "b");
 }
 
 unittest
@@ -950,6 +1017,8 @@ unittest
     assert(lx.tokens[1].isTokStringLiteral);
     assert(lx.tokens[1].text == "abcdef");
     assert(lx.tokens[2].isTokMinus);
+    // ! for coverage !
+    lx.printTokens();
 }
 
 unittest
@@ -979,6 +1048,18 @@ unittest
     assert(lx.tokens[0].text == "function");
     assert(lx.tokens[1].isTokDollar);
     assert(lx.tokens[2].isTokIdentifier);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `==|`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].isTokEqualEqual);
+    assert(lx.tokens[1].isTokPipe);
 }
 
 /// Tests the symbols and single char operators.
@@ -1012,5 +1093,116 @@ unittest
     assert(range.front().type == TokenType.dot);
     range.popFront();
     assert(range.empty());
+    assert(lx.filename == __FILE_FULL_PATH__);
+}
+
+/// Null chars are allowed between two tokens
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "1a\x00b";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].text == "1a");
+    assert(lx.tokens[1].isTokIdentifier);
+    assert(lx.tokens[1].text == "b");
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "aa\x00";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "/*\x00";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "//\x00";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "0\x00";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "0.0\x00";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "0x1\x00";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "\"stringliteral\x00";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "0x1Y";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].isTokInvalid);
 }
 
