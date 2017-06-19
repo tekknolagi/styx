@@ -480,7 +480,6 @@ private:
         advance();
         if (current.isTokComma || current.isTokRightCurly)
         {
-            advance();
             return result;
         }
         else if (current.isTokEqual)
@@ -491,7 +490,6 @@ private:
                 result.value = e;
                 if (current.isTokComma || current.isTokRightCurly)
                 {
-                    advance();
                     return result;
                 }
                 else
@@ -502,7 +500,7 @@ private:
             }
             else
             {
-                parseError("invalid enum value");
+                parseError("invalid enum member value");
                 return null;
             }
         }
@@ -564,6 +562,16 @@ private:
             if (EnumMemberAstNode ei = parseEnumMember())
             {
                 result.members ~= ei;
+                if (current.isTokComma)
+                {
+                    advance();
+                    if (current.isTokRightCurly)
+                    {
+                        unexpected();
+                        return null;
+                    }
+                    else continue;
+                }
             }
             else
             {
@@ -2387,9 +2395,9 @@ unittest
 
 unittest
 {
-    assertParse(q{
+    assertNotParse(q{
         unit a;
-        enum A {a,b = call(), c = 8, d}
+        enum A {a, b = 8, c = call(), d,}
     });
 }
 

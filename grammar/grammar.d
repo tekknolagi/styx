@@ -42,7 +42,7 @@ Yatol:
 
     VariableDeclarationItem < Identifier Initializer?
 
-    EnumDeclaration < Enum Identifier Cast? LeftCurly EnumMember (Comma EnumMember)* Comma? RightCurly
+    EnumDeclaration < Enum Identifier Cast? LeftCurly EnumMember (Comma EnumMember)* RightCurly
 
     EnumMember    < Identifier BasicTypeInitializer?
 
