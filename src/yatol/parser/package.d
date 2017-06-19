@@ -298,14 +298,14 @@ private:
     }
 
     /**
-     * Parses a TypedVariableList.
+     * Parses a FunctionParameterGroup.
      *
      * Returns:
-     *      On success a $(D TypedVariableListAstNode) otherwise $(D null).
+     *      On success a $(D FunctionParameterGroupAstNode) otherwise $(D null).
      */
-    TypedVariableListAstNode parseTypedVariableList()
+    FunctionParameterGroupAstNode parseFunctionParameterGroup()
     {
-        TypedVariableListAstNode result = new TypedVariableListAstNode;
+        FunctionParameterGroupAstNode result = new FunctionParameterGroupAstNode;
         while (true)
         {
             if (current.isTokConst)
@@ -676,11 +676,11 @@ private:
         result.isStatic = isStatic;
         if (!current.isTokRightParen) while (true)
         {
-            if (TypedVariableListAstNode tvl = parseTypedVariableList())
+            if (FunctionParameterGroupAstNode fpg = parseFunctionParameterGroup())
             {
-                result.parameters ~= tvl;
-            if (!current.isTokSemicolon)
-                break;
+                result.parameters ~= fpg;
+                if (!current.isTokSemicolon)
+                    break;
             }
             advance();
         }
@@ -741,10 +741,10 @@ private:
         advance();
         while (!current.isTokRightParen)
         {
-            TypedVariableListAstNode tvl = parseTypedVariableList();
-            if (tvl)
+            FunctionParameterGroupAstNode fpg = parseFunctionParameterGroup();
+            if (fpg)
             {
-                result.parameters ~= tvl;
+                result.parameters ~= fpg;
                 if (!current.isTokSemicolon)
                     break;
                 advance();

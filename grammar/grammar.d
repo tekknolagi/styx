@@ -68,7 +68,9 @@ Yatol:
 
     FunctionPointerType < Attributes? Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
 
-    FunctionParameters < TypedVariableList (Semicolon TypedVariableList)*
+    FunctionParameters < FunctionParameterGroup (Semicolon FunctionParameterGroup)*
+
+    FunctionParameterGroup < ParameterStorageClass* Type IdentifierList
 
 ################################################################################
 # Attribute
@@ -200,8 +202,6 @@ Yatol:
 
 ################################################################################
 # Type
-
-    TypedVariableList < ParameterStorageClass* Type IdentifierList
 
     Type    < TypeIdentifier TypeModifiers?
             / Auto

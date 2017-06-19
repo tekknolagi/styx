@@ -68,6 +68,7 @@ class AstVisitor
     void visit(ExpressionStatementAstNode node){node.accept(this);}
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
     void visit(FunctionHeaderAstNode node){node.accept(this);}
+    void visit(FunctionParameterGroupAstNode node){node.accept(this);}
     void visit(FunctionTypeAstNode node){node.accept(this);}
     void visit(ImportDeclarationAstNode node){node.accept(this);}
     void visit(IndexExpressionAstNode node){node.accept(this);}
@@ -82,7 +83,6 @@ class AstVisitor
     void visit(StructDeclarationAstNode node){node.accept(this);}
     void visit(TypeAstNode node){node.accept(this);}
     void visit(TypeModifierAstNode node){node.accept(this);}
-    void visit(TypedVariableListAstNode node){node.accept(this);}
     void visit(UnaryExpressionAstNode node){node.accept(this);}
     void visit(UnitAstNode node){node.accept(this);}
     void visit(UnitContainerAstNode node){node.accept(this);}
@@ -116,6 +116,7 @@ class AstVisitorNone: AstVisitor
     override void visit(ExpressionStatementAstNode node){}
     override void visit(FunctionDeclarationAstNode node){}
     override void visit(FunctionHeaderAstNode node){}
+    override void visit(FunctionParameterGroupAstNode node){}
     override void visit(FunctionTypeAstNode node){}
     override void visit(ImportDeclarationAstNode node){}
     override void visit(IndexExpressionAstNode node){}
@@ -130,7 +131,6 @@ class AstVisitorNone: AstVisitor
     override void visit(StructDeclarationAstNode node){}
     override void visit(TypeAstNode node){}
     override void visit(TypeModifierAstNode node){}
-    override void visit(TypedVariableListAstNode node){}
     override void visit(UnaryExpressionAstNode node){}
     override void visit(UnitAstNode node){node.accept(this);}
     override void visit(UnitContainerAstNode node){node.accept(this);}
@@ -227,7 +227,7 @@ final class FunctionTypeAstNode: AstNode
     /// Indicates wether the function type needs a context.
     bool isStatic;
     /// The function parameters;
-    TypedVariableListAstNode[] parameters;
+    FunctionParameterGroupAstNode[] parameters;
     /// The function return
     TypeAstNode returnType;
     ///
@@ -245,7 +245,7 @@ final class FunctionHeaderAstNode: AstNode
     /// The function name.
     Token* name;
     /// The function parameters
-    TypedVariableListAstNode[] parameters;
+    FunctionParameterGroupAstNode[] parameters;
     /// The function return
     TypeAstNode returnType;
     ///
@@ -766,7 +766,7 @@ final class DeclarationOrStatementAstNode: AstNode
 }
 
 /// TypedVariableList
-final class TypedVariableListAstNode: AstNode
+final class FunctionParameterGroupAstNode: AstNode
 {
     /// Indicates if the variables are passed by reference.
     bool isVar;
@@ -774,7 +774,7 @@ final class TypedVariableListAstNode: AstNode
     bool isConst;
     /// The variables list.
     Token*[] variableList;
-    /// The variables common type.
+    /// The type of group.
     TypeAstNode type;
     ///
     override void accept(AstVisitor visitor)
