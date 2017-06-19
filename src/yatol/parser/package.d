@@ -174,6 +174,37 @@ private:
         }
     }
 
+    /**
+     * Parses an IdentifierChains.
+     *
+     * Returns:
+     *      On success an array of $(D Token*[]) otherwise $(D null).
+     */
+    IdentifierChainsAstNode parseIdentifierChains()
+    {
+        Token*[][] chains;
+        while (true)
+        {
+            if (!current.isTokIdentifier)
+            {
+                expected(TokenType.identifier);
+                return null;
+            }
+            Token*[] chain = parseIdentifierChain();
+            if (chain.length)
+                chains ~= chain;
+            else
+                return null;
+            if (current.isTokComma)
+                advance();
+            else
+                break;
+        }
+        IdentifierChainsAstNode result = new IdentifierChainsAstNode;
+        result.chains = chains;
+        return result;
+    }
+
     NumberLiteralAstNode parseNumberLiteral()
     {
         if (!current.isTokIntegerLiteral && !current.isTokHexLiteral
@@ -374,6 +405,19 @@ private:
         result.position = current.position;
         result.name = current();
         advance();
+        if (current.isTokColon)
+        {
+            advance();
+            if (IdentifierChainsAstNode ic = parseIdentifierChains())
+            {
+                result.inheritanceList = ic;
+            }
+            else
+            {
+                parseError("invalid inheritance list");
+                return null;
+            }
+        }
         if (!current.isTokLeftCurly)
         {
             expected(TokenType.leftCurly);
@@ -411,6 +455,19 @@ private:
         result.position = current.position;
         result.name = current();
         advance();
+        if (current.isTokColon)
+        {
+            advance();
+            if (IdentifierChainsAstNode ic = parseIdentifierChains())
+            {
+                result.inheritanceList = ic;
+            }
+            else
+            {
+                parseError("invalid inheritance list");
+                return null;
+            }
+        }
         if (!current.isTokLeftCurly)
         {
             expected(TokenType.leftCurly);
@@ -556,7 +613,6 @@ private:
         {
             if (current.isTokRightCurly)
             {
-                advance();
                 return result;
             }
             if (EnumMemberAstNode ei = parseEnumMember())
@@ -1863,7 +1919,7 @@ public:
     }
 }
 
-version(none) unittest
+unittest
 {
     enum line = __LINE__;
     enum source = `
@@ -1889,7 +1945,7 @@ version(none) unittest
     assert(!tman);
 }
 
-version(none) unittest
+unittest
 {
     enum line = __LINE__;
     enum source = `
@@ -1988,6 +2044,8 @@ unittest
             c,
             d = call()
         }
+
+        class Foo : Bar.Bar , Baz{}
     }
 `;
     Lexer lx;
@@ -2406,6 +2464,22 @@ unittest
     assertNotParse(q{
         unit a;
         enum A {a,b = }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        class Foo : Foo, Bar.Bar {}
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        class Foo : Foo, Bar.Bar, {}
     });
 }
 

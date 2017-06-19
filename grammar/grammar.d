@@ -33,10 +33,12 @@ Yatol:
 
     ProtectionDeclaration   < Prot LeftParen Identifier RightParen
     StructDeclaration       < Struct Identifier LeftCurly Declarations? RightCurly
-    ClassDeclaration        < Class Identifier LeftCurly Declarations? RightCurly
-    InterfaceDeclaration    < Interface Identifier LeftCurly Declarations? RightCurly
+    ClassDeclaration        < Class Identifier InheritanceList? LeftCurly Declarations? RightCurly
+    InterfaceDeclaration    < Interface Identifier InheritanceList? LeftCurly Declarations? RightCurly
 
-    VariableDeclaration     < ParameterStorageClass Static? Type VariableDeclarationList Semicolon
+    InheritanceList < Colon IdentifierChains
+
+    VariableDeclaration < ParameterStorageClass Static? Type VariableDeclarationList Semicolon
 
     VariableDeclarationList < VariableDeclarationItem (Comma VariableDeclarationItem)*
 
@@ -223,7 +225,7 @@ Yatol:
 
     ConditionalIdentifierChainKnot < Dot / OptAccess
 
-    IdentifierChainList < IdentifierChain (Comma IdentifierChain)*
+    IdentifierChains < IdentifierChain (Comma IdentifierChain)*
 
     IdentifierChain < Identifier (Dot Identifier)*
 
@@ -486,6 +488,8 @@ enum source1 = `
         b,
         c = 2
     }
+
+    class Foo: Bar.bar, Baz{}
 `;
 
 // use "on" instead of "case" ?

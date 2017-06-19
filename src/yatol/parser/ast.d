@@ -70,6 +70,7 @@ class AstVisitor
     void visit(FunctionHeaderAstNode node){node.accept(this);}
     void visit(FunctionParameterGroupAstNode node){node.accept(this);}
     void visit(FunctionTypeAstNode node){node.accept(this);}
+    void visit(IdentifierChainsAstNode node){node.accept(this);}
     void visit(ImportDeclarationAstNode node){node.accept(this);}
     void visit(IndexExpressionAstNode node){node.accept(this);}
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
@@ -118,6 +119,7 @@ class AstVisitorNone: AstVisitor
     override void visit(FunctionHeaderAstNode node){}
     override void visit(FunctionParameterGroupAstNode node){}
     override void visit(FunctionTypeAstNode node){}
+    override void visit(IdentifierChainsAstNode node){}
     override void visit(ImportDeclarationAstNode node){}
     override void visit(IndexExpressionAstNode node){}
     override void visit(InterfaceDeclarationAstNode node){}
@@ -167,6 +169,13 @@ unittest
     static assert(hasUDA!(FunctionDeclarationAstNode.isPublic, Semantic));
     static assert(isGrammatic!AstNode);
     static assert(!isGrammatic!FlowControlBaseNode);
+}
+
+/// IdentifierChains
+final class IdentifierChainsAstNode: AstNode
+{
+    /// The chain of identifiers.
+    Token*[][] chains;
 }
 
 /// LiteralAstNode
@@ -344,11 +353,15 @@ final class ClassDeclarationAstNode: AstNode
 {
     /// The class name.
     Token* name;
+    /// The inheritance list.
+    IdentifierChainsAstNode inheritanceList;
     /// The declarations located in the class.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
     {
+        if (inheritanceList)
+            visitor.visit(inheritanceList);
         declarations.each!(a => visitor.visit(a));
     }
 }
@@ -358,11 +371,15 @@ final class InterfaceDeclarationAstNode: AstNode
 {
     /// The interface name.
     Token* name;
+    /// The inheritance list.
+    IdentifierChainsAstNode inheritanceList;
     /// The declarations located in the class.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
     {
+        if (inheritanceList)
+            visitor.visit(inheritanceList);
         declarations.each!(a => visitor.visit(a));
     }
 }
@@ -475,6 +492,7 @@ final class DeclarationAstNode: AstNode
     }
 }
 
+/// CallParameters
 final class CallParametersAstNode: AstNode
 {
     /// The parameters
@@ -614,6 +632,7 @@ final class BinaryExpressionAstNode: AstNode
     }
 }
 
+/// DotExpression
 final class DotExpressionAstNode : AstNode
 {
     /// Assigned if there's an expression before the dot.
@@ -712,6 +731,7 @@ final class ContinueStatementAstNode: FlowControlBaseNode {}
 /// BreakStatement
 final class BreakStatementAstNode: FlowControlBaseNode
 {
+    /// The token that indicates the label to go to.
     Token* label;
 }
 
