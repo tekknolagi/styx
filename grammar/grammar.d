@@ -68,7 +68,7 @@ Yatol:
 
     FunctionPointerType < Attributes? Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
 
-    FunctionParameters < TypedVariableList (Semicolon TypedVariableList)
+    FunctionParameters < TypedVariableList (Semicolon TypedVariableList)*
 
 ################################################################################
 # Attribute
@@ -480,8 +480,6 @@ enum source1 = `
 
     }
 
-    #ok, the peg is used to have a "formal" grammar
-    # now let's write this by hand
     enum A
     {
         a = 0,
