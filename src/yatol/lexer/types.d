@@ -85,12 +85,13 @@ enum TokenType : ubyte
     dotDot,
     ellipsis,
     // operators
+    mul,
+    div,
+    plus,
+    minus,
     amp,
     pipe,
-    div,
-    minus,
-    mul,
-    plus,
+    // postfixes
     minusMinus,
     plusPlus,
 }
@@ -179,12 +180,12 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     "..",
     "...",
     // operators
+    "*",
+    "/",
+    "+",
+    "-",
     "&",
     "|",
-    "/",
-    "-",
-    "*",
-    "+",
     //
     "--",
     "++",
@@ -222,9 +223,9 @@ static immutable firstSymbol = TokenType.bang;
 static immutable lastSymbol = TokenType.ellipsis;
 
 /// The value of the first operator.
-static immutable firstOperator = TokenType.amp;
+static immutable firstOperator = TokenType.mul;
 /// The value of the last operator.
-static immutable lastOperator = TokenType.plus;
+static immutable lastOperator = TokenType.pipe;
 
 /// The value of the first number literal.
 static immutable firstNumberLiteral = TokenType.intLiteral;

@@ -1443,11 +1443,42 @@ private:
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 BinaryExpressionAstNode be = new BinaryExpressionAstNode;
+
                 be.position = current.position;
                 be.left = exp;
                 be.operator = op;
                 be.right = r;
                 result.binaryExpression = be;
+
+                if (r.binaryExpression && r.binaryExpression.operator.type > op.type)
+                {
+                    /*
+                            a           e1L
+                              *         e1O
+                                b + c   e1R
+
+                            a * b       e1L
+                                  +     e1O
+                                    c   e1R
+                    */
+                    writeln("swap: ", r.binaryExpression.operator.text, " ", op.text);
+
+                    ExpressionAstNode old_L = be.left;
+                    ExpressionAstNode old_R = be.right;
+                    Token* old_O = be.operator;
+
+                    ExpressionAstNode old_RL = be.right.binaryExpression.left;
+                    ExpressionAstNode old_RR = be.right.binaryExpression.right;
+                    Token* old_RO = be.right.binaryExpression.operator;
+
+                    be.left = old_R;
+                    be.left.binaryExpression.left = old_L;
+                    be.left.binaryExpression.operator = old_O;
+                    be.left.binaryExpression.right = old_RL;
+                    be.operator = old_RO;
+                    be.right = old_RR;
+                }
+
                 if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal))
                 {
                     return result;
@@ -2067,14 +2098,21 @@ unittest
  * Params:
  *     code = The source code.
  */
-void assertParse(const(char)[] code, string file = __FILE_FULL_PATH__,
-    size_t line = __LINE__)
+void assertParse(const(char)[] code, bool printAST = false,
+    string file = __FILE_FULL_PATH__, size_t line = __LINE__)
 {
     Lexer lx;
     lx.setSourceFromText(code, file, line, 1);
     lx.lex;
     Parser pr = Parser(&lx);
     assert(pr.parse() !is null, "code not parsed but should be");
+    if (printAST)
+    {
+        import yatol.parser.debug_visitor;
+        DebugVisitor dv = new DebugVisitor;
+        dv.visit(pr.unitContainer);
+        dv.printText();
+    }
 }
 
 /**
@@ -2559,4 +2597,16 @@ unittest
         }
     });
 }
+
+/*unittest
+{
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            a = b * c + d;
+            a = b + c * d;
+        }
+    }, true);
+}*/
 
