@@ -1333,6 +1333,11 @@ private:
             else
                 return null;
         }
+        else
+        {
+            parseError("expected an identifier, a literal or a paren expression");
+            return null;
+        }
         with(TokenType) while (current.type.among(colon, plusPlus, minusMinus, leftSquare, leftParen))
         {
             if (PostfixExpressionAstNode pe = parsePostfixExpression)
@@ -2609,4 +2614,79 @@ unittest
         }
     }, true);
 }*/
+
+unittest // cover error cases for: postfix exp and call params
+{
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            a(a a
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            a@
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            a:=
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            a(exp]
+        }
+    });
+}
+
+unittest // cover error cases for: paren expression
+{
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            (a+a;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            (]
+        }
+    });
+}
+
+unittest // cover error cases for: unary and dot expr
+{
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            ++++;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            ++a.a.]
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            (a).]
+        }
+    });
+}
 
