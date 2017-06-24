@@ -741,8 +741,13 @@ private:
                 result.parameters ~= fpg;
                 if (!current.isTokSemicolon)
                     break;
+                else
+                    advance();
             }
-            advance();
+            else
+            {
+                break;
+            }
         }
         if (!current.isTokRightParen)
         {
@@ -2389,6 +2394,11 @@ unittest
         function bar(u32 a,b,c; u64 d): u64;
         function bar(u32 a,b,c; u64 d): u64 {}
         function bar(function*(u32 a) callback): function*();
+        var function *(const u32 a,b,c; u64 d) a;
+        var function *(u32 a,b,c; var u64 d) a;
+        var function *(u32 a,b,c; u64 d): u64 a;
+        var function *(u32 a,b,c; u64 d): u64 a;
+        var function *(function*(u32 a) callback): function*() a;
     });
 }
 
@@ -2687,6 +2697,110 @@ unittest // cover error cases for: unary and dot expr
         {
             (a).]
         }
+    });
+}
+
+unittest // cover error cases for: function and function type decl
+{
+    assertNotParse(q{
+        unit a;
+        function foo(;
+    });
+    assertNotParse(q{
+        unit a;
+        function foo;
+    });
+    assertNotParse(q{
+        unit a;
+        function foo;
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(;
+    });
+    assertNotParse(q{
+        unit a;
+        function foo():;
+    });
+    assertNotParse(q{
+        unit a;
+        function ():;
+    });
+    assertNotParse(q{
+        unit a;
+        function a(): a k
+    });
+    assertNotParse("
+        unit a;
+        function a(){;
+    ");
+    assertNotParse(q{
+        unit a;
+        var function* foo(;
+    });
+    assertNotParse(q{
+        unit a;
+        var function* foo;
+    });
+    assertNotParse(q{
+        unit a;
+        var function* foo;
+    });
+    assertNotParse(q{
+        unit a;
+        var function foo;
+    });
+    assertNotParse(q{
+        unit a;
+        var function *(;
+    });
+    assertNotParse(q{
+        unit a;
+        var function *():;
+    });
+}
+
+unittest // cover error cases for: protection declaration
+{
+    assertNotParse(q{
+        unit a;
+        protection;
+    });
+    assertNotParse(q{
+        unit a;
+        protection(private;a
+    });
+    assertNotParse(q{
+        unit a;
+        protection(p
+    });
+    assertNotParse(q{
+        unit a;
+        protection m
+    });
+    assertNotParse(q{
+        unit a;
+        protection()
+    });
+}
+
+unittest // cover error cases for: variable declaration
+{
+    assertNotParse(q{
+        unit a;
+        var a var a;
+    });
+    assertNotParse(q{
+        unit a;
+        var a = var ;
+    });
+    assertNotParse(q{
+        unit a;
+        var T a = var 0;
+    });
+    assertNotParse(q{
+        unit a;
+        var T a = 0 var
     });
 }
 
