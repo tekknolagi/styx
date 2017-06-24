@@ -1087,9 +1087,6 @@ private:
                 // or "no statement found".
                 with (TokenType) switch (current.type)
                 {
-                case virtual:
-                    unexpected();
-                    return false;
                 case rightCurly:
                     --_declarationLevels;
                     if (_declarationLevels <= 0)
@@ -1381,6 +1378,7 @@ private:
                 }
                 else
                 {
+                    parseError("expected an expression following `=`");
                     return null;
                 }
             }
@@ -1400,6 +1398,7 @@ private:
      */
     DotExpressionAstNode parseDotExpression()
     {
+        writeln("this happens but it's called elsewhere ");
         if (!current.isTokDot)
         {
             expected(TokenType.dot);
@@ -1495,7 +1494,9 @@ private:
                 }
                 else if (current.isTokDot)
                 {
-                    return dotifyExpression(result);
+                    // this never happens...
+                    assert(false);
+                    //return dotifyExpression(result);
                 }
                 else
                 {
@@ -2496,6 +2497,17 @@ unittest
 {
     assertParse(q{
         unit a;
+        function foo()
+        {
+            instances[a].instances[b] = 8;
+        }
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
         enum A {a}
     });
 }
@@ -2613,7 +2625,7 @@ unittest
     });
 }
 
-/*unittest
+unittest
 {
     assertParse(q{
         unit a;
@@ -2623,7 +2635,7 @@ unittest
             a = b + c * d;
         }
     }, true);
-}*/
+}
 
 unittest // cover error cases for: postfix exp and call params
 {
@@ -2696,6 +2708,13 @@ unittest // cover error cases for: unary and dot expr
         function foo()
         {
             (a).]
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            (a).....(a);
         }
     });
 }
@@ -2801,6 +2820,81 @@ unittest // cover error cases for: variable declaration
     assertNotParse(q{
         unit a;
         var T a = 0 var
+    });
+    assertNotParse(q{
+        unit a;
+        var T a]
+    });
+}
+
+unittest // cover error cases for: continue break return statements
+{
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            break
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            break a
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            break( a
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            continue
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            continue )
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            continue a
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            return
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            return a
+        }
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            a =
+        }
     });
 }
 
