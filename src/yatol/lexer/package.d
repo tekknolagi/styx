@@ -345,6 +345,28 @@ private:
         }
     }
 
+    void skipSheBang()
+    {
+        if (_front && _front + 2 <= _back && *_front == '#' && *lookup(1) == '!')
+        {
+            while (true)
+            {
+                if (_front > _back)
+                {
+                    return;
+                }
+                switch(*_front)
+                {
+                case '\r', '\n':
+                    processlineEnding;
+                    return;
+                default:
+                    advance();
+                }
+            }
+        }
+    }
+
 public:
 
     /**
@@ -390,6 +412,7 @@ public:
      */
     void lex()
     {
+        skipSheBang();
         if (_front) while (_front <= _back)
         {
             switch(*_front)
@@ -1206,3 +1229,15 @@ unittest
     assert(lx.tokens[0].isTokInvalid);
 }
 
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "#!bin/yatol -until=parsing \r\n unit a;";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokUnit);
+    assert(lx.tokens[0].line == line + 1);
+}
