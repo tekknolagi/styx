@@ -98,13 +98,13 @@ int main(string[] args)
             }
             else
             {
-                stderr.writefln(`error, unrecognized file extension for "%s"`, arg);
+                writefln(`error, unrecognized file extension for "%s"`, arg);
                 return 1;
             }
         }
         else if (arg[0] != '-')
         {
-            stderr.writefln(`error, the file "%s" does not seem to exist`, arg);
+            writefln(`error, the file "%s" does not seem to exist`, arg);
             return 1;
         }
     }
@@ -185,7 +185,7 @@ int main(string[] args)
         }
         else
         {
-            stderr.writeln("error, failed to parse `",  lexer.filename, "`");
+            writeln("error, failed to parse `",  lexer.filename, "`");
             return 1;
         }
     }

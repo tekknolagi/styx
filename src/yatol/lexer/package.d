@@ -36,7 +36,7 @@ private:
 
     void error(const(char[]) message)
     {
-        stderr.writefln("%s(%d,%d): error, %s", _filename, _frontLine,
+        writefln("%s(%d,%d): error, %s", _filename, _frontLine,
             _frontColumn, message);
     }
 
