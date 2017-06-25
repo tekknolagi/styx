@@ -806,8 +806,7 @@ private:
         advance();
         while (!current.isTokRightParen)
         {
-            FunctionParameterGroupAstNode fpg = parseFunctionParameterGroup();
-            if (fpg)
+            if (FunctionParameterGroupAstNode fpg = parseFunctionParameterGroup())
             {
                 result.parameters ~= fpg;
                 if (!current.isTokSemicolon)
@@ -1082,9 +1081,9 @@ private:
             }
             else
             {
-                // advance() bug in parseExpression(): this branch maybe reached
-                // because "null" returned by parseStatement() can say either "error"
-                // or "no statement found".
+                // NOTE: this branch maybe reached because "null",
+                // as returned by parseStatement() means either
+                // "error" or "no statement found".
                 with (TokenType) switch (current.type)
                 {
                 case rightCurly:
@@ -1398,7 +1397,6 @@ private:
      */
     DotExpressionAstNode parseDotExpression()
     {
-        writeln("this happens but it's called elsewhere ");
         if (!current.isTokDot)
         {
             expected(TokenType.dot);
@@ -2884,6 +2882,138 @@ unittest // cover error cases for: continue break return statements
         {
             return a
         }
+    });
+}
+
+unittest // cover error cases for: import declaration
+{
+    assertNotParse(q{
+        unit a;
+        import;
+    });
+    assertNotParse(q{
+        unit a;
+        import a.;
+    });
+    assertNotParse(q{
+        unit a;
+        import("tant") a;
+    });
+    assertNotParse(q{
+        unit a;
+        import() a;
+    });
+    assertNotParse(q{
+        unit a;
+        import(0) a
+    });
+    assertNotParse(q{
+        unit a;
+        import(a) a;
+    });
+    assertNotParse(q{
+        unit a;
+        import(0 a;
+    });
+}
+
+unittest // cover error cases for: interface, struct & class
+{
+    assertNotParse(q{
+        unit a;
+        class {}
+    });
+    assertNotParse(q{
+        unit a;
+        struct {}
+    });
+    assertNotParse(q{
+        unit a;
+        interface {}
+    });
+    assertNotParse("
+        unit a;
+        class A}
+    ");
+    assertNotParse("
+        unit a;
+        struct A}
+    ");
+    assertNotParse("
+        unit a;
+        interface A}
+    ");
+    assertNotParse(q{
+        unit a;
+        class A : {}
+    });
+    assertNotParse(q{
+        unit a;
+        struct A : {}
+    });
+    assertNotParse(q{
+        unit a;
+        interface A : {}
+    });
+    assertNotParse(q{
+        unit a;
+        class A : A A{}
+    });
+    assertNotParse(q{
+        unit a;
+        interface A : A A{}
+    });
+    assertNotParse("
+        unit a;
+        class A{ var s8 a;
+    ");
+    assertNotParse("
+        unit a;
+        struct A{ var s8 a;
+    ");
+    assertNotParse("
+        unit a;
+        interface A{ var s8 a;
+    ");
+}
+
+unittest // cover error cases for: enum
+{
+    assertNotParse(q{
+        unit a;
+        enum A : {}
+    });
+    assertNotParse("
+        unit a;
+        enum A a {
+    ");
+    assertNotParse(q{
+        unit a;
+        enum A {a a}
+    });
+    assertNotParse(q{
+        unit a;
+        enum  {a}
+    });
+}
+
+unittest // cover error cases for: aka
+{
+    assertNotParse(q{
+        unit a;
+        is;
+    });
+    assertNotParse(q{
+        unit a;
+        is a;
+    });
+    assertNotParse(q{
+        unit a;
+        is a aka
+    });
+    assertNotParse(q{
+        unit a;
+        is a aka other
     });
 }
 
