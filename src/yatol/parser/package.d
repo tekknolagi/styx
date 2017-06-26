@@ -84,8 +84,6 @@ private:
         return _current + 1;
     }
 
-private:
-
     /**
      * Parses a UnitDeclaration.
      *
@@ -272,8 +270,9 @@ private:
                     lastMd.staticDimension = e;
                     if (!current.isTokRightSquare)
                     {
-                        expected(TokenType.rightSquare);
-                        return null;
+                        assert(false);
+                        //expected(TokenType.rightSquare);
+                        //return null;
                     }
                     else advance();
                 }
@@ -356,7 +355,7 @@ private:
             else break;
         }
         TypeAstNode type = parseType();
-        if (!type && current.isTokIdentifier)
+        if (!type && (current.isTokIdentifier || current.isTokComma))
         {
             parseError("Type expected before parameter list");
             return null;
@@ -1323,9 +1322,14 @@ private:
         }
         else if (current.isNumberLiteral)
         {
-            result.numberLitteral = new NumberLiteralAstNode;
-            result.numberLitteral.literal = current();
-            advance();
+            if (NumberLiteralAstNode nl = parseNumberLiteral())
+            {
+                result.numberLitteral = nl;
+            }
+            else
+            {
+                return null;
+            }
         }
         else if (current.isTokLeftParen)
         {
@@ -2775,6 +2779,10 @@ unittest // cover error cases for: function and function type decl
         unit a;
         var function *():;
     });
+    assertNotParse(q{
+        unit a;
+        function foo(): static
+    });
 }
 
 unittest // cover error cases for: protection declaration
@@ -3017,7 +3025,7 @@ unittest // cover error cases for: aka
     });
 }
 
-unittest
+unittest // misc. coverage for errors
 {
     assertNotParse(q{
         unit a;
@@ -3025,6 +3033,21 @@ unittest
         {
             a =
         }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            a = 8: ;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        enum A : s8[8:;
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(s8[8 a);
     });
 }
 
