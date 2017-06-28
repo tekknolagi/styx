@@ -142,13 +142,11 @@ Yatol:
 
     AtLabel < LeftParen Identifier RightParen
 
-    IfCondition < LeftParen RelationalExpressions RightParen
+    IfCondition < LeftParen Expression RightParen
                 / LeftParen ConditionalIdentifierChain RightParen
-                / LeftParen VariableDeclaration RightParen
-                #/ RelationalExpression Then
+                #/ LeftParen VariableDeclaration RightParen
+                #/ Expression Then
                 #/ IdentifierChain Then
-
-    RelationalExpressions < RelationalExpression (RelOperator RelationalExpression)*
 
 ################################################################################
 # Composites expressions
@@ -160,12 +158,8 @@ Yatol:
                 / DotExpression
                 / OptionalExpression
                 / UnaryExpression
-                / RelationalExpression
 
     BinaryExpression < Expression Operator Expression
-
-    RelationalExpression    < Expression RelOperator Expression
-                            / ConditionalIdentifierChain RelOperator Expression
 
     DotExpression < Expression Dot Expression
 
@@ -175,8 +169,6 @@ Yatol:
 # Postfixable single expression
 
     ParenExpression < UnaryPrefix? LeftParen Expression RightParen PostfixExpression*
-
-    CallParameters < LeftParen Expression? (Comma Expression)* RightParen
 
     UnaryExpression < UnaryPrefix? IdentifierChain PostfixExpression*
                     / NumberLiteral UnarySuffix?
@@ -196,6 +188,8 @@ Yatol:
     IndexExpression < LeftSquare Expression RightSquare
 
     RangeExpression < LeftSquare Expression DotDot Expression RightSquare
+
+    CallParameters < LeftParen Expression? (Comma Expression)* RightParen
 
 ################################################################################
 # Cast
@@ -264,7 +258,7 @@ Yatol:
 
     DollarKw <~Dollar Keyword
 
-    Operator < Mul / Div / Plus / Minus
+    Operator < RelOperator / Mul / Div / Plus / Minus / LShift / RShift / Amp / Pipe / Xor
 
     RelOperator < EqualEqual
                 / NotEqual
@@ -273,7 +267,7 @@ Yatol:
                 / GreaterEqual
                 / LesserEqual
 
-    UnaryPrefix < Mul / PlusPlus / MinusMinus / Amp
+    UnaryPrefix < Mul / PlusPlus / MinusMinus / Amp / Bang
 
     UnarySuffix < PlusPlus / MinusMinus
 
@@ -316,6 +310,11 @@ Yatol:
     Amp         <- '&'
     Qmark       <- '?'
     Dollar      <- '$'
+    LShift      <- "<<"
+    RShift      <- ">>"
+    Xor         <- "^"
+    Pow         <- "^^"
+    Pipe        <- "|"
 
     HexPrefix   <- "0x" / "0X"
 
@@ -351,6 +350,7 @@ Yatol:
             / Switch
             / Null
             / On
+            / Bool
 
 
     BasicType  < BasicFloatType
@@ -369,6 +369,7 @@ Yatol:
                         / U8
                         / UREG
                         / SREG
+                        / Bool
 
     Unit    <- "unit"
     Prot    <- "protection"
@@ -408,6 +409,7 @@ Yatol:
     U32     <- "u32"
     U16     <- "u16"
     U8      <- "u8"
+    Bool    <- "bool"
 `));
 
 enum overview =q{
@@ -504,6 +506,17 @@ q{
     }
 };
 
+auto n =
+q{
+
+    cmp (v1, v2)
+    {
+        case >: /*greater*/;
+        case <: /*lesser*/;
+        case ==: /*equal*/;
+    }
+};
+
 // done
 auto f =
 q{
@@ -526,31 +539,45 @@ q{
     }
 };
 
-
+// Object model
 auto c =
 q{
-    class Foo
+    /*
+        1. No keywords for virtual and abstract function, only attribs
+        2. Ctors and Dtors are named, as any regular member function.
+        3. Single class inheritance, multiple interface inheritance.
+        4. An equivalent of `this T` member functions is possible with an annotation that's TBA
+     */
+    class Foo : Bar
     {
         var s32 field;
-        @virtual void foo();
+        @virtual void foo() {}
         @abstract void foo();
-        @constructor @virtual Foo construct(s32 param)
+        @constructor @virtual function construct(s32 param): Foo
         {
             /// auto generated alloc
+            super.construct(param);
             this.field = param;
+            /// allowed but usually implicit
             return this;
         }
-        @destructor @virtual void destruct()
+        @destructor @virtual function destruct()
         {
-
+            super.destruct();
         }
     }
 
     void foo()
     {
-        Foo f = Foo.construct();
+        Foo f = Foo.construct(8:s32);
         f.destruct();
     }
+};
+
+// safe assignment operator ?
+auto sa =
+q{
+    assigned_if_target_not_null ?= rhs;
 };
 
 // reuse "on" instead of "catch" ?

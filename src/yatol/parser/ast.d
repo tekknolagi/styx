@@ -71,6 +71,7 @@ class AstVisitor
     void visit(FunctionParameterGroupAstNode node){node.accept(this);}
     void visit(FunctionTypeAstNode node){node.accept(this);}
     void visit(IdentifierChainsAstNode node){node.accept(this);}
+    void visit(IfElseStatementAstNode  node){node.accept(this);}
     void visit(ImportDeclarationAstNode node){node.accept(this);}
     void visit(IndexExpressionAstNode node){node.accept(this);}
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
@@ -82,6 +83,7 @@ class AstVisitor
     void visit(ReturnStatementAstNode node){node.accept(this);}
     void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
+    void visit(Token* token){}
     void visit(TypeAstNode node){node.accept(this);}
     void visit(TypeModifierAstNode node){node.accept(this);}
     void visit(UnaryExpressionAstNode node){node.accept(this);}
@@ -120,6 +122,7 @@ class AstVisitorNone: AstVisitor
     override void visit(FunctionParameterGroupAstNode node){}
     override void visit(FunctionTypeAstNode node){}
     override void visit(IdentifierChainsAstNode node){}
+    override void visit(IfElseStatementAstNode  node){}
     override void visit(ImportDeclarationAstNode node){}
     override void visit(IndexExpressionAstNode node){}
     override void visit(InterfaceDeclarationAstNode node){}
@@ -315,7 +318,7 @@ final class StructDeclarationAstNode: AstNode
     }
 }
 
-/// EnumItem
+/// EnumMember
 final class EnumMemberAstNode: AstNode
 {
     /// The enum member name.
@@ -573,6 +576,35 @@ final class ExpressionStatementAstNode: AstNode
     }
 }
 
+/// IfElseStatement
+final class IfElseStatementAstNode: AstNode
+{
+    /// The condition
+    ExpressionAstNode condition;
+    /// The statement when condition is true.
+    DeclarationOrStatementAstNode trueStatement;
+    /// The block when condition is true.
+    BlockStatementAstNode trueBlock;
+    /// The statement when condition is false.
+    DeclarationOrStatementAstNode falseStatement;
+    /// The block when condition is false
+    BlockStatementAstNode falseBlock;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (condition)
+            visitor.visit(condition);
+        if (trueBlock)
+            visitor.visit(trueBlock);
+        else if (trueStatement)
+            visitor.visit(trueStatement);
+        if (falseBlock)
+            visitor.visit(falseBlock);
+        else if (falseStatement)
+            visitor.visit(falseStatement);
+    }
+}
+
 /// Expression
 final class ExpressionAstNode: AstNode
 {
@@ -750,6 +782,8 @@ final class StatementAstNode: AstNode
     ContinueStatementAstNode continueStatement;
     /// Assigned if this is a block statement.
     BlockStatementAstNode block;
+    /// Assigned if this statement is an IfElseStatement.
+    IfElseStatementAstNode ifElseStatement;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -765,6 +799,8 @@ final class StatementAstNode: AstNode
             visitor.visit(continueStatement);
         else if (block)
             visitor.visit(block);
+        else if (ifElseStatement)
+            visitor.visit(ifElseStatement);
     }
 }
 

@@ -56,7 +56,7 @@ private:
         if (!_anticipated)
             error("INTERNAL, attempt to validate an unanticipated token");
         if (_tokens.length && _tokens[$-1].isTokDollar &&
-            _anticipated == TokenType.identifier &&
+            _anticipatedType == TokenType.identifier &&
             Keywords.isKeyword(_tokStart[0.._front-_tokStart]))
         {
             --_tokStart;
@@ -502,12 +502,28 @@ public:
                 lexStringLiteral();
                 continue;
             case '&':
-                anticipateToken(TokenType.amp);
+                if (_front <= _back && *lookup(1) == '&')
+                {
+                    anticipateToken(TokenType.andAnd);
+                    advance();
+                }
+                else
+                {
+                    anticipateToken(TokenType.amp);
+                }
                 advance();
                 validateToken();
                 continue;
             case '|':
-                anticipateToken(TokenType.pipe);
+                if (_front <= _back && *lookup(1) == '|')
+                {
+                    anticipateToken(TokenType.orOr);
+                    advance();
+                }
+                else
+                {
+                    anticipateToken(TokenType.pipe);
+                }
                 advance();
                 validateToken();
                 continue;
@@ -532,6 +548,47 @@ public:
                 continue;
             case '*':
                 anticipateToken(TokenType.mul);
+                advance();
+                validateToken();
+                continue;
+            case '^':
+                anticipateToken(TokenType.xor);
+                advance();
+                validateToken();
+                continue;
+            case '>':
+                if (_front <= _back && *lookup(1) == '=')
+                {
+                    anticipateToken(TokenType.greaterEqual);
+                    advance();
+                }
+                else if (_front <= _back && *lookup(1) == '>')
+                {
+                    anticipateToken(TokenType.rShift);
+                    advance();
+                }
+                else
+                {
+                    anticipateToken(TokenType.greater);
+                }
+                advance();
+                validateToken();
+                continue;
+            case '<':
+                if (_front <= _back && *lookup(1) == '=')
+                {
+                    anticipateToken(TokenType.lesserEqual);
+                    advance();
+                }
+                else if (_front <= _back && *lookup(1) == '<')
+                {
+                    anticipateToken(TokenType.lShift);
+                    advance();
+                }
+                else
+                {
+                    anticipateToken(TokenType.lesser);
+                }
                 advance();
                 validateToken();
                 continue;
@@ -600,7 +657,15 @@ public:
                 validateToken();
                 continue;
             case '!':
-                anticipateToken(TokenType.bang);
+                if (_front <= _back && *lookup(1) == '=')
+                {
+                    anticipateToken(TokenType.notEqual);
+                    advance();
+                }
+                else
+                {
+                    anticipateToken(TokenType.bang);
+                }
                 advance();
                 validateToken();
                 continue;
@@ -623,34 +688,6 @@ public:
                     validateToken();
                 }
                 continue;
-            case '>':
-                anticipateToken(TokenType.greater);
-                if (_front <= _back && *lookup(1) == '=')
-                {
-                    advance();
-                    advance();
-                    validateToken(TokenType.greaterEqual);
-                }
-                else
-                {
-                    advance();
-                    validateToken();
-                }
-                continue;
-            case '<':
-                anticipateToken(TokenType.lesser);
-                if (_front <= _back && *lookup(1) == '=')
-                {
-                    advance();
-                    advance();
-                    validateToken(TokenType.lesserEqual);
-                }
-                else
-                {
-                    advance();
-                    validateToken();
-                }
-                continue;
             default:
                 anticipateToken(TokenType.invalid);
                 error("invalid input character");
@@ -658,6 +695,8 @@ public:
                 validateToken();
             }
         }
+        anticipateToken(TokenType.eof);
+        validateToken();
     }
 
     /// Returns: The tokens produced after lexing.
@@ -694,7 +733,7 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 7);
     lx.lex();
 
-    assert(lx.tokens.length == 22);
+    assert(lx.tokens.length == 23);
     assert(lx.tokens[0].text == "unit");
     assert(lx.tokens[0].isTokKeyword);
     assert(lx.tokens[0].isTokUnit, lx.tokens[0].text);
@@ -738,7 +777,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 0);
+    assert(lx.tokens.length == 1);
 }
 
 unittest
@@ -748,7 +787,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].text == source);
 }
 
@@ -759,7 +798,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].text == source);
 }
 
@@ -772,7 +811,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokStringLiteral);
 }
 
@@ -783,7 +822,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 2);
+    assert(lx.tokens.length == 3);
     assert(lx.tokens[0].type == TokenType.s8);
     assert(lx.tokens[1].type == TokenType.s16);
     assert(lx.tokens[1].line == lx.tokens[0].line + 1);
@@ -796,7 +835,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].text == source);
 }
 
@@ -807,7 +846,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].text == source);
 }
 
@@ -822,7 +861,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 4);
+    assert(lx.tokens.length == 5);
     assert(lx.tokens[0].isTokLineComment);
     assert(lx.tokens[1].isTokStarComment);
     assert(lx.tokens[2].isTokLineComment);
@@ -836,7 +875,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
 }
 
@@ -847,7 +886,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
 }
 
@@ -858,7 +897,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
 }
 
@@ -869,7 +908,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].text == source);
 }
 
@@ -880,7 +919,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].text == source);
     assert(lx.tokens[0].isTokIntegerLiteral);
 }
@@ -892,7 +931,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 3);
+    assert(lx.tokens.length == 4);
     assert(lx.tokens[0].isTokIntegerLiteral);
     assert(lx.tokens[0].text == "1234");
     assert(lx.tokens[1].isTokDot);
@@ -907,7 +946,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 3);
+    assert(lx.tokens.length == 4);
     assert(lx.tokens[0].isTokLeftParen);
     assert(lx.tokens[1].isTokIntegerLiteral);
     assert(lx.tokens[2].isTokRightParen);
@@ -920,7 +959,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokFloatLiteral);
     assert(lx.tokens[0].text == "1234.01");
 }
@@ -932,7 +971,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokFloatLiteral);
     assert(lx.tokens[0].text == source);
 }
@@ -944,7 +983,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokHexLiteral);
     assert(lx.tokens[0].text == source);
 }
@@ -956,7 +995,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokHexLiteral);
     assert(lx.tokens[0].text == source);
 }
@@ -968,7 +1007,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 3);
+    assert(lx.tokens.length == 4);
     assert(lx.tokens[0].type == TokenType.s8);
     assert(lx.tokens[1].type == TokenType.starComment);
     assert(lx.tokens[1].text == "/*s16*/");
@@ -982,7 +1021,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 3);
+    assert(lx.tokens.length == 4);
     assert(lx.tokens[0].type == TokenType.s8);
     assert(lx.tokens[1].type == TokenType.starComment);
     assert(lx.tokens[1].text == "/*\n/*\n*/");
@@ -996,7 +1035,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 5);
+    assert(lx.tokens.length == 6);
     assert(lx.tokens[0].isTokIntegerLiteral);
     assert(lx.tokens[1].isTokGreaterEqual);
     assert(lx.tokens[2].isTokIntegerLiteral);
@@ -1011,7 +1050,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 2);
+    assert(lx.tokens.length == 3);
     assert(lx.tokens[0].isTokPlusPlus);
     assert(lx.tokens[1].isTokPlus);
 }
@@ -1023,7 +1062,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 2);
+    assert(lx.tokens.length == 3);
     assert(lx.tokens[0].isTokMinusMinus);
     assert(lx.tokens[1].isTokMinus);
 }
@@ -1035,7 +1074,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 3);
+    assert(lx.tokens.length == 4);
     assert(lx.tokens[0].isTokPlus);
     assert(lx.tokens[1].isTokStringLiteral);
     assert(lx.tokens[1].text == "abcdef");
@@ -1051,7 +1090,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 4);
+    assert(lx.tokens.length == 5);
     assert(lx.tokens[0].isTokIs);
     assert(lx.tokens[1].isTokBasicType);
     assert(lx.tokens[2].isTokAka);
@@ -1065,7 +1104,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 3);
+    assert(lx.tokens.length == 4);
     assert(lx.tokens[0].isTokIdentifier);
     assert(lx.tokens[0].keywordAsIdentifier);
     assert(lx.tokens[0].text == "function");
@@ -1080,22 +1119,83 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 2);
+    assert(lx.tokens.length == 3);
     assert(lx.tokens[0].isTokEqualEqual);
     assert(lx.tokens[1].isTokPipe);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `&&&`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokAndAnd);
+    assert(lx.tokens[1].isTokAmp);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `|||`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokOrOr);
+    assert(lx.tokens[1].isTokPipe);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `>>>`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokRightShift);
+    assert(lx.tokens[1].isTokGreater);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `<<<`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokLeftShift);
+    assert(lx.tokens[1].isTokLesser);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `!!=`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokBang);
+    assert(lx.tokens[1].isTokNotEqual);
 }
 
 /// Tests the symbols and single char operators.
 unittest
 {
     int line = __LINE__ + 1;
-    enum source = `.:;,()/[]{}*+-@!=><&$`;
+    enum source = `.:;,()/[]{}*+-!@=><&$^`;
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == source.length);
+    assert(lx.tokens.length == source.length + 1);
     foreach(i, tk; lx.tokens)
-        assert(lx.tokens[i].text == source[i..i+1]);
+        if (i != lx.tokens.length-1)
+            assert(lx.tokens[i].text == source[i..i+1]);
 }
 
 /// Tests a token iterator that skips the line comments
@@ -1106,7 +1206,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 5);
+    assert(lx.tokens.length == 6);
     alias NoCommentRange = TokenRange!(TokenType.lineComment);
     NoCommentRange range = NoCommentRange(lx.tokens);
     assert(range.front().type == TokenType.colon);
@@ -1127,7 +1227,7 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 2);
+    assert(lx.tokens.length == 3);
     assert(lx.tokens[0].text == "1a");
     assert(lx.tokens[1].isTokIdentifier);
     assert(lx.tokens[1].text == "b");
@@ -1141,7 +1241,7 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
     lx.printTokens;
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
 }
 
@@ -1153,7 +1253,7 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
     lx.printTokens;
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
 }
 
@@ -1165,7 +1265,7 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
     lx.printTokens;
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
 }
 
@@ -1177,7 +1277,7 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
     lx.printTokens;
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
 }
 
@@ -1189,7 +1289,7 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
     lx.printTokens;
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
 }
 
@@ -1201,7 +1301,7 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
     lx.printTokens;
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
 }
 
@@ -1213,7 +1313,7 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
     lx.printTokens;
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
 }
 
@@ -1225,7 +1325,7 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
     lx.printTokens;
-    assert(lx.tokens.length == 1);
+    assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
 }
 
@@ -1237,7 +1337,7 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
     lx.printTokens;
-    assert(lx.tokens.length == 3);
+    assert(lx.tokens.length == 4);
     assert(lx.tokens[0].isTokUnit);
     assert(lx.tokens[0].line == line + 1);
 }

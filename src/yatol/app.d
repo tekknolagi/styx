@@ -78,7 +78,6 @@ Options:
     -v or --verbose       : verbose output.
 `
     );
-    stdout.flush;
 }
 
 int main(string[] args)
@@ -92,7 +91,7 @@ int main(string[] args)
     {
         if (arg.exists)
         {
-            if (extension(arg) == ".ya")
+            if (arg.length > 3 && arg[$-3..$] == ".ya")
             {
                 sources ~= arg;
             }

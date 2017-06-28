@@ -63,16 +63,10 @@ private:
         parseError(specifier.format(_current.text));
     }
 
-    bool advance()
+    void advance()
     {
-        bool result;
-        if (!_range.empty())
-        {
-            _current = cast(Token*) &_range.front();
-            _range.popFront();
-            result = true;
-        }
-        return result;
+        _current = cast(Token*) &_range.front();
+        _range.popFront();
     }
 
     pragma(inline, true)
@@ -115,6 +109,7 @@ private:
                 UnitAstNode result = new UnitAstNode;
                 result.position = current.position;
                 result.unitDeclaration = toks;
+                advance();
                 if (parseDeclarations(result.declarations))
                 {
                     --_declarationLevels;
@@ -426,12 +421,14 @@ private:
             expected(TokenType.leftCurly);
             return null;
         }
+        advance();
         parseDeclarations(result.declarations);
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
             return null;
         }
+        advance();
         return result;
     }
 
@@ -476,12 +473,14 @@ private:
             expected(TokenType.leftCurly);
             return null;
         }
+        advance();
         parseDeclarations(result.declarations);
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
             return null;
         }
+        advance();
         return result;
     }
 
@@ -513,12 +512,14 @@ private:
             expected(TokenType.leftCurly);
             return null;
         }
+        advance();
         parseDeclarations(result.declarations);
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
             return null;
         }
+        advance();
         return result;
     }
 
@@ -616,6 +617,7 @@ private:
         {
             if (current.isTokRightCurly)
             {
+                advance();
                 return result;
             }
             if (EnumMemberAstNode ei = parseEnumMember())
@@ -687,6 +689,7 @@ private:
             result.importList ~= imp;
             if (current.isTokSemicolon)
             {
+                advance();
                 break;
             }
             else if (!current.isTokComma)
@@ -856,6 +859,7 @@ private:
         result.firstBodyToken = current();
         if (current.isTokLeftCurly)
         {
+            advance();
             if (!parseDeclarationsOrStatements(result.declarationsOrStatements))
             {
                 parseError("invalid declarations or statements");
@@ -867,6 +871,7 @@ private:
                 return null;
             }
         }
+        advance();
         return result;
     }
 
@@ -904,6 +909,7 @@ private:
             expected(TokenType.rightParen);
             return null;
         }
+        advance();
         return result;
     }
 
@@ -994,6 +1000,7 @@ private:
                     }
                     else if (current.isTokSemicolon)
                     {
+                        advance();
                         return result;
                     }
                 }
@@ -1043,9 +1050,36 @@ private:
                 expected(TokenType.semiColon);
                 return null;
             }
+            advance();
             return result;
         }
         else return null;
+    }
+
+    /**
+     * Parses a DeclarationOrStatement.
+     *
+     * Returns:
+     *      A $(D DeclarationOrStatementAstNode) on success, $(D null) otherwise.
+     */
+    DeclarationOrStatementAstNode parseDeclarationOrStatement()
+    {
+        if (DeclarationAstNode d = parseDeclaration())
+        {
+            DeclarationOrStatementAstNode result = new DeclarationOrStatementAstNode;
+            result.declaration = d;
+            return result;
+        }
+        else if (StatementAstNode s = parseStatement())
+        {
+            DeclarationOrStatementAstNode result = new DeclarationOrStatementAstNode;
+            result.statement  = s;
+            return result;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     /**
@@ -1062,32 +1096,21 @@ private:
         const ptrdiff_t oldDeclLvl = _declarationLevels;
         ++_declarationLevels;
 
-        while (advance())
+        while (true)
         {
-            if (DeclarationAstNode d = parseDeclaration())
+            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
             {
-                DeclarationOrStatementAstNode dos = new DeclarationOrStatementAstNode;
-                dos.declaration = d;
-                declsOrStatements ~= dos;
-            }
-            else if (StatementAstNode s = parseStatement())
-            {
-                // advance() bug in parseExpression(): one possible fix,
-                // if cast(ErrorStatement) s ...
-                DeclarationOrStatementAstNode dos = new DeclarationOrStatementAstNode;
-                dos.statement  = s;
                 declsOrStatements ~= dos;
             }
             else
             {
-                // NOTE: this branch maybe reached because "null",
-                // as returned by parseStatement() means either
-                // "error" or "no statement found".
                 with (TokenType) switch (current.type)
                 {
+                case virtual, eof:
+                    return true; // virtual unit
                 case rightCurly:
                     --_declarationLevels;
-                    if (_declarationLevels <= 0)
+                    if (_declarationLevels < 0)
                     {
                         unexpected();
                         return false;
@@ -1096,14 +1119,16 @@ private:
                     {
                         return false;
                     }
-                    else return true;
+                    else
+                    {
+                        return true;
+                    }
                 default:
                     unexpected();
                     return false;
                 }
             }
         }
-        return true;
     }
 
     /**
@@ -1118,7 +1143,7 @@ private:
     {
         const ptrdiff_t oldDeclLvl = _declarationLevels;
         ++_declarationLevels;
-        while (advance())
+        while (true)
         {
             if (DeclarationAstNode d = parseDeclaration())
             {
@@ -1128,11 +1153,11 @@ private:
             {
                 with (TokenType) switch (current.type)
                 {
-                case virtual:
+                case virtual, eof:
                     return true; // virtual unit
                 case rightCurly:
                     --_declarationLevels;
-                    if (_declarationLevels <= 0)
+                    if (_declarationLevels < 0)
                     {
                         unexpected();
                         return false;
@@ -1141,14 +1166,16 @@ private:
                     {
                         return false;
                     }
-                    else return true;
+                    else
+                    {
+                        return true;
+                    }
                 default:
                     unexpected();
                     return false;
                 }
             }
         }
-        return true;
     }
 
     /**
@@ -1445,8 +1472,10 @@ private:
      */
     ExpressionAstNode parseExpression(ExpressionAstNode exp)
     {
-        with(TokenType) if ((firstOperator <= current.type && current.type <= lastOperator)
-            || (current.isTokMul && !lookupNext.type.among(mul, semiColon )))
+        with(TokenType) if (current.isTokOperator
+            && !(current.isTokAmp && exp is null) // &(unary)
+            && !(current.isTokMul && exp is null) // *(unary)
+        )
         {
             Token* op = current();
             advance();
@@ -1555,9 +1584,100 @@ private:
                 expected(TokenType.semiColon);
                 return null;
             }
-            else return result;
+            else
+            {
+                advance();
+                return result;
+            }
         }
         else return null;
+    }
+
+    IfElseStatementAstNode parseIfElseStatement()
+    {
+        if (!current.isTokIf)
+        {
+            expected(TokenType.if_);
+            return null;
+        }
+        advance();
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        advance();
+        IfElseStatementAstNode result = new IfElseStatementAstNode;
+        if (ExpressionAstNode c = parseExpression(null))
+        {
+            result.condition = c;
+        }
+        else
+        {
+            parseError("invalid if condition");
+            return null;
+        }
+        if (!current.isTokRightParen)
+        {
+            expected(TokenType.rightParen);
+            return null;
+        }
+        advance();
+        if (current.isTokLeftCurly)
+        {
+            advance();
+            BlockStatementAstNode tb = new BlockStatementAstNode;
+            parseDeclarationsOrStatements(tb.declarationsOrStatements);
+            if (!current.isTokRightCurly)
+            {
+                expected(TokenType.rightCurly);
+                return null;
+            }
+            advance();
+            result.trueBlock = tb;
+        }
+        else
+        {
+            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
+            {
+                result.trueStatement = dos;
+            }
+            else
+            {
+                parseError("invalid if branch statement");
+                return null;
+            }
+        }
+        if (current.isTokElse)
+        {
+            advance();
+            if (current.isTokLeftCurly)
+            {
+                advance();
+                BlockStatementAstNode fb = new BlockStatementAstNode;
+                parseDeclarationsOrStatements(fb.declarationsOrStatements);
+                if (!current.isTokRightCurly)
+                {
+                    expected(TokenType.rightCurly);
+                    return null;
+                }
+                advance();
+                result.falseBlock = fb;
+            }
+            else
+            {
+                if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
+                {
+                    result.falseStatement = dos;
+                }
+                else
+                {
+                    parseError("invalid else branch statement");
+                    return null;
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -1587,6 +1707,7 @@ private:
         }
         else
         {
+            advance();
             return result;
         }
     }
@@ -1618,6 +1739,7 @@ private:
         }
         else
         {
+            advance();
             return result;
         }
     }
@@ -1666,6 +1788,7 @@ private:
         }
         else
         {
+            advance();
             return result;
         }
     }
@@ -1679,11 +1802,14 @@ private:
     {
         with(TokenType) switch(current.type)
         {
+        case eof:
+            return null;
         case semiColon:
         {
             StatementAstNode result = new StatementAstNode;
             result.emptyStatement = new EmptyStatementAstNode;
             result.emptyStatement.position = current.position;
+            advance();
             return result;
         }
         case return_:
@@ -1728,8 +1854,23 @@ private:
                 return null;
             }
         }
+        case if_:
+        {
+            if (IfElseStatementAstNode ies = parseIfElseStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.ifElseStatement = ies;
+                return result;
+            }
+            else
+            {
+                parseError("invalid ifElse statement");
+                return null;
+            }
+        }
         case leftCurly:
         {
+            advance();
             BlockStatementAstNode b = new BlockStatementAstNode;
             if (parseDeclarationsOrStatements(b.declarationsOrStatements))
             {
@@ -1922,11 +2063,11 @@ public:
             if (!_uc.virtualUnits[$-1])
                 return null;
         }
-        if (!_range.empty)
+        /*if (!_range.empty)
         {
             unexpected;
             return null;
-        }
+        }*/
         if (_errorCount)
             return null;
         else
@@ -2026,7 +2167,7 @@ unittest
         function of2(): u32
         {
             import c.v.b;
-            function local(): c.v.b.FooBar {;;}
+            function local(): c.v.b.FooBar {}
         }
     }
     interface Pig
@@ -2086,6 +2227,14 @@ unittest
         }
 
         class Foo : Bar.Bar , Baz{}
+
+        function withIf()
+        {
+            if (!a)
+            {
+                call(a);
+            }
+        }
     }
 `;
     Lexer lx;
@@ -2146,7 +2295,7 @@ void assertNotParse(const(char)[] code, string file = __FILE_FULL_PATH__,
     assert(pr.parse() is null, "code parsed but should not be");
 }
 
-version(all):
+
 
 unittest
 {
@@ -2266,7 +2415,7 @@ unittest
     });
 }
 
-version(all) unittest
+unittest
 {
     assertParse(q{
         unit a;
@@ -2478,7 +2627,6 @@ unittest
     });
 }
 
-
 unittest
 {
     assertParse(q{
@@ -2557,6 +2705,19 @@ unittest
 {
     assertNotParse(q{
         unit a-a;
+    });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function main()
+        {
+            {
+                call();
+            }
+        }
     });
 }
 
@@ -3049,5 +3210,119 @@ unittest // misc. coverage for errors
         unit a;
         function foo(s8[8 a);
     });
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            if (a)
+                call(b);
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            if (a)
+            {
+                call(b);
+            }
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            if (a)
+            {
+                call(b);
+                call(b);
+            }
+            else
+            {
+                how(c);
+                how(c);
+            }
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            if (a)
+                call(b);
+            else
+                can(c);
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            if (a)
+                ;
+            else
+                ;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            if (a)
+            else
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            if (a) {
+            else }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            if a) {
+            else }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            if (a {
+            else }
+        }
+    });
+    assertNotParse("
+        unit a;
+        function foo()
+        {
+            if (a {
+            else a a a
+        }
+    ");
+    assertNotParse("
+        unit a;
+        function foo()
+        {
+            if (a {}
+            else {
+        }
+    ");
+    assertNotParse("
+        unit a;
+        function foo()
+        {
+            if (a {}
+            else a a a {
+        }
+    ");
 }
 
