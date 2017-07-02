@@ -441,12 +441,6 @@ public:
                         validateToken();
                     }
                 }
-                else
-                {
-                    anticipateToken(TokenType.div);
-                    advance();
-                    validateToken();
-                }
                 continue;
             case 'a': .. case 'z':
             case 'A': .. case 'Z':
@@ -1327,6 +1321,21 @@ unittest
     lx.printTokens;
     assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "0/0";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 4);
+    assert(lx.tokens[0].isTokIntegerLiteral);
+    assert(lx.tokens[1].isTokDiv);
+    assert(lx.tokens[2].isTokIntegerLiteral);
+    assert(lx.tokens[3].type == TokenType.eof);
 }
 
 unittest

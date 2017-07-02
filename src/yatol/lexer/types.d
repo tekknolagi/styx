@@ -32,6 +32,7 @@ enum TokenType : ubyte
     continue_,
     else_,
     enum_,
+    false_,
     foreach_,
     function_,
     if_,
@@ -46,6 +47,7 @@ enum TokenType : ubyte
     static_,
     struct_,
     switch_,
+    true_,
     unit,
     var,
     virtual,
@@ -59,6 +61,7 @@ enum TokenType : ubyte
     s64,
     s8,
     sreg,
+    super_,
     u16,
     u32,
     u64,
@@ -137,6 +140,7 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     "continue",
     "else",
     "enum",
+    "false",
     "foreach",
     "function",
     "if",
@@ -151,6 +155,7 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     "static",
     "struct",
     "switch",
+    "true",
     "unit",
     "var",
     "virtual",
@@ -164,6 +169,7 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     "s64",
     "s8",
     "sreg",
+    "super",
     "u16",
     "u32",
     "u64",
@@ -268,9 +274,9 @@ private:
          - case sensitive: true
     */
 
-    static const string[64] _words = ["u64", "s64", "struct", "else", "while", "f64", "continue", "ureg", "sreg", "return", "", "auto", "in", "null", "", "", "protection", "u32", "s32", "", "", "", "f32", "", "virtual", "", "aka", "", "enum", "", "bool", "foreach", "import", "", "function", "static", "", "u8", "s8", "break", "const", "class", "var", "interface", "", "", "switch", "", "", "", "", "u16", "s16", "", "", "", "is", "on", "", "unit", "if", "", "", ""];
+    static const string[64] _words = ["", "", "virtual", "", "", "foreach", "", "const", "u16", "function", "u32", "continue", "null", "super", "s8", "unit", "enum", "", "false", "import", "", "in", "", "ureg", "on", "u64", "", "", "auto", "s16", "static", "s32", "", "protection", "f32", "", "return", "aka", "else", "", "while", "", "struct", "class", "sreg", "", "s64", "", "is", "f64", "break", "if", "switch", "", "", "", "var", "u8", "", "", "", "bool", "interface", "true"];
 
-    static const ubyte[256] _coefficients = [131, 108, 240, 186, 160, 241, 211, 48, 26, 126, 116, 112, 156, 225, 3, 163, 252, 133, 194, 129, 22, 27, 113, 59, 22, 7, 188, 248, 174, 186, 21, 51, 252, 203, 254, 130, 152, 16, 80, 187, 137, 223, 213, 42, 145, 149, 154, 141, 141, 222, 75, 156, 171, 31, 235, 186, 59, 180, 151, 245, 31, 100, 253, 88, 48, 108, 144, 226, 74, 77, 100, 235, 124, 52, 124, 236, 158, 27, 209, 215, 252, 74, 25, 60, 65, 146, 54, 16, 146, 246, 72, 4, 167, 200, 138, 152, 93, 226, 248, 255, 0, 19, 239, 230, 94, 141, 246, 214, 242, 32, 63, 250, 80, 51, 36, 43, 69, 170, 100, 212, 245, 93, 85, 69, 84, 141, 189, 240, 210, 78, 13, 53, 106, 107, 49, 116, 249, 125, 92, 3, 115, 214, 125, 166, 202, 130, 170, 65, 41, 15, 50, 65, 43, 95, 35, 40, 155, 95, 107, 47, 217, 181, 184, 42, 162, 66, 98, 148, 203, 136, 39, 51, 188, 14, 37, 118, 52, 235, 12, 223, 120, 138, 124, 185, 96, 184, 251, 70, 46, 78, 175, 157, 200, 86, 18, 91, 204, 6, 199, 84, 119, 150, 2, 14, 95, 132, 145, 81, 168, 31, 206, 139, 131, 134, 222, 236, 233, 112, 254, 204, 237, 206, 135, 72, 152, 128, 221, 172, 38, 196, 174, 53, 38, 36, 130, 111, 125, 17, 15, 138, 98, 169, 171, 133, 157, 47, 221, 240, 210, 44, 201, 123, 1, 255, 103, 255];
+    static const ubyte[256] _coefficients = [164, 45, 60, 106, 140, 246, 82, 193, 191, 205, 147, 237, 88, 67, 105, 161, 200, 2, 206, 54, 143, 188, 138, 192, 222, 227, 133, 246, 255, 156, 58, 153, 183, 158, 72, 132, 120, 108, 176, 186, 82, 89, 110, 113, 181, 250, 163, 159, 4, 232, 242, 238, 185, 143, 246, 191, 207, 121, 250, 216, 23, 192, 53, 79, 185, 241, 176, 153, 134, 157, 12, 246, 161, 185, 69, 129, 58, 221, 17, 128, 102, 211, 78, 175, 219, 215, 232, 169, 22, 188, 203, 223, 177, 91, 214, 220, 117, 110, 246, 96, 200, 68, 130, 40, 252, 49, 190, 73, 159, 62, 228, 180, 223, 192, 1, 191, 80, 170, 201, 88, 121, 34, 162, 81, 213, 195, 165, 88, 201, 35, 170, 198, 203, 30, 10, 235, 93, 186, 120, 112, 201, 228, 49, 33, 107, 177, 156, 5, 53, 131, 219, 250, 64, 139, 218, 253, 6, 122, 147, 202, 59, 212, 101, 31, 112, 231, 155, 14, 75, 133, 114, 172, 218, 234, 69, 164, 65, 145, 148, 58, 232, 47, 51, 131, 156, 167, 63, 58, 244, 199, 72, 241, 112, 82, 154, 101, 9, 137, 18, 25, 12, 170, 21, 103, 87, 19, 38, 48, 236, 199, 169, 174, 44, 5, 222, 177, 108, 227, 247, 13, 25, 240, 4, 65, 193, 85, 34, 120, 227, 72, 162, 217, 169, 247, 88, 36, 249, 104, 78, 206, 53, 200, 177, 187, 118, 83, 200, 193, 145, 33, 17, 85, 61, 217, 241, 190];
 
     static string generateFilledTable()
     {
@@ -671,6 +677,15 @@ public:
     bool isTokElse() const {return type == TokenType.else_;}
 
     /// Conveniance function used by the parser.
+    bool isTokTrue() const {return type == TokenType.true_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokFalse() const {return type == TokenType.false_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokSuper() const {return type == TokenType.super_;}
+
+    /// Conveniance function used by the parser.
     bool isUnaryPrefix() const
     {
         return type == TokenType.plusPlus || type == TokenType.minusMinus ||
@@ -687,6 +702,13 @@ public:
     bool isNumberLiteral() const
     {
         return firstNumberLiteral <= type && type <= lastNumberLiteral;
+    }
+
+    /// Conveniance function used by the parser.
+    bool isTokValueKeyword() const
+    {
+        return type == TokenType.true_ || type == TokenType.false_ ||
+            type == TokenType.null_;
     }
 }
 

@@ -547,8 +547,12 @@ final class UnaryExpressionAstNode: AstNode
     NumberLiteralAstNode numberLitteral;
     /// Assigned when this unary is a ParenExpression.
     ParenExpressionAstNode parenExpression;
-    /// Assigned when no numberLitteral.
+    /// Assigned for a simplified / full super call.
+    Token* super_;
+    /// Assigned when no numberLitteral / no value keyword / following super (.)?
     Token*[] identifierChain;
+    /// Assigned when the unary is a value that's a keyword
+    Token* valueKeyword;
     ///
     override void accept(AstVisitor visitor)
     {

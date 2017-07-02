@@ -1,12 +1,12 @@
 aka
 auto
-bool
 break
 class
 const
 continue
 else
 enum
+false
 foreach
 function
 if
@@ -20,12 +20,15 @@ protection
 return
 static
 struct
+super
 switch
+true
 unit
 var
 virtual
 while
 
+bool
 f32
 f64
 s16

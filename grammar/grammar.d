@@ -37,6 +37,7 @@ Yatol:
     InterfaceDeclaration    < Interface Identifier InheritanceList? LeftCurly Declarations? RightCurly
 
     InheritanceList < Colon IdentifierChains
+                  #  / Colon Super (Comma, IdentifierChains)? # nested class inherited the "super" type
 
     VariableDeclaration < ParameterStorageClass Static? Type VariableDeclarationList Semicolon
 
@@ -174,6 +175,8 @@ Yatol:
                     / NumberLiteral UnarySuffix?
                     / UnaryPrefix? UnaryExpression
                     / UnaryPrefix? ParenExpression
+                    / Super (Dot UnaryExpression)?
+                    / ValueKeyword
 
 ################################################################################
 # PostfixExpression
@@ -352,9 +355,13 @@ Yatol:
             / On
             / Bool
 
+    ValueKeyword    < Null
+                    / False
+                    / True
 
-    BasicType  < BasicFloatType
+    BasicType   < BasicFloatType
                 / BasicIntegerType
+                / Super
 
     BasicFloatType  < F64
                     / F32
@@ -410,6 +417,9 @@ Yatol:
     U16     <- "u16"
     U8      <- "u8"
     Bool    <- "bool"
+    True    <- "true"
+    False   <- "false"
+    Super   <- "super"
 `));
 
 enum overview =q{
@@ -547,6 +557,7 @@ q{
         2. Ctors and Dtors are named, as any regular member function.
         3. Single class inheritance, multiple interface inheritance.
         4. An equivalent of `this T` member functions is possible with an annotation that's TBA
+        5. super alone implies `super.theCurrentFuncIdentifier(theParams);` (think like ObjPas `inherited;`
      */
     class Foo : Bar
     {
@@ -564,6 +575,8 @@ q{
         @destructor @virtual function destruct()
         {
             super.destruct();
+            // or more simply
+            super;
         }
     }
 

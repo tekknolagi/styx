@@ -1340,7 +1340,33 @@ private:
                 else return null;
             }
         }
-        if (current.isTokIdentifier)
+        if (current.isTokSuper)
+        {
+            result.super_ = current();
+            advance();
+            if (current.isTokDot)
+            {
+                advance();
+                if (!current.isTokIdentifier)
+                {
+                    expected(TokenType.identifier);
+                    return null;
+                }
+                else
+                {
+                    if (Token*[] idc = parseIdentifierChain())
+                        result.identifierChain = idc;
+                    else
+                        return null;
+                }
+            }
+            else if (!current.isTokSemicolon)
+            {
+                parseError("expected semicolon or dotted identifier after `super`");
+                return null;
+            }
+        }
+        else if (current.isTokIdentifier)
         {
             if (Token*[] idc = parseIdentifierChain())
                 result.identifierChain = idc;
@@ -1365,9 +1391,14 @@ private:
             else
                 return null;
         }
+        else if (current.isTokValueKeyword)
+        {
+            result.valueKeyword = current();
+            advance();
+        }
         else
         {
-            parseError("expected an identifier, a literal or a paren expression");
+            parseError("expected identifier, literal, paren or value keyword");
             return null;
         }
         with(TokenType) while (current.type.among(colon, plusPlus, minusMinus, leftSquare, leftParen))
@@ -1538,7 +1569,8 @@ private:
         }
 
         with(TokenType) if (current.isUnaryPrefix || current.isTokIdentifier ||
-            current.isNumberLiteral || current.isTokLeftParen)
+            current.isNumberLiteral || current.isTokLeftParen ||
+            current.isTokSuper || current.isTokValueKeyword)
         {
             if (exp && (exp.unaryExpression))
             {
@@ -3186,6 +3218,42 @@ unittest // cover error cases for: aka
     });
 }
 
+unittest // super
+{
+    assertParse(q{
+        unit a;
+        class A : B { var super superInstance;}
+    });
+    assertNotParse(q{
+        unit a;
+        class A : B { super superInstance;}
+    });
+    assertParse(q{
+        unit a;
+        class A : B { function foo() {super.a();}}
+    });
+    assertParse(q{
+        unit a;
+        class A : B { function foo() {var auto b = super.a;}}
+    });
+    assertParse(q{
+        unit a;
+        class A : B { function foo() {super;}}
+    });
+    assertNotParse(q{
+        unit a;
+        class A : B { function foo() {super a;}}
+    });
+    assertNotParse(q{
+        unit a;
+        class A : B { function foo() {super .;}}
+    });
+    assertParse(q{
+        unit a;
+        class A : B { function foo() : super {return this:super;}}
+    });
+}
+
 unittest // misc. coverage for errors
 {
     assertNotParse(q{
@@ -3324,5 +3392,14 @@ unittest
             else a a a {
         }
     ");
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            a = false;
+            a = true;
+            a = null;
+        }
+    });
 }
 
