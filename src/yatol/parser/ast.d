@@ -66,6 +66,7 @@ class AstVisitor
     void visit(EnumMemberAstNode node){node.accept(this);}
     void visit(ExpressionAstNode node){node.accept(this);}
     void visit(ExpressionStatementAstNode node){node.accept(this);}
+    void visit(ForeachStatementAstNode node){node.accept(this);}
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
     void visit(FunctionHeaderAstNode node){node.accept(this);}
     void visit(FunctionParameterGroupAstNode node){node.accept(this);}
@@ -91,6 +92,7 @@ class AstVisitor
     void visit(UnitContainerAstNode node){node.accept(this);}
     void visit(VariableDeclarationAstNode node){node.accept(this);}
     void visit(VariableDeclarationItemAstNode node){node.accept(this);}
+    void visit(WhileStatementAstNode node){node.accept(this);}
 }
 
 /**
@@ -117,6 +119,7 @@ class AstVisitorNone: AstVisitor
     override void visit(EnumMemberAstNode node){}
     override void visit(ExpressionAstNode node){}
     override void visit(ExpressionStatementAstNode node){}
+    override void visit(ForeachStatementAstNode node){}
     override void visit(FunctionDeclarationAstNode node){}
     override void visit(FunctionHeaderAstNode node){}
     override void visit(FunctionParameterGroupAstNode node){}
@@ -141,6 +144,7 @@ class AstVisitorNone: AstVisitor
     override void visit(UnitContainerAstNode node){node.accept(this);}
     override void visit(VariableDeclarationAstNode node){}
     override void visit(VariableDeclarationItemAstNode node){}
+    override void visit(WhileStatementAstNode node){}
 }
 
 /// The base AST node.
@@ -580,6 +584,30 @@ final class ExpressionStatementAstNode: AstNode
     }
 }
 
+/// ForeachStatement
+final class ForeachStatementAstNode: AstNode
+{
+    /// The variable.
+    VariableDeclarationAstNode variable;
+    /// The expression that give the enumerable.
+    ExpressionAstNode enumerable;
+    /// If no block then the single statement.
+    DeclarationOrStatementAstNode statement;
+    /// The block if no single statement.
+    BlockStatementAstNode block;
+}
+
+/// WhileStatement
+final class WhileStatementAstNode: AstNode
+{
+    /// The condition
+    ExpressionAstNode condition;
+    /// If no block then the single statement.
+    DeclarationOrStatementAstNode statement;
+    /// The block if no single statement.
+    BlockStatementAstNode block;
+}
+
 /// IfElseStatement
 final class IfElseStatementAstNode: AstNode
 {
@@ -788,6 +816,10 @@ final class StatementAstNode: AstNode
     BlockStatementAstNode block;
     /// Assigned if this statement is an IfElseStatement.
     IfElseStatementAstNode ifElseStatement;
+    /// Assigned if this statement is a WhileStatement.
+    WhileStatementAstNode whileStatement;
+    /// Assigned if this statement is a ForeachStatement.
+    ForeachStatementAstNode foreachStatement;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -805,6 +837,10 @@ final class StatementAstNode: AstNode
             visitor.visit(block);
         else if (ifElseStatement)
             visitor.visit(ifElseStatement);
+        else if (whileStatement)
+            visitor.visit(whileStatement);
+        else if (foreachStatement)
+            visitor.visit(foreachStatement);
     }
 }
 

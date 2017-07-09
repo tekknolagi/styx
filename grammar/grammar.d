@@ -39,7 +39,7 @@ Yatol:
     InheritanceList < Colon IdentifierChains
                   #  / Colon Super (Comma, IdentifierChains)? # nested class inherited the "super" type
 
-    VariableDeclaration < ParameterStorageClass Static? Type VariableDeclarationList Semicolon
+    VariableDeclaration < StorageClass Static? Type VariableDeclarationList Semicolon
 
     VariableDeclarationList < VariableDeclarationItem (Comma VariableDeclarationItem)*
 
@@ -73,7 +73,7 @@ Yatol:
 
     FunctionParameters < FunctionParameterGroup (Semicolon FunctionParameterGroup)*
 
-    FunctionParameterGroup < ParameterStorageClass* Type IdentifierList
+    FunctionParameterGroup < StorageClass* Type IdentifierList
 
 ################################################################################
 # Attribute
@@ -82,9 +82,9 @@ Yatol:
     Attribute <- At Identifier / At Keyword
 
 ################################################################################
-# ParameterStorageClass
+# StorageClass
 
-    ParameterStorageClass < Var / Const
+    StorageClass < Var / Const
 
 ################################################################################
 # Initializer
@@ -116,6 +116,7 @@ Yatol:
                 / ExpressionStatement
                 / IfElseStatement
                 / WhileStatement
+                / ForeachStatement
                 / ContinueStatement
                 / BreakStatement
                 / BlockStatement
@@ -129,15 +130,19 @@ Yatol:
 
     ExpressionStatement < AssignExpression Semicolon
 
-    IfElseStatement < If IfCondition DeclarationOrStatementsBlock (Else DeclarationOrStatementsBlock)?
+    IfElseStatement < If IfCondition SingleStatementOrBlock (Else SingleStatementOrBlock)?
 
-    WhileStatement < While LeftParen IfCondition RightParen DeclarationOrStatementsBlock
+    WhileStatement < While LeftParen IfCondition RightParen SingleStatementOrBlock
+
+    ForeachStatement < Foreach LeftParen VariableDeclaration Semicolon Expression RightParen SingleStatementOrBlock
 
     ReturnStatement < Return AssignExpression? Semicolon
 
     ContinueStatement < Continue AssignExpression? Semicolon
 
     BreakStatement < Break AtLabel? AssignExpression? Semicolon
+
+    SingleStatementOrBlock < DeclarationOrStatement / BlockStatement
 
     BlockStatement < LeftCurly DeclarationOrStatementsBlock RightCurly
 

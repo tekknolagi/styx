@@ -1,3 +1,8 @@
+/**
+ * YATOL lexer.
+ *
+ * to maintain unittest coverage: 98%
+ */
 module yatol.lexer;
 
 import

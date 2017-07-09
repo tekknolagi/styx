@@ -1,4 +1,9 @@
 #!runnable: -g -gs
+/**
+ * YATOL parser.
+ *
+ * to maintain unittest coverage: 97%
+ **/
 module yatol.parser;
 
 //TODO-cparser todo: check when advance() reaches the EOF.
@@ -26,13 +31,13 @@ private:
         TokenType.invalid);
     Range _range;
 
-    /*void warning(const(char[]) message)
+    void warning(const(char[]) message)
     {
         assert(_current);
         writefln("%s(%d,%d): warning, %s", _lexer.filename, _current.line,
             _current.column, message);
         stdout.flush;
-    }*/
+    }
 
     void parseError(const(char[]) message)
     {
@@ -339,11 +344,19 @@ private:
         {
             if (current.isTokConst)
             {
+                if (result.isConst)
+                {
+                    warning("redundant storage class, `const` is already specified");
+                }
                 result.isConst = true;
                 advance();
             }
             else if (current.isTokVar)
             {
+                if (result.isVar)
+                {
+                    warning("redundant storage class, `var` is already specified");
+                }
                 result.isVar = true;
                 advance();
             }
@@ -388,11 +401,7 @@ private:
      */
     InterfaceDeclarationAstNode parseInterfaceDeclaration()
     {
-        if (!current.isTokInterface)
-        {
-            expected(TokenType.class_);
-            return null;
-        }
+        assert(current.isTokInterface);
         advance();
         if (!current.isTokIdentifier)
         {
@@ -440,11 +449,7 @@ private:
      */
     ClassDeclarationAstNode parseClassDeclaration()
     {
-        if (!current.isTokClass)
-        {
-            expected(TokenType.class_);
-            return null;
-        }
+        assert(current.isTokClass);
         advance();
         if (!current.isTokIdentifier)
         {
@@ -492,11 +497,7 @@ private:
      */
     StructDeclarationAstNode parseStructDeclaration()
     {
-        if (!current.isTokStruct)
-        {
-            expected(TokenType.struct_);
-            return null;
-        }
+        assert(current.isTokStruct);
         advance();
         if (!current.isTokIdentifier)
         {
@@ -580,11 +581,7 @@ private:
      */
     EnumDeclarationAstNode parseEnumDeclaration()
     {
-        if (!current.isTokEnum)
-        {
-            expected(TokenType.enum_);
-            return null;
-        }
+        assert(current.isTokEnum);
         advance();
         if (!current.isTokIdentifier)
         {
@@ -649,11 +646,7 @@ private:
      */
     ImportDeclarationAstNode parseImportDeclaration()
     {
-        if (!current.isTokImport)
-        {
-            expected(TokenType.import_);
-            return null;
-        }
+        assert(current.isTokImport);
         ImportDeclarationAstNode result = new ImportDeclarationAstNode;
         result.position = current.position;
         advance();
@@ -883,11 +876,7 @@ private:
      */
     ProtectionDeclarationAstNode parseProtectionDeclaration()
     {
-        if (!current.isTokProtection)
-        {
-            expected(TokenType.protection);
-            return null;
-        }
+        assert(current.isTokProtection);
         advance();
         if (!current.isTokLeftParen)
         {
@@ -1022,11 +1011,7 @@ private:
      */
     AkaDeclarationAstNode parseAkaDeclaration()
     {
-        if (!current.isTokIs)
-        {
-            expected(TokenType.is_);
-            return null;
-        }
+        assert(current.isTokIs);
         advance();
         if (TypeAstNode t = parseType())
         {
@@ -1083,11 +1068,11 @@ private:
     }
 
     /**
-     * Parses contiguous declarations or statements, a function body.
+     * Parses contiguous DeclarationsOrStatement.
      *
      * Params:
-     *      declsOrStatements: The array filled with the declarations or
-     *      statements.
+     *      declsOrStatements: The array filled with one or more
+     *      DeclarationsOrStatement
      * Returns:
      *      $(D true) on success, $(D false) otherwise.
      */
@@ -1132,7 +1117,7 @@ private:
     }
 
     /**
-     * Parses contiguous declarations.
+     * Parses contiguous Declaration.
      *
      * Params:
      *      declarations: The array filled with the declarations.
@@ -1179,7 +1164,7 @@ private:
     }
 
     /**
-     * Parses an paren expression
+     * Parses a ParenExpression.
      *
      * Returns: a $(D ParenExpressionAstNode) on success, $(D null) otherwise.
      */
@@ -1206,17 +1191,13 @@ private:
     }
 
     /**
-     * Parses call parameters.
+     * Parses CallParameters.
      *
      * Returns: a $(D CallParametersAstNode) on success, $(D null) otherwise.
      */
     CallParametersAstNode parseCallParameters()
     {
-        if (!current.isTokLeftParen)
-        {
-            expected(TokenType.leftParen);
-            return null;
-        }
+        assert(current.isTokLeftParen);
         CallParametersAstNode result = new CallParametersAstNode;
         result.position = current.position;
         advance();
@@ -1247,6 +1228,12 @@ private:
         }
     }
 
+
+    /**
+     * Parses a PostfixExpression.
+     *
+     * Returns: a $(D PostfixExpressionAstNode) on success, $(D null) otherwise.
+     */
     PostfixExpressionAstNode parsePostfixExpression()
     {
         PostfixExpressionAstNode result = new PostfixExpressionAstNode;
@@ -1318,7 +1305,7 @@ private:
     }
 
     /**
-     * Parses an unary expression.
+     * Parses an UnaryExpression.
      *
      * Returns: a $(D UnaryExpressionAstNode) on success, $(D null) otherwise.
      */
@@ -1459,11 +1446,7 @@ private:
      */
     DotExpressionAstNode parseDotExpression()
     {
-        if (!current.isTokDot)
-        {
-            expected(TokenType.dot);
-            return null;
-        }
+        assert(current.isTokDot);
         advance();
         if (ExpressionAstNode e = parseExpression(null))
         {
@@ -1497,7 +1480,7 @@ private:
     }
 
     /**
-     * Parses an expression.
+     * Parses an Expression.
      *
      * Returns: a $(D ExpressionAstNode) on success, $(D null) otherwise.
      */
@@ -1601,7 +1584,7 @@ private:
     }
 
     /**
-     * Parses an expression statement
+     * Parses an ExpressionStatement.
      *
      * Returns: a $(D ExpressionStatementAstNode) on success, $(D null) otherwise.
      */
@@ -1625,13 +1608,150 @@ private:
         else return null;
     }
 
-    IfElseStatementAstNode parseIfElseStatement()
+
+    /**
+     * Parses a WhileStatement.
+     *
+     * Returns: a $(D WhileStatementAstNode) on success, $(D null) otherwise.
+     */
+    WhileStatementAstNode parseWhileStatement()
     {
-        if (!current.isTokIf)
+        assert(current.isTokWhile);
+        advance();
+        if (!current.isTokLeftParen)
         {
-            expected(TokenType.if_);
+            expected(TokenType.leftParen);
             return null;
         }
+        advance();
+        WhileStatementAstNode result = new WhileStatementAstNode;
+        if (ExpressionAstNode c = parseExpression(null))
+        {
+            result.condition = c;
+        }
+        else
+        {
+            parseError("invalid while condition");
+            return null;
+        }
+        if (!current.isTokRightParen)
+        {
+            expected(TokenType.rightParen);
+            return null;
+        }
+        advance();
+        if (current.isTokLeftCurly)
+        {
+            advance();
+            BlockStatementAstNode bs = new BlockStatementAstNode;
+            parseDeclarationsOrStatements(bs.declarationsOrStatements);
+            if (!current.isTokRightCurly)
+            {
+                expected(TokenType.rightCurly);
+                return null;
+            }
+            advance();
+            result.block = bs;
+        }
+        else
+        {
+            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
+            {
+                result.statement = dos;
+            }
+            else
+            {
+                parseError("invalid while single statement");
+                return null;
+            }
+        }
+        return result;
+    }
+
+
+    /**
+     * Parses a ForeachStatement.
+     *
+     * Returns: a $(D ForeachStatementAstNode) on success, $(D null) otherwise.
+     */
+    ForeachStatementAstNode parseForeachStatement()
+    {
+        assert(current.isTokForeach);
+        advance();
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        advance();
+        ForeachStatementAstNode result = new ForeachStatementAstNode;
+        if (VariableDeclarationAstNode vd = parseVariableDeclaration)
+        {
+            result.variable = vd;
+        }
+        else
+        {
+            parseError("invalid foreach variable");
+            return null;
+        }
+        //note: parseVariableDeclaration should not eat the semicolon.
+        /*if (!current.isTokSemicolon)
+        {
+            expected(TokenType.semiColon);
+            return null;
+        }
+        advance();*/
+        if (ExpressionAstNode e = parseExpression(null))
+        {
+            result.enumerable = e;
+        }
+        else
+        {
+            parseError("invalid foreach enumerable expression");
+        }
+        if (!current.isTokRightParen)
+        {
+            expected(TokenType.rightParen);
+            return null;
+        }
+        advance();
+        if (current.isTokLeftCurly)
+        {
+            advance();
+            BlockStatementAstNode bs = new BlockStatementAstNode;
+            parseDeclarationsOrStatements(bs.declarationsOrStatements);
+            if (!current.isTokRightCurly)
+            {
+                expected(TokenType.rightCurly);
+                return null;
+            }
+            advance();
+            result.block = bs;
+        }
+        else
+        {
+            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
+            {
+                result.statement = dos;
+            }
+            else
+            {
+                parseError("invalid foreach single statement");
+                return null;
+            }
+        }
+        return result;
+    }
+
+
+    /**
+     * Parses an IfElseStatement.
+     *
+     * Returns: a $(D IfElseStatementAstNode) on success, $(D null) otherwise.
+     */
+    IfElseStatementAstNode parseIfElseStatement()
+    {
+        assert(current.isTokIf);
         advance();
         if (!current.isTokLeftParen)
         {
@@ -1713,17 +1833,13 @@ private:
     }
 
     /**
-     * Parses a return statement
+     * Parses a ReturnStatement.
      *
      * Returns: a $(D ReturnStatementAstNode) on success, $(D null) otherwise.
      */
     ReturnStatementAstNode parseReturnStatement()
     {
-        if (!current.isTokReturn)
-        {
-            expected(TokenType.return_);
-            return null;
-        }
+        assert(current.isTokReturn);
         ReturnStatementAstNode result = new ReturnStatementAstNode;
         result.position = current.position;
         advance();
@@ -1745,17 +1861,13 @@ private:
     }
 
     /**
-     * Parses a ContinueStatement
+     * Parses a ContinueStatement.
      *
      * Returns: a $(D ContinueStatementAstNode) on success, $(D null) otherwise.
      */
     ContinueStatementAstNode parseContinueStatement()
     {
-        if (!current.isTokContinue)
-        {
-            expected(TokenType.continue_);
-            return null;
-        }
+        assert(current.isTokContinue);
         ContinueStatementAstNode result = new ContinueStatementAstNode;
         result.position = current.position;
         advance();
@@ -1777,17 +1889,13 @@ private:
     }
 
     /**
-     * Parses a BreakStatement
+     * Parses a BreakStatement.
      *
      * Returns: a $(D BreakStatementAstNode) on success, $(D null) otherwise.
      */
     BreakStatementAstNode parseBreakStatement()
     {
-        if (!current.isTokBreak)
-        {
-            expected(TokenType.break_);
-            return null;
-        }
+        assert(current.isTokBreak);
         BreakStatementAstNode result = new BreakStatementAstNode;
         result.position = current.position;
         advance();
@@ -1826,7 +1934,7 @@ private:
     }
 
     /**
-     * Parses a statement.
+     * Parses a Statement.
      *
      * Returns: a $(D StatementAstNode) on success, $(D null) otherwise.
      */
@@ -1896,7 +2004,35 @@ private:
             }
             else
             {
-                parseError("invalid ifElse statement");
+                parseError("invalid if-else statement");
+                return null;
+            }
+        }
+        case while_:
+        {
+            if (WhileStatementAstNode ws = parseWhileStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.whileStatement = ws;
+                return result;
+            }
+            else
+            {
+                parseError("invalid while statement");
+                return null;
+            }
+        }
+        case foreach_:
+        {
+            if (ForeachStatementAstNode fs = parseForeachStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.foreachStatement = fs;
+                return result;
+            }
+            else
+            {
+                parseError("invalid foreach statement");
                 return null;
             }
         }
@@ -1929,7 +2065,7 @@ private:
     }
 
     /**
-     * Parses a declaration.
+     * Parses a Declaration.
      *
      * Returns: a $(D DeclarationAstNode) on success, $(D null) otherwise.
      */
@@ -2062,14 +2198,12 @@ public:
      */
     this(Lexer* lexer)
     {
-        if (!lexer)
+        if (lexer)
         {
-            stderr.writeln("INTERNAL ERROR: attempt to create a parser without lexer");
-            exit(1);
+            _lexer = lexer;
+            _range = Range(lexer.tokens);
+            advance();
         }
-        _lexer = lexer;
-        _range = Range(lexer.tokens);
-        advance();
     }
 
     /**
@@ -2080,8 +2214,7 @@ public:
      */
     UnitContainerAstNode parse()
     {
-        if (!current)
-            return null;
+        assert(current); // at least EOF token
         _uc = new UnitContainerAstNode;
         _uc.mainUnit = parseUnit();
         if (!_uc.mainUnit)
@@ -2141,7 +2274,7 @@ unittest
     lx.setSourceFromText(source, __FILE__, line + 1, 1);
     lx.lex;
     Parser prs = Parser(&lx);
-    TypeAstNode tan = prs.parseCustomNode!TypeAstNode;
+    const TypeAstNode tan = prs.parseCustomNode!TypeAstNode;
     assert(tan);
 }
 
@@ -2154,7 +2287,7 @@ unittest
     lx.setSourceFromText(source, __FILE__, line + 1, 1);
     lx.lex;
     Parser prs = Parser(&lx);
-    TypeModifierAstNode tman = prs.parseCustomNode!TypeModifierAstNode;
+    const TypeModifierAstNode tman = prs.parseCustomNode!TypeModifierAstNode;
     assert(!tman);
 }
 
@@ -2167,7 +2300,7 @@ unittest
     lx.setSourceFromText(source, __FILE__, line + 1, 1);
     lx.lex;
     Parser prs = Parser(&lx);
-    TypeAstNode tan = prs.parseCustomNode!TypeAstNode;
+    const TypeAstNode tan = prs.parseCustomNode!TypeAstNode;
     assert(!tan);
 }
 
@@ -2976,6 +3109,18 @@ unittest // cover error cases for: function and function type decl
         unit a;
         function foo(): static
     });
+    assertParse(q{
+        unit a;
+        function foo(const const s32 a);
+    });
+    assertParse(q{
+        unit a;
+        function foo(var var s32 a);
+    });
+    assertParse(q{
+        unit a;
+        function foo(var const var const s32 a);
+    });
 }
 
 unittest // cover error cases for: protection declaration
@@ -3040,6 +3185,13 @@ unittest // cover error cases for: continue break return statements
         function foo()
         {
             break a
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            break(
         }
     });
     assertNotParse(q{
@@ -3150,6 +3302,22 @@ unittest // cover error cases for: interface, struct & class
     });
     assertNotParse(q{
         unit a;
+        class A : B.C, {}
+    });
+    assertNotParse(q{
+        unit a;
+        interface A : B.C, {}
+    });
+    assertNotParse(q{
+        unit a;
+        class A : B.C, D. {}
+    });
+    assertNotParse(q{
+        unit a;
+        interface A : B.C, D. {}
+    });
+    assertNotParse(q{
+        unit a;
         struct A : {}
     });
     assertNotParse(q{
@@ -3254,6 +3422,135 @@ unittest // super
     });
 }
 
+unittest // while
+{
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            while (true) {}
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            while (a.b == true) {}
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            while (true)
+                while (true)
+                    {++a;}
+        }
+    });
+    assertNotParse("
+        unit a;
+        function foo()
+        {
+            while (a) { a a a
+        }
+    ");
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            while (a) unit
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            while ( {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            while () {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            while (true {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            while true {}
+        }
+    });
+}
+
+unittest // foreach
+{
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(const s8 a; b) {}
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(const auto a; b) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(a; b) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(; b) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(a;a a) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach a; b {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(const auto a; b) a a
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(const auto a; b) ;
+        }
+    });
+}
+
 unittest // misc. coverage for errors
 {
     assertNotParse(q{
@@ -3277,6 +3574,48 @@ unittest // misc. coverage for errors
     assertNotParse(q{
         unit a;
         function foo(s8[8 a);
+    });
+    assertNotParse(q{});
+    assertNotParse(q{
+        unit a;
+        static identifier;
+    });
+    assertNotParse(q{
+        unit a;
+        struct Foo
+        {
+            unit a;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        struct Foo
+        {
+            virtual unit a;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            if (true) {} else a a;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            if (true) a a else a a;
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            if (true) {}
+            else if (true) {}
+            else {}
+        }
     });
 }
 

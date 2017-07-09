@@ -473,6 +473,9 @@ public:
     bool isTokSymbol() const {return firstSymbol <= type && type <= lastSymbol;}
 
     /// Conveniance function used by the parser.
+    bool isTokStorageClass() const {return isTokVar || isTokConst;}
+
+    /// Conveniance function used by the parser.
     bool isTokIdentifier() const {return type == TokenType.identifier;}
 
     /// Conveniance function used by the parser.
