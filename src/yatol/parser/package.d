@@ -2,7 +2,7 @@
 /**
  * YATOL parser.
  *
- * to maintain unittest coverage: 97%
+ * to maintain unittest coverage: 98%
  **/
 module yatol.parser;
 
@@ -118,7 +118,12 @@ private:
                 if (parseDeclarations(result.declarations))
                 {
                     --_declarationLevels;
-                    return result;
+                    if (_declarationLevels < 0)
+                    {
+                        unexpected();
+                        return null;
+                    }
+                    else return result;
                 }
                 else
                 {
@@ -394,10 +399,10 @@ private:
     }
 
     /**
-     * Parses a ClassDeclaration.
+     * Parses an InterfaceDeclaration.
      *
      * Returns:
-     *      On success a $(D ClassDeclarationAstNode) otherwise $(D null).
+     *      On success a $(D InterfaceDeclarationAstNode) otherwise $(D null).
      */
     InterfaceDeclarationAstNode parseInterfaceDeclaration()
     {
@@ -612,27 +617,31 @@ private:
         advance();
         while (true)
         {
-            if (current.isTokRightCurly)
-            {
-                advance();
-                return result;
-            }
             if (EnumMemberAstNode ei = parseEnumMember())
             {
                 result.members ~= ei;
                 if (current.isTokComma)
                 {
                     advance();
-                    if (current.isTokRightCurly)
-                    {
-                        unexpected();
-                        return null;
-                    }
-                    else continue;
+                    continue;
+                }
+            }
+            if (current.isTokRightCurly)
+            {
+                if (result.members.length)
+                {
+                    advance();
+                    return result;
+                }
+                else
+                {
+                    parseError("no enum members");
+                    return null;
                 }
             }
             else
             {
+                parseError("invalid enum member");
                 return null;
             }
         }
@@ -777,11 +786,7 @@ private:
         {
             advance();
         }
-        if (!current.isTokFunction)
-        {
-            expected(TokenType.function_);
-            return null;
-        }
+        assert(current.isTokFunction);
         advance();
         if (!current.isTokIdentifier)
         {
@@ -1705,10 +1710,6 @@ private:
         {
             result.enumerable = e;
         }
-        else
-        {
-            parseError("invalid foreach enumerable expression");
-        }
         if (!current.isTokRightParen)
         {
             expected(TokenType.rightParen);
@@ -2044,6 +2045,7 @@ private:
             {
                 StatementAstNode result = new StatementAstNode;
                 result.block = b;
+                advance();
                 return result;
             }
             else return null;
@@ -2460,7 +2462,16 @@ void assertNotParse(const(char)[] code, string file = __FILE_FULL_PATH__,
     assert(pr.parse() is null, "code parsed but should not be");
 }
 
-
+unittest
+{
+    assertNotParse(`
+        unit a;
+        function foo()
+        {
+            a++;}
+        }
+    `);
+}
 
 unittest
 {
@@ -3121,6 +3132,18 @@ unittest // cover error cases for: function and function type decl
         unit a;
         function foo(var const var const s32 a);
     });
+    assertNotParse(q{
+        unit a;
+        function foo(var const var s32 a,,);
+    });
+    assertParse(q{
+        unit a;
+        function foo(var const var s32 a,b; const C c; const D d;);
+    });
+    assertParse(q{
+        unit a;
+        function foo(var const var s32 a,b; const C c; const D d);
+    });
 }
 
 unittest // cover error cases for: protection declaration
@@ -3364,6 +3387,22 @@ unittest // cover error cases for: enum
         unit a;
         enum  {a}
     });
+    assertNotParse(q{
+        unit a;
+        enum  {a,++}
+    });
+    assertNotParse(q{
+        unit a;
+        enum  A {}
+    });
+    assertNotParse(q{
+        unit a;
+        enum  A {a,}
+    });
+    assertNotParse(q{
+        unit a;
+        enum  A {a = 4; 3 2 1 0}
+    });
 }
 
 unittest // cover error cases for: aka
@@ -3415,6 +3454,10 @@ unittest // super
     assertNotParse(q{
         unit a;
         class A : B { function foo() {super .;}}
+    });
+    assertNotParse(q{
+        unit a;
+        class A : B { function foo() {super.a.0;}}
     });
     assertParse(q{
         unit a;
@@ -3489,6 +3532,13 @@ unittest // while
             while true {}
         }
     });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            while (true; {}
+        }
+    });
 }
 
 unittest // foreach
@@ -3549,10 +3599,42 @@ unittest // foreach
             foreach(const auto a; b) ;
         }
     });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(var auto a; b]) {}
+        }
+    });
+    assertNotParse(`
+        unit a;
+        function foo()
+        {
+            foreach(var auto a; b]) {a]
+        }
+    `);
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(auto a; b] {}
+        }
+    });
+    assertNotParse(`
+        unit a;
+        function foo()
+        {
+            foreach(auto a; b) { a++; a a a
+        }
+    `);
 }
 
 unittest // misc. coverage for errors
 {
+    assertNotParse(q{
+        unit a;
+        A[0 b a;
+    });
     assertNotParse(q{
         unit a;
         function foo()
@@ -3738,6 +3820,13 @@ unittest
             a = false;
             a = true;
             a = null;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            if (true; {}
         }
     });
 }
