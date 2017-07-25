@@ -4,7 +4,7 @@ sudo: false
 language: d
 os:
  - linux
- - osx
+ #- osx
 d:
  - dmd
  - dmd-nightly
