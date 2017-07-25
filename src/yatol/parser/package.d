@@ -2,7 +2,7 @@
 /**
  * YATOL parser.
  *
- * to maintain unittest coverage: 98%
+ * to maintain unittest coverage: 99%
  **/
 module yatol.parser;
 
@@ -972,11 +972,6 @@ private:
         }
         if (TypeAstNode t = parseType())
         {
-            if (!current.isTokIdentifier)
-            {
-                expected(TokenType.identifier);
-                return null;
-            }
             VariableDeclarationAstNode result = new VariableDeclarationAstNode;
             result.type = t;
             result.isStatic = isStatic;
@@ -1105,12 +1100,9 @@ private:
                         unexpected();
                         return false;
                     }
-                    else if (oldDeclLvl != _declarationLevels)
-                    {
-                        return false;
-                    }
                     else
                     {
+                        assert (oldDeclLvl == _declarationLevels);
                         return true;
                     }
                 default:
@@ -1152,12 +1144,9 @@ private:
                         unexpected();
                         return false;
                     }
-                    else if (oldDeclLvl != _declarationLevels)
-                    {
-                        return false;
-                    }
                     else
                     {
+                        assert(oldDeclLvl == _declarationLevels);
                         return true;
                     }
                 default:
@@ -1544,14 +1533,14 @@ private:
                 }
                 else if (current.isTokDot)
                 {
-                    // this never happens...
                     assert(false);
                     //return dotifyExpression(result);
                 }
                 else
                 {
-                    result = parseExpression(result);
-                    return result;
+                    assert(false);
+                    //result = parseExpression(result);
+                    //return result;
                 }
             }
         }
@@ -1599,16 +1588,9 @@ private:
         {
             ExpressionStatementAstNode result = new ExpressionStatementAstNode;
             result.assignExpression = ae;
-            if (!current.isTokSemicolon)
-            {
-                expected(TokenType.semiColon);
-                return null;
-            }
-            else
-            {
-                advance();
-                return result;
-            }
+            assert(current.isTokSemicolon);
+            advance();
+            return result;
         }
         else return null;
     }
@@ -3192,6 +3174,10 @@ unittest // cover error cases for: variable declaration
         unit a;
         var T a]
     });
+    assertNotParse(q{
+        unit a;
+        var T ++;
+    });
 }
 
 unittest // cover error cases for: continue break return statements
@@ -3627,10 +3613,24 @@ unittest // foreach
             foreach(auto a; b) { a++; a a a
         }
     `);
+    assertNotParse(`
+        unit a;
+        function foo()
+        {
+            foreach(const auto a; b) {a a;++
+        }
+    `);
 }
 
 unittest // misc. coverage for errors
 {
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            a = 8
+        }
+    });
     assertNotParse(q{
         unit a;
         A[0 b a;
@@ -3829,5 +3829,13 @@ unittest
             if (true; {}
         }
     });
+    assertNotParse(`
+        unit a;
+        function foo()
+        {
+            if (true) {}
+            else {a a;++
+        }
+    `);
 }
 
