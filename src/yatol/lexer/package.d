@@ -92,9 +92,15 @@ private:
     }
 
     pragma(inline, true)
-    char* lookup(size_t value)
+    bool canLookup()
     {
-        return _front + value;
+        return _front < _back;
+    }
+
+    pragma(inline, true)
+    char* lookup()
+    {
+        return _front + 1;
     }
 
     // Must be called when a sub-lexer finds a line ending.
@@ -275,7 +281,7 @@ private:
                 validateToken(TokenType.invalid);
                 return;
             case '.':
-                if ('0' <= *lookup(1) && *lookup(1) <= '9')
+                if (canLookup() && '0' <= *lookup() && *lookup() <= '9')
                 {
                     advance();
                     advance();
@@ -352,7 +358,7 @@ private:
 
     void skipSheBang()
     {
-        if (_front && _front + 2 <= _back && *_front == '#' && *lookup(1) == '!')
+        if (canLookup && _front && _front + 2 <= _back && *_front == '#' && *lookup() == '!')
         {
             while (true)
             {
@@ -433,18 +439,15 @@ public:
                 processlineEnding;
                 continue;
             case '/':
-                if (_front <= _back)
+                if (canLookup() && *lookup() == '/')
+                    lexLineComment();
+                else if (canLookup && *lookup() == '*')
+                    lexStarComment();
+                else
                 {
-                    if ( *lookup(1) == '/')
-                        lexLineComment();
-                    else if (*lookup(1) == '*')
-                        lexStarComment;
-                    else
-                    {
-                        anticipateToken(TokenType.div);
-                        advance();
-                        validateToken();
-                    }
+                    anticipateToken(TokenType.div);
+                    advance();
+                    validateToken();
                 }
                 continue;
             case 'a': .. case 'z':
@@ -453,7 +456,7 @@ public:
                 lexIdentifier();
                 continue;
             case '0':
-                if (_front <= _back && ('x' == *lookup(1) || *lookup(1) == 'X'))
+                if (canLookup() && ('x' == *lookup() || *lookup() == 'X'))
                 {
                     anticipateToken(TokenType.hexLiteral);
                     advance();
@@ -469,14 +472,14 @@ public:
                 lexIntegerLiteral();
                 continue;
             case '-':
-                if (_front < _back)
+                if (canLookup())
                 {
-                    if ( '0' <= *lookup(1) && *lookup(1) <= '9')
+                    if ( '0' <= *lookup() && *lookup() <= '9')
                     {
                         anticipateToken(TokenType.intLiteral);
                         lexIntegerLiteral();
                     }
-                    else if (*lookup(1) == '-')
+                    else if (*lookup() == '-')
                     {
                         anticipateToken(TokenType.minusMinus);
                         advance();
@@ -501,7 +504,7 @@ public:
                 lexStringLiteral();
                 continue;
             case '&':
-                if (_front <= _back && *lookup(1) == '&')
+                if (canLookup() && *lookup() == '&')
                 {
                     anticipateToken(TokenType.andAnd);
                     advance();
@@ -514,7 +517,7 @@ public:
                 validateToken();
                 continue;
             case '|':
-                if (_front <= _back && *lookup(1) == '|')
+                if (canLookup() && *lookup() == '|')
                 {
                     anticipateToken(TokenType.orOr);
                     advance();
@@ -528,7 +531,7 @@ public:
                 continue;
             case '+':
                 anticipateToken(TokenType.plus);
-                if (_front <= _back && *lookup(1) == '+')
+                if (canLookup() && *lookup() == '+')
                 {
                     advance();
                     advance();
@@ -556,12 +559,12 @@ public:
                 validateToken();
                 continue;
             case '>':
-                if (_front <= _back && *lookup(1) == '=')
+                if (canLookup() && *lookup() == '=')
                 {
                     anticipateToken(TokenType.greaterEqual);
                     advance();
                 }
-                else if (_front <= _back && *lookup(1) == '>')
+                else if (canLookup() && *lookup() == '>')
                 {
                     anticipateToken(TokenType.rShift);
                     advance();
@@ -574,12 +577,12 @@ public:
                 validateToken();
                 continue;
             case '<':
-                if (_front <= _back && *lookup(1) == '=')
+                if (canLookup() && *lookup() == '=')
                 {
                     anticipateToken(TokenType.lesserEqual);
                     advance();
                 }
-                else if (_front <= _back && *lookup(1) == '<')
+                else if (canLookup() && *lookup() == '<')
                 {
                     anticipateToken(TokenType.lShift);
                     advance();
@@ -593,7 +596,7 @@ public:
                 continue;
             case '.':
                 anticipateToken(TokenType.dot);
-                if (_front <= _back && *lookup(1) == '.')
+                if (canLookup() && *lookup() == '.')
                 {
                     advance();
                     advance();
@@ -656,7 +659,7 @@ public:
                 validateToken();
                 continue;
             case '!':
-                if (_front <= _back && *lookup(1) == '=')
+                if (canLookup() && *lookup() == '=')
                 {
                     anticipateToken(TokenType.notEqual);
                     advance();
@@ -675,7 +678,7 @@ public:
                 continue;
             case '=':
                 anticipateToken(TokenType.equal);
-                if (_front <= _back && *lookup(1) == '=')
+                if (canLookup() && *lookup() == '=')
                 {
                     advance();
                     advance();
