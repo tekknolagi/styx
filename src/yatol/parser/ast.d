@@ -595,6 +595,18 @@ final class ForeachStatementAstNode: AstNode
     DeclarationOrStatementAstNode statement;
     /// The block if no single statement.
     BlockStatementAstNode block;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (variable)
+            visitor.visit(variable);
+        if (enumerable)
+            visitor.visit(enumerable);
+        if (statement)
+            visitor.visit(statement);
+        else
+            visitor.visit(block);
+    }
 }
 
 /// WhileStatement
@@ -606,6 +618,17 @@ final class WhileStatementAstNode: AstNode
     DeclarationOrStatementAstNode statement;
     /// The block if no single statement.
     BlockStatementAstNode block;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (condition)
+            visitor.visit(condition);
+        if (statement)
+            visitor.visit(statement);
+        else
+            visitor.visit(block);
+    }
+}
 }
 
 /// IfElseStatement
