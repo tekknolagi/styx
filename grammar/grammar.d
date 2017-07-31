@@ -150,9 +150,11 @@ Yatol:
 
     IfCondition < LeftParen Expression RightParen
                 / LeftParen ConditionalIdentifierChain RightParen
-                #/ LeftParen VariableDeclaration RightParen
+                / LeftParen IfConditionVariable RightParen
                 #/ Expression Then
                 #/ IdentifierChain Then
+
+    IfConditionVariable < StorageClass Type VariableDeclarationItem
 
 ################################################################################
 # Composites expressions
@@ -496,6 +498,9 @@ enum source1 = `
         is function*() aka FuncPtr;
 
         const auto a = (b[0].b[1].b[2])(8);
+
+        if (const s8 a = call())
+            do();
 
     }
 

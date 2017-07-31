@@ -72,7 +72,8 @@ class AstVisitor
     void visit(FunctionParameterGroupAstNode node){node.accept(this);}
     void visit(FunctionTypeAstNode node){node.accept(this);}
     void visit(IdentifierChainsAstNode node){node.accept(this);}
-    void visit(IfElseStatementAstNode  node){node.accept(this);}
+    void visit(IfConditionVariableAstNode node){node.accept(this);}
+    void visit(IfElseStatementAstNode node){node.accept(this);}
     void visit(ImportDeclarationAstNode node){node.accept(this);}
     void visit(IndexExpressionAstNode node){node.accept(this);}
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
@@ -125,6 +126,7 @@ class AstVisitorNone: AstVisitor
     override void visit(FunctionParameterGroupAstNode node){}
     override void visit(FunctionTypeAstNode node){}
     override void visit(IdentifierChainsAstNode node){}
+    override void visit(IfConditionVariableAstNode node){}
     override void visit(IfElseStatementAstNode  node){}
     override void visit(ImportDeclarationAstNode node){}
     override void visit(IndexExpressionAstNode node){}
@@ -629,13 +631,33 @@ final class WhileStatementAstNode: AstNode
             visitor.visit(block);
     }
 }
+
+/// IfConditionVariable
+final class IfConditionVariableAstNode: AstNode
+{
+    /// Indicates wether the variable is const.
+    bool isConst;
+    /// The type of the variables in the list.
+    TypeAstNode type;
+    /// The variable and its initializer.
+    VariableDeclarationItemAstNode variable;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (type)
+            visitor.visit(type);
+        if (variable)
+            visitor.visit(variable);
+    }
 }
 
 /// IfElseStatement
 final class IfElseStatementAstNode: AstNode
 {
-    /// The condition
+    /// The condition when it's an expression.
     ExpressionAstNode condition;
+    /// The consition when it's a new scoped variable.
+    IfConditionVariableAstNode ifVariable;
     /// The statement when condition is true.
     DeclarationOrStatementAstNode trueStatement;
     /// The block when condition is true.
@@ -649,6 +671,8 @@ final class IfElseStatementAstNode: AstNode
     {
         if (condition)
             visitor.visit(condition);
+        else if (ifVariable)
+            visitor.visit(ifVariable);
         if (trueBlock)
             visitor.visit(trueBlock);
         else if (trueStatement)

@@ -928,12 +928,13 @@ private:
             }
             else return null;
         }
-        if (!current.isTokComma && !current.isTokSemicolon)
+        /*if (!current.isTokComma && !current.isTokSemicolon)
         {
             parseError("expected colon or semicolon");
             return null;
         }
-        else return result;
+        else*/
+        return result;
     }
 
     /**
@@ -986,6 +987,11 @@ private:
                     {
                         advance();
                         return result;
+                    }
+                    else
+                    {
+                        parseError("expected colon or semicolon");
+                        return null;
                     }
                 }
                 else
@@ -1708,11 +1714,43 @@ private:
         return result;
     }
 
+    /**
+     * Parses an IfConditionVariableAstNode.
+     *
+     * Returns: an $(D IfConditionVariableAstNode) on success, $(D null) otherwise.
+     */
+    IfConditionVariableAstNode parseIfConditionVariableAstNode()
+    {
+        assert(current.isTokConst || current.isTokVar);
+        IfConditionVariableAstNode result = new IfConditionVariableAstNode;
+        result.isConst = current.isTokConst;
+        advance();
+        if (TypeAstNode t = parseType())
+        {
+            result.type = t;
+        }
+        else
+        {
+            parseError("invalid variable type");
+            return null;
+        }
+        if (VariableDeclarationItemAstNode vdi = parseVariableDeclarationItem())
+        {
+            result.variable = vdi;
+            if (!current.isTokRightParen)
+            {
+                expected(TokenType.rightParen);
+                return null;
+            }
+            return result;
+        }
+        else return null;
+    }
 
     /**
      * Parses an IfElseStatement.
      *
-     * Returns: a $(D IfElseStatementAstNode) on success, $(D null) otherwise.
+     * Returns: an $(D IfElseStatementAstNode) on success, $(D null) otherwise.
      */
     IfElseStatementAstNode parseIfElseStatement()
     {
@@ -1725,11 +1763,16 @@ private:
         }
         advance();
         IfElseStatementAstNode result = new IfElseStatementAstNode;
-        if (ExpressionAstNode c = parseExpression(null))
+        if (current.isTokStorageClass)
+        {
+            if (IfConditionVariableAstNode icv = parseIfConditionVariableAstNode())
+                result.ifVariable = icv;
+        }
+        else if (ExpressionAstNode c = parseExpression(null))
         {
             result.condition = c;
         }
-        else
+        if (!result.condition && !result.ifVariable)
         {
             parseError("invalid if condition");
             return null;
@@ -3683,6 +3726,48 @@ unittest // misc. coverage for errors
             if (true) {}
             else if (true) {}
             else {}
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            if (const auto a = 0) {}
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            if (const s8 a = call()) {}
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            if (var A.B a = call() && other()) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            if (var 0) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            if (const s8 a = 0; {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            if (const s8 0 = 0) {}
         }
     });
 }
