@@ -273,13 +273,8 @@ private:
                 {
                     lastMd.kind = ModifierKind.arrayStatDim;
                     lastMd.staticDimension = e;
-                    if (!current.isTokRightSquare)
-                    {
-                        assert(false);
-                        //expected(TokenType.rightSquare);
-                        //return null;
-                    }
-                    else advance();
+                    assert (current.isTokRightSquare);
+                    advance();
                 }
                 else
                 {
@@ -1095,16 +1090,8 @@ private:
                     return true; // virtual unit
                 case rightCurly:
                     --_declarationLevels;
-                    if (_declarationLevels < 0)
-                    {
-                        unexpected();
-                        return false;
-                    }
-                    else
-                    {
-                        assert (oldDeclLvl == _declarationLevels);
-                        return true;
-                    }
+                    assert (oldDeclLvl == _declarationLevels);
+                    return true;
                 default:
                     unexpected();
                     return false;
@@ -1139,16 +1126,8 @@ private:
                     return true; // virtual unit
                 case rightCurly:
                     --_declarationLevels;
-                    if (_declarationLevels < 0)
-                    {
-                        unexpected();
-                        return false;
-                    }
-                    else
-                    {
-                        assert(oldDeclLvl == _declarationLevels);
-                        return true;
-                    }
+                    assert(oldDeclLvl == _declarationLevels);
+                    return true;
                 default:
                     unexpected();
                     return false;
@@ -1230,9 +1209,11 @@ private:
      */
     PostfixExpressionAstNode parsePostfixExpression()
     {
+        assert(current.isTokLeftSquare || current.isTokDotDot||
+            current.isUnarySuffix || current.isTokColon || current.isTokLeftParen);
+
         PostfixExpressionAstNode result = new PostfixExpressionAstNode;
         result.position = current.position;
-
         if (current.isTokLeftSquare)
         {
             advance();
@@ -1282,7 +1263,7 @@ private:
                 return null;
             }
         }
-        else if (current.isTokLeftParen)
+        else /*if (current.isTokLeftParen)*/
         {
             if (CallParametersAstNode cp = parseCallParameters())
             {
@@ -1295,7 +1276,7 @@ private:
                 return null;
             }
         }
-        else return null;
+        //else return null;
     }
 
     /**
@@ -1531,17 +1512,18 @@ private:
                 {
                     return result;
                 }
-                else if (current.isTokDot)
+                assert(false);
+                /*else if (current.isTokDot)
                 {
                     assert(false);
-                    //return dotifyExpression(result);
+                    return dotifyExpression(result);
                 }
                 else
                 {
                     assert(false);
-                    //result = parseExpression(result);
-                    //return result;
-                }
+                    result = parseExpression(result);
+                    return result;
+                }*/
             }
         }
 
@@ -3177,6 +3159,10 @@ unittest // cover error cases for: variable declaration
     assertNotParse(q{
         unit a;
         var T ++;
+    });
+    assertNotParse(q{
+        unit a;
+        var const T ++;
     });
 }
 

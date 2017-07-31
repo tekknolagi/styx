@@ -149,7 +149,6 @@ private:
         }
     }
 
-    // lexes a line comment
     void lexLineComment()
     {
         anticipateToken(TokenType.lineComment);
@@ -300,7 +299,6 @@ private:
         }
     }
 
-    // lex
     void lexFloatingLiteralFractionalPart()
     {
         assert (_anticipated);
@@ -327,7 +325,6 @@ private:
         }
     }
 
-    // Lex an identifier or a keywords.
     void lexIdentifier()
     {
         anticipateToken(TokenType.identifier);
