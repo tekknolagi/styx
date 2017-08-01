@@ -525,7 +525,136 @@ private:
     }
 
     /**
-     * Parses an EnumItem
+     * Parses an OnMatchStatement.
+     *
+     * Returns:
+     *      On success a $(D OnMatchStatementAstNode) otherwise $(D null).
+     */
+    OnMatchStatementAstNode parseOnMatchStatementAstNode()
+    {
+        assert(current.isTokOn);
+        advance();
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        advance();
+        OnMatchStatementAstNode result = new OnMatchStatementAstNode;
+        while (true)
+        {
+            if (ExpressionAstNode e = parseExpression(null))
+            {
+                result.onMatchExpressions ~= e;
+                if (current.isTokRightParen)
+                {
+                    advance();
+                    break;
+                }
+                else if (current.isTokComma)
+                {
+                    advance();
+                    continue;
+                }
+                else
+                {
+                    unexpected();
+                    return null;
+                }
+            }
+            else
+            {
+                parseError("invalid on match expression");
+                return null;
+            }
+        }
+        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+        {
+            result.singleStatementOrBlock = ssob;
+            return result;
+        }
+        else
+        {
+            parseError("invalid on match statement");
+            return null;
+        }
+    }
+
+    /**
+     * Parses an SwitchStatement.
+     *
+     * Returns:
+     *      On success a $(D SwitchStatementAstNode) otherwise $(D null).
+     */
+    SwitchStatementAstNode parseSwitchStatementAstNode()
+    {
+        assert(current.isTokSwitch);
+        advance();
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        advance();
+        SwitchStatementAstNode result = new SwitchStatementAstNode;
+        if (ExpressionAstNode e = parseExpression(null))
+        {
+            result.expression = e;
+        }
+        else
+        {
+            return null;
+        }
+        assert(current.isTokRightParen);
+        advance();
+        if (!current.isTokLeftCurly)
+        {
+            expected(TokenType.leftCurly);
+            return null;
+        }
+        advance();
+        if (!current.isTokOn)
+        {
+            expected(TokenType.on);
+            return null;
+        }
+        while(true)
+        {
+            if (OnMatchStatementAstNode oms = parseOnMatchStatementAstNode())
+            {
+                result.onMatchStatements ~= oms;
+            }
+            else return null;
+            if (current.isTokOn)
+            {
+                continue;
+            }
+            else if (current.isTokElse || current.isTokRightCurly)
+            {
+                break;
+            }
+            else
+            {
+                unexpected();
+                return null;
+            }
+        }
+        if (current.isTokElse)
+        {
+            advance();
+            if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+            {
+                result.elseStatement = ssob;
+            }
+            else return null;
+        }
+        assert(current.isTokRightCurly);
+        advance();
+        return result;
+    }
+
+    /**
+     * Parses an EnumMember.
      *
      * Returns:
      *      On success a $(D EnumMemberAstNode) otherwise $(D null).
@@ -2015,6 +2144,20 @@ private:
             else
             {
                 parseError("invalid foreach statement");
+                return null;
+            }
+        }
+        case switch_:
+        {
+            if (SwitchStatementAstNode ss = parseSwitchStatementAstNode())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.switchStatement = ss;
+                return result;
+            }
+            else
+            {
+                parseError("invalid switch statement");
                 return null;
             }
         }
@@ -3882,5 +4025,181 @@ unittest
             else {a a;++
         }
     `);
+}
+
+unittest // switch
+{
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            switch(a)
+            {
+                on (0,1) a++;
+                else a--;
+            }
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            switch(call())
+            {
+                on (0,1) a++;
+                on (1,2) a++;
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(call())
+            {
+                (0,1) a++;
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(call())
+            {
+                0,1) a++;
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(call())
+            {
+                (0,1) a++ + +
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(call())
+            {
+                on (0,1) a++;
+                a++;
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(call())
+            {
+                on 0,1) a++;
+                a++;
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(call())
+            {
+                on (0;+;
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(call())
+            {
+                on (,
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(call())
+            {
+                on (0,1) a++
+            }
+        }
+    });
+    assertNotParse("
+        unit a;
+        function foo()
+        {
+            switch(call())
+            {
+                on (0,1) a++;
+
+        }
+    ");
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(::
+            {
+                on (0,1) a++
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(a
+            {
+                on (0,1) a++
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(a)
+                on (0,1) a++
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch a
+                on (0,1) a++
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(a)
+            {
+                on (0,1) a++;
+                else :;
+            }
+        }
+    });
+    assertNotParse("
+        unit a;
+        function foo()
+        {
+            switch(a)
+            {
+                on (0,1) a++;
+                else {}
+
+        }
+    ");
 }
 

@@ -689,6 +689,9 @@ public:
     bool isTokSuper() const {return type == TokenType.super_;}
 
     /// Conveniance function used by the parser.
+    bool isTokOn() const {return type == TokenType.on;}
+
+    /// Conveniance function used by the parser.
     bool isUnaryPrefix() const
     {
         return type == TokenType.plusPlus || type == TokenType.minusMinus ||

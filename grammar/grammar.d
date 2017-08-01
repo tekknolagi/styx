@@ -120,7 +120,7 @@ Yatol:
                 / ContinueStatement
                 / BreakStatement
                 / BlockStatement
-#               / SwitchStatement
+                / SwitchStatement
 #               / OnStatement
 #               / TryStatement
 #               / OnTriedStatement
@@ -157,6 +157,12 @@ Yatol:
                 #/ IdentifierChain Then
 
     IfConditionVariable < StorageClass Type VariableDeclarationItem
+
+    SwitchStatement < Switch LeftParen Expression RightParen LeftCurly OnMatchStatement* ElseStatement? RightCurly
+
+    OnMatchStatement < On OnMatchExpressions SingleStatementOrBlock
+
+    OnMatchExpressions < LeftParen Expression (Comma Expression)* RightParen
 
 ################################################################################
 # Composites expressions
@@ -504,6 +510,17 @@ enum source1 = `
         if (const s8 a = call())
             do();
 
+        switch(a)
+        {
+            on (0,1) doThis();
+            on (2,3) doThat();
+            on (4,6) {doThisAndThat();}
+            else
+            {
+                a++++;
+            }
+        }
+
     }
 
     enum A
@@ -516,14 +533,19 @@ enum source1 = `
     class Foo: Bar.bar, Baz{}
 `;
 
-// use "on" instead of "case" ?
+/*
+ *
+
+ */
+
+// done
 auto s =
 q{
 
     switch (value)
     {
-        on 0,8,9: return "flûte";
-        on 10..20: return "nay";
+        on (0,8,9) return "flûte";
+        on (10..20) return "nay";
         else return "yah";
     }
 };
@@ -533,9 +555,9 @@ q{
 
     cmp (v1, v2)
     {
-        case >: /*greater*/;
-        case <: /*lesser*/;
-        case ==: /*equal*/;
+        case (>) /*greater*/;
+        case (<) /*lesser*/;
+        case (==) /*equal*/;
     }
 };
 

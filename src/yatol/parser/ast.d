@@ -78,6 +78,7 @@ class AstVisitor
     void visit(IndexExpressionAstNode node){node.accept(this);}
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
     void visit(NumberLiteralAstNode node){node.accept(this);}
+    void visit(OnMatchStatementAstNode node){node.accept(this);}
     void visit(ParenExpressionAstNode node){node.accept(this);}
     void visit(PostfixExpressionAstNode node){node.accept(this);}
     void visit(ProtectionDeclarationAstNode node){node.accept(this);}
@@ -86,6 +87,7 @@ class AstVisitor
     void visit(SingleStatementOrBlockAstNode node){node.accept(this);}
     void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
+    void visit(SwitchStatementAstNode node){node.accept(this);}
     void visit(Token* token){}
     void visit(TypeAstNode node){node.accept(this);}
     void visit(TypeModifierAstNode node){node.accept(this);}
@@ -133,6 +135,7 @@ class AstVisitorNone: AstVisitor
     override void visit(IndexExpressionAstNode node){}
     override void visit(InterfaceDeclarationAstNode node){}
     override void visit(NumberLiteralAstNode node){}
+    override void visit(OnMatchStatementAstNode node){}
     override void visit(ParenExpressionAstNode node){}
     override void visit(PostfixExpressionAstNode node){}
     override void visit(ProtectionDeclarationAstNode node){}
@@ -141,6 +144,7 @@ class AstVisitorNone: AstVisitor
     override void visit(SingleStatementOrBlockAstNode node){}
     override void visit(StatementAstNode node){}
     override void visit(StructDeclarationAstNode node){}
+    override void visit(SwitchStatementAstNode node){}
     override void visit(TypeAstNode node){}
     override void visit(TypeModifierAstNode node){}
     override void visit(UnaryExpressionAstNode node){}
@@ -323,6 +327,42 @@ final class StructDeclarationAstNode: AstNode
     override void accept(AstVisitor visitor)
     {
         declarations.each!(a => visitor.visit(a));
+    }
+}
+
+/// OnMatchStatement
+final class OnMatchStatementAstNode: AstNode
+{
+    /// The expressions that match.
+    ExpressionAstNode[] onMatchExpressions;
+    /// Single Statement or block.
+    SingleStatementOrBlockAstNode singleStatementOrBlock;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        onMatchExpressions.each!(a => visitor.visit(a));
+        if (singleStatementOrBlock)
+            visitor.visit(singleStatementOrBlock);
+    }
+}
+
+/// SwitchStatement
+final class SwitchStatementAstNode: AstNode
+{
+    /// The expression to match.
+    ExpressionAstNode expression;
+    /// The matches.
+    OnMatchStatementAstNode[] onMatchStatements;
+    /// The fallback for unmatched cases.
+    SingleStatementOrBlockAstNode elseStatement;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (expression)
+            visitor.visit(expression);
+        onMatchStatements.each!(a => visitor.visit(a));
+        if (elseStatement)
+            visitor.visit(elseStatement);
     }
 }
 
@@ -870,6 +910,8 @@ final class StatementAstNode: AstNode
     WhileStatementAstNode whileStatement;
     /// Assigned if this statement is a ForeachStatement.
     ForeachStatementAstNode foreachStatement;
+    /// Assigned if this statement is a SwitchStatement.
+    SwitchStatementAstNode switchStatement;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -891,6 +933,8 @@ final class StatementAstNode: AstNode
             visitor.visit(whileStatement);
         else if (foreachStatement)
             visitor.visit(foreachStatement);
+        else if (switchStatement)
+            visitor.visit(switchStatement);
     }
 }
 
