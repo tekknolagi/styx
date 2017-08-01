@@ -130,7 +130,9 @@ Yatol:
 
     ExpressionStatement < AssignExpression Semicolon
 
-    IfElseStatement < If IfCondition SingleStatementOrBlock (Else SingleStatementOrBlock)?
+    IfElseStatement < If IfCondition SingleStatementOrBlock ElseStatement?
+
+    ElseStatement < Else SingleStatementOrBlock
 
     WhileStatement < While LeftParen IfCondition RightParen SingleStatementOrBlock
 

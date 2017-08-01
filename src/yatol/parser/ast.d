@@ -83,6 +83,7 @@ class AstVisitor
     void visit(ProtectionDeclarationAstNode node){node.accept(this);}
     void visit(RangeExpressionAstNode node){node.accept(this);}
     void visit(ReturnStatementAstNode node){node.accept(this);}
+    void visit(SingleStatementOrBlockAstNode node){node.accept(this);}
     void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
     void visit(Token* token){}
@@ -137,6 +138,7 @@ class AstVisitorNone: AstVisitor
     override void visit(ProtectionDeclarationAstNode node){}
     override void visit(RangeExpressionAstNode node){}
     override void visit(ReturnStatementAstNode node){}
+    override void visit(SingleStatementOrBlockAstNode node){}
     override void visit(StatementAstNode node){}
     override void visit(StructDeclarationAstNode node){}
     override void visit(TypeAstNode node){}
@@ -593,10 +595,8 @@ final class ForeachStatementAstNode: AstNode
     VariableDeclarationAstNode variable;
     /// The expression that give the enumerable.
     ExpressionAstNode enumerable;
-    /// If no block then the single statement.
-    DeclarationOrStatementAstNode statement;
-    /// The block if no single statement.
-    BlockStatementAstNode block;
+    /// The single statement or block.
+    SingleStatementOrBlockAstNode singleStatementOrBlock;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -604,10 +604,8 @@ final class ForeachStatementAstNode: AstNode
             visitor.visit(variable);
         if (enumerable)
             visitor.visit(enumerable);
-        if (statement)
-            visitor.visit(statement);
-        else
-            visitor.visit(block);
+        if (singleStatementOrBlock)
+            visitor.visit(singleStatementOrBlock);
     }
 }
 
@@ -616,19 +614,15 @@ final class WhileStatementAstNode: AstNode
 {
     /// The condition
     ExpressionAstNode condition;
-    /// If no block then the single statement.
-    DeclarationOrStatementAstNode statement;
-    /// The block if no single statement.
-    BlockStatementAstNode block;
+    /// The single statement or block.
+    SingleStatementOrBlockAstNode singleStatementOrBlock;
     ///
     override void accept(AstVisitor visitor)
     {
         if (condition)
             visitor.visit(condition);
-        if (statement)
-            visitor.visit(statement);
-        else
-            visitor.visit(block);
+        if (singleStatementOrBlock)
+            visitor.visit(singleStatementOrBlock);
     }
 }
 
@@ -651,6 +645,23 @@ final class IfConditionVariableAstNode: AstNode
     }
 }
 
+/// SingleStatementOrBlock
+final class SingleStatementOrBlockAstNode: AstNode
+{
+    /// The single statement.
+    DeclarationOrStatementAstNode singleStatement;
+    /// The block.
+    BlockStatementAstNode block;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (singleStatement)
+            visitor.visit(singleStatement);
+        else if (block)
+            visitor.visit(block);
+    }
+}
+
 /// IfElseStatement
 final class IfElseStatementAstNode: AstNode
 {
@@ -658,14 +669,10 @@ final class IfElseStatementAstNode: AstNode
     ExpressionAstNode condition;
     /// The consition when it's a new scoped variable.
     IfConditionVariableAstNode ifVariable;
-    /// The statement when condition is true.
-    DeclarationOrStatementAstNode trueStatement;
-    /// The block when condition is true.
-    BlockStatementAstNode trueBlock;
-    /// The statement when condition is false.
-    DeclarationOrStatementAstNode falseStatement;
-    /// The block when condition is false
-    BlockStatementAstNode falseBlock;
+    /// The single statement or block when condition is true.
+    SingleStatementOrBlockAstNode trueStatementOrBlock;
+    /// The single statement or block when condition is false.
+    SingleStatementOrBlockAstNode falseStatementOrBlock;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -673,14 +680,10 @@ final class IfElseStatementAstNode: AstNode
             visitor.visit(condition);
         else if (ifVariable)
             visitor.visit(ifVariable);
-        if (trueBlock)
-            visitor.visit(trueBlock);
-        else if (trueStatement)
-            visitor.visit(trueStatement);
-        if (falseBlock)
-            visitor.visit(falseBlock);
-        else if (falseStatement)
-            visitor.visit(falseStatement);
+        if (trueStatementOrBlock)
+            visitor.visit(trueStatementOrBlock);
+        if (falseStatementOrBlock)
+            visitor.visit(falseStatementOrBlock);
     }
 }
 

@@ -1615,32 +1615,16 @@ private:
             return null;
         }
         advance();
-        if (current.isTokLeftCurly)
+        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
         {
-            advance();
-            BlockStatementAstNode bs = new BlockStatementAstNode;
-            parseDeclarationsOrStatements(bs.declarationsOrStatements);
-            if (!current.isTokRightCurly)
-            {
-                expected(TokenType.rightCurly);
-                return null;
-            }
-            advance();
-            result.block = bs;
+            result.singleStatementOrBlock = ssob;
+            return result;
         }
         else
         {
-            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
-            {
-                result.statement = dos;
-            }
-            else
-            {
-                parseError("invalid while single statement");
-                return null;
-            }
+            parseError("invalid single statement or block");
+            return null;
         }
-        return result;
     }
 
 
@@ -1686,32 +1670,16 @@ private:
             return null;
         }
         advance();
-        if (current.isTokLeftCurly)
+        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
         {
-            advance();
-            BlockStatementAstNode bs = new BlockStatementAstNode;
-            parseDeclarationsOrStatements(bs.declarationsOrStatements);
-            if (!current.isTokRightCurly)
-            {
-                expected(TokenType.rightCurly);
-                return null;
-            }
-            advance();
-            result.block = bs;
+            result.singleStatementOrBlock = ssob;
+            return result;
         }
         else
         {
-            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
-            {
-                result.statement = dos;
-            }
-            else
-            {
-                parseError("invalid foreach single statement");
-                return null;
-            }
+            parseError("invalid single statement or block");
+            return null;
         }
-        return result;
     }
 
     /**
@@ -1783,58 +1751,26 @@ private:
             return null;
         }
         advance();
-        if (current.isTokLeftCurly)
+        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
         {
-            advance();
-            BlockStatementAstNode tb = new BlockStatementAstNode;
-            parseDeclarationsOrStatements(tb.declarationsOrStatements);
-            if (!current.isTokRightCurly)
-            {
-                expected(TokenType.rightCurly);
-                return null;
-            }
-            advance();
-            result.trueBlock = tb;
+            result.trueStatementOrBlock = ssob;
         }
         else
         {
-            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
-            {
-                result.trueStatement = dos;
-            }
-            else
-            {
-                parseError("invalid if branch statement");
-                return null;
-            }
+            parseError("invalid true single statement or block");
+            return null;
         }
         if (current.isTokElse)
         {
             advance();
-            if (current.isTokLeftCurly)
+            if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
             {
-                advance();
-                BlockStatementAstNode fb = new BlockStatementAstNode;
-                parseDeclarationsOrStatements(fb.declarationsOrStatements);
-                if (!current.isTokRightCurly)
-                {
-                    expected(TokenType.rightCurly);
-                    return null;
-                }
-                advance();
-                result.falseBlock = fb;
+                result.falseStatementOrBlock = ssob;
             }
             else
             {
-                if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
-                {
-                    result.falseStatement = dos;
-                }
-                else
-                {
-                    parseError("invalid else branch statement");
-                    return null;
-                }
+                parseError("invalid false single statement or block");
+                return null;
             }
         }
         return result;
@@ -1938,6 +1874,44 @@ private:
         {
             advance();
             return result;
+        }
+    }
+
+    /**
+     * Parses a SingleStatementOrBlock.
+     *
+     * Returns: a $(D SingleStatementOrBlockAstNode) on success, $(D null) otherwise.
+     */
+    SingleStatementOrBlockAstNode parseSingleStatementOrBlock()
+    {
+        if (current.isTokLeftCurly)
+        {
+            advance();
+            BlockStatementAstNode bs = new BlockStatementAstNode;
+            parseDeclarationsOrStatements(bs.declarationsOrStatements);
+            if (!current.isTokRightCurly)
+            {
+                expected(TokenType.rightCurly);
+                return null;
+            }
+            advance();
+            SingleStatementOrBlockAstNode result = new SingleStatementOrBlockAstNode;
+            result.block = bs;
+            return result;
+        }
+        else
+        {
+            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
+            {
+                SingleStatementOrBlockAstNode result = new SingleStatementOrBlockAstNode;
+                result.singleStatement = dos;
+                return result;
+            }
+            else
+            {
+                parseError("invalid single statement");
+                return null;
+            }
         }
     }
 
