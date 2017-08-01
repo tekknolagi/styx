@@ -144,7 +144,7 @@ Yatol:
 
     BreakStatement < Break AtLabel? AssignExpression? Semicolon
 
-    SingleStatementOrBlock < DeclarationOrStatement / BlockStatement
+    SingleStatementOrBlock < BlockStatement / DeclarationOrStatement
 
     BlockStatement < LeftCurly DeclarationOrStatementsBlock RightCurly
 
