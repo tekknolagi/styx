@@ -162,7 +162,10 @@ Yatol:
 
     OnMatchStatement < On OnMatchExpressions SingleStatementOrBlock
 
-    OnMatchExpressions < LeftParen Expression (Comma Expression)* RightParen
+    OnMatchExpressions < LeftParen OnMatchExpression (Comma OnMatchExpression)* RightParen
+
+    OnMatchExpression < Expression DotDot Expression
+                      / Expression
 
 ################################################################################
 # Composites expressions

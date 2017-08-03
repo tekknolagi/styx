@@ -78,6 +78,7 @@ class AstVisitor
     void visit(IndexExpressionAstNode node){node.accept(this);}
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
     void visit(NumberLiteralAstNode node){node.accept(this);}
+    void visit(OnMatchExpressionAstNode node){node.accept(this);}
     void visit(OnMatchStatementAstNode node){node.accept(this);}
     void visit(ParenExpressionAstNode node){node.accept(this);}
     void visit(PostfixExpressionAstNode node){node.accept(this);}
@@ -135,6 +136,7 @@ class AstVisitorNone: AstVisitor
     override void visit(IndexExpressionAstNode node){}
     override void visit(InterfaceDeclarationAstNode node){}
     override void visit(NumberLiteralAstNode node){}
+    override void visit(OnMatchExpressionAstNode node){}
     override void visit(OnMatchStatementAstNode node){}
     override void visit(ParenExpressionAstNode node){}
     override void visit(PostfixExpressionAstNode node){}
@@ -330,11 +332,28 @@ final class StructDeclarationAstNode: AstNode
     }
 }
 
+/// OnMatchExpression
+final class OnMatchExpressionAstNode: AstNode
+{
+    /// The expression or the left expression of the range.
+    ExpressionAstNode singleOrLeftExpression;
+    /// The right expression of the range.
+    ExpressionAstNode rightExpression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (singleOrLeftExpression)
+            visitor.visit(singleOrLeftExpression);
+        if (rightExpression)
+            visitor.visit(rightExpression);
+    }
+}
+
 /// OnMatchStatement
 final class OnMatchStatementAstNode: AstNode
 {
     /// The expressions that match.
-    ExpressionAstNode[] onMatchExpressions;
+    OnMatchExpressionAstNode[] onMatchExpressions;
     /// Single Statement or block.
     SingleStatementOrBlockAstNode singleStatementOrBlock;
     ///

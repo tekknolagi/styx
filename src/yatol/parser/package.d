@@ -525,6 +525,30 @@ private:
     }
 
     /**
+     * Parses an OnMatchExpression.
+     *
+     * Returns:
+     *      On success a $(D OnMatchExpressionAstNode) otherwise $(D null).
+     */
+    OnMatchExpressionAstNode parseOnMatchExpression()
+    {
+        OnMatchExpressionAstNode result = new OnMatchExpressionAstNode;
+        if (ExpressionAstNode e1 = parseExpression(null))
+        {
+            result.singleOrLeftExpression = e1;
+            if (current.isTokDotDot)
+            {
+                advance();
+                if (ExpressionAstNode e2 = parseExpression(null))
+                    result.rightExpression = e2;
+                else return null;
+            }
+            return result;
+        }
+        else return null;
+    }
+
+    /**
      * Parses an OnMatchStatement.
      *
      * Returns:
@@ -543,7 +567,7 @@ private:
         OnMatchStatementAstNode result = new OnMatchStatementAstNode;
         while (true)
         {
-            if (ExpressionAstNode e = parseExpression(null))
+            if (OnMatchExpressionAstNode e = parseOnMatchExpression)
             {
                 result.onMatchExpressions ~= e;
                 if (current.isTokRightParen)
@@ -586,7 +610,7 @@ private:
      * Returns:
      *      On success a $(D SwitchStatementAstNode) otherwise $(D null).
      */
-    SwitchStatementAstNode parseSwitchStatementAstNode()
+    SwitchStatementAstNode parseSwitchStatement()
     {
         assert(current.isTokSwitch);
         advance();
@@ -2149,7 +2173,7 @@ private:
         }
         case switch_:
         {
-            if (SwitchStatementAstNode ss = parseSwitchStatementAstNode())
+            if (SwitchStatementAstNode ss = parseSwitchStatement())
             {
                 StatementAstNode result = new StatementAstNode;
                 result.switchStatement = ss;
@@ -4048,6 +4072,39 @@ unittest // switch
             {
                 on (0,1) a++;
                 on (1,2) a++;
+            }
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            switch(a)
+            {
+                on (0..2) a++;
+                else a--;
+            }
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            switch(a)
+            {
+                on (call1()..call2()) a++;
+                else a--;
+            }
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            switch(a)
+            {
+                on (call1()..++) a++;
+                else a--;
             }
         }
     });
