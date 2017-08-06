@@ -1,7 +1,7 @@
 module app;
 
 import
-    std.getopt, std.file, std.stdio, std.path, std.datetime;
+    std.getopt, std.file, std.stdio, std.path, std.datetime, std.array;
 import
     yatol.lexer, yatol.lexer.types, yatol.parser, yatol.parser.ast,
     yatol.semantic,
@@ -20,7 +20,8 @@ struct Options
 __gshared:
     bool mtime;
     bool verbose;
-    bool print;
+    bool ast;
+    bool pipe;
     Until until;
 }
 
@@ -71,8 +72,9 @@ Command line syntax:
 Files:
     a list of yatol source files, space-separated.
 Options:
+    -a or --ast           : print the AST of each source.
     -h or --help          : prints this message.
-    -p or --print         : print the AST of each source.
+    -p or --pipe          : create a source named "stdin" by piping the input.
     -t or --time          : measure the time spent to compile.
           --until=<phase> : compiles and stops after <phase>, either "lexing", "parsing" or "semantic".
     -v or --verbose       : verbose output.
@@ -108,19 +110,12 @@ int main(string[] args)
         }
     }
 
-    if (!sources.length)
-    {
-        showHelp();
-        writeln("nothing to compile, exited !");
-        return 0;
-    }
-
     try gr = getopt(args,
-        "p|print", &options.print,
+        "a|ast", &options.ast,
+        "p|pipe", &options.pipe,
         "t|time", &options.mtime,
         "until", &options.until,
         "v|verbose", &options.verbose,
-
     );
     catch (GetOptException ge)
     {
@@ -133,10 +128,28 @@ int main(string[] args)
         return 0;
     }
 
+    if (!sources.length && !options.pipe)
+    {
+        showHelp();
+        writeln("nothing to compile, exited !");
+        return 0;
+    }
+
+    if (options.pipe)
+    {
+        char[] c = stdin.byLine.join("\n");
+        lexers ~= new Lexer;
+        lexers[$-1].setSourceFromText(c, "stdin");
+    }
+
     if (options.mtime)
         timer.start();
 
     // lexes each source
+    if (options.pipe)
+    {
+        lexers[0].lex();
+    }
     foreach (source; sources)
     {
         if (options.verbose)
@@ -173,7 +186,7 @@ int main(string[] args)
         parsers ~= new Parser(lexer);
         if (UnitContainerAstNode uc = parsers[$-1].parse())
         {
-            if (options.print)
+            if (options.ast)
             {
                 writeln("AST for ", lexer.filename);
                 DebugVisitor dbgv = new DebugVisitor();
