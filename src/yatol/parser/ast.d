@@ -50,6 +50,7 @@ string genVisitMethods(string statements)
 class AstVisitor
 {
     void visit(AkaDeclarationAstNode node){node.accept(this);}
+    void visit(AtAttributeAstNode node){node.accept(this);}
     void visit(AssignExpressionAstNode node){node.accept(this);}
     void visit(AstNode node){node.accept(this);}
     void visit(BinaryExpressionAstNode node){node.accept(this);}
@@ -108,6 +109,7 @@ class AstVisitor
 class AstVisitorNone: AstVisitor
 {
     override void visit(AkaDeclarationAstNode node){}
+    override void visit(AtAttributeAstNode node){}
     override void visit(AssignExpressionAstNode node){}
     override void visit(AstNode node){}
     override void visit(BinaryExpressionAstNode node){}
@@ -270,6 +272,8 @@ final class FunctionTypeAstNode: AstNode
 /// FunctionDeclaration
 final class FunctionHeaderAstNode: AstNode
 {
+    /// The function attributes.
+    AtAttributeAstNode[] attributes;
     /// The function name.
     Token* name;
     /// The function parameters
@@ -281,6 +285,7 @@ final class FunctionHeaderAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        attributes.each!(a => visitor.visit(a));
         parameters.each!(a => visitor.visit(a));
         if (returnType)
             visitor.visit(returnType);
@@ -513,6 +518,13 @@ final class AkaDeclarationAstNode: AstNode
         if (type)
             visitor.visit(type);
     }
+}
+
+/// AtAttribute
+final class AtAttributeAstNode: AstNode
+{
+    /// Either an identifier or a keyword
+    Token* identifierOrKeyword;
 }
 
 /// Declaration

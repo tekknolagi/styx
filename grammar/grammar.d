@@ -30,6 +30,7 @@ Yatol:
                     / InterfaceDeclaration
                     / BlockStatement
                     / AkaDeclaration
+                #   / AtAttributeSectionDeclaration
 
     ProtectionDeclaration   < Prot LeftParen Identifier RightParen
     StructDeclaration       < Struct Identifier LeftCurly Declarations? RightCurly
@@ -64,22 +65,24 @@ Yatol:
 
     FunctionDeclaration < FunctionHeader FunctionBody
 
-    FunctionHeader < Attributes? Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
+    FunctionHeader < AtAttributes? Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
 
     FunctionBody < LeftCurly DeclarationOrStatements? RightCurly
                  / Semicolon
 
-    FunctionPointerType < Attributes? Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
+    FunctionPointerType < AtAttributes? Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
 
     FunctionParameters < FunctionParameterGroup (Semicolon FunctionParameterGroup)*
 
     FunctionParameterGroup < StorageClass* Type IdentifierList
 
 ################################################################################
-# Attribute
+# AtAttribute
 
-    Attributes < Attribute*
-    Attribute <- At Identifier / At Keyword
+    # AtAttributeSectionDeclaration < AtAttribute Colon
+
+    AtAttributes < AtAttribute*
+    AtAttribute <- At Identifier / At Keyword
 
 ################################################################################
 # StorageClass

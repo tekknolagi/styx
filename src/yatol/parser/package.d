@@ -922,6 +922,27 @@ private:
     }
 
     /**
+     * Parses an AtAttribute.
+     *
+     * Returns:
+     *      On success a $(D AtAttributeAstNode) otherwise $(D null).
+     */
+    AtAttributeAstNode parseAtAttribute()
+    {
+        assert(current.isTokAt);
+        advance();
+        if (!current.isTokKeyword && !current.isTokIdentifier)
+        {
+            parseError("expected a keyword or an identifier after `@`");
+            return null;
+        }
+        AtAttributeAstNode result = new AtAttributeAstNode;
+        result.identifierOrKeyword = current();
+        advance();
+        return result;
+    }
+
+    /**
      * Parses a FunctionHeader.
      *
      * Returns:
@@ -929,19 +950,29 @@ private:
      */
     FunctionHeaderAstNode parseFunctionHeader()
     {
+        FunctionHeaderAstNode result = new FunctionHeaderAstNode;
+        while (current.isTokAt)
+        {
+            if (AtAttributeAstNode aa = parseAtAttribute())
+                result.attributes ~= aa;
+            else return null;
+        }
         const bool isStatic = current.isTokStatic;
         if (isStatic)
         {
             advance();
         }
-        assert(current.isTokFunction);
+        if (!current.isTokFunction)
+        {
+            expected(TokenType.function_);
+            return null;
+        }
         advance();
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
             return null;
         }
-        FunctionHeaderAstNode result = new FunctionHeaderAstNode;
         result.position = current.position;
         result.isStatic = isStatic;
         result.name = current();
@@ -2322,6 +2353,10 @@ private:
             }
             else return null;
         }
+        case at:
+        {
+            goto case function_;
+        }
         case static_:
         {
             if (lookupNext.isTokFunction)
@@ -3206,7 +3241,7 @@ unittest // cover error cases for: unary and dot expr
     });
 }
 
-unittest // cover error cases for: function and function type decl
+unittest // function and function type decl
 {
     assertNotParse(q{
         unit a;
@@ -3291,6 +3326,26 @@ unittest // cover error cases for: function and function type decl
     assertParse(q{
         unit a;
         function foo(var const var s32 a,b; const C c; const D d);
+    });
+    assertParse(q{
+        unit a;
+        @virtual function foo(){}
+    });
+    assertParse(q{
+        unit a;
+        @abstract @virtual function foo();
+    });
+    assertNotParse(q{
+        unit a;
+        @abstract,virtual function foo();
+    });
+    assertNotParse(q{
+        unit a;
+        @abstract,virtual foo();
+    });
+    assertNotParse(q{
+        unit a;
+        @++,virtual foo();
     });
 }
 
@@ -3913,7 +3968,7 @@ unittest // misc. coverage for errors
     });
 }
 
-unittest
+unittest // if else
 {
     assertParse(q{
         unit a;
