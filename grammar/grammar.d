@@ -547,20 +547,9 @@ q{
 
     switch (value)
     {
-        on (0,8,9) return "flûte";
-        on (10..20) return "nay";
-        else return "yah";
-    }
-};
-
-auto n =
-q{
-
-    cmp (v1, v2)
-    {
-        case (>) /*greater*/;
-        case (<) /*lesser*/;
-        case (==) /*equal*/;
+        on (0,8,9) return "a";
+        on (10..20) return "b";
+        else return "c";
     }
 };
 
@@ -568,7 +557,7 @@ q{
 auto f =
 q{
     L1:
-    foreach(t; ts)
+    foreach(const auto t; ts)
     {
         if (t.call())
         {
@@ -579,7 +568,7 @@ q{
 
     // break after expression;
     L1:
-    foreach(t; ts)
+    foreach(const auto t; ts)
     {
         if (t.call())
             break(L1) t.otherCall();

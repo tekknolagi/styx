@@ -1077,7 +1077,7 @@ private:
             advance();
             if (ExpressionAstNode e = parseExpression(null))
             {
-                result.initiliazer = e;
+                result.initializer = e;
             }
             else return null;
         }

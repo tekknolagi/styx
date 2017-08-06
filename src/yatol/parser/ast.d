@@ -170,6 +170,8 @@ class AstNode
     @Semantic bool isPrivate;
     /// Set $(D true) if this node represents something protected.
     @Semantic bool isProtected;
+    /// Set to a non null value if this node has a matching type.
+    @Semantic TypeAstNode type;
 }
 
 
@@ -467,14 +469,14 @@ final class ProtectionDeclarationAstNode: AstNode
 final class VariableDeclarationItemAstNode: AstNode
 {
     /// The expression that gives trhe initial value;
-    ExpressionAstNode initiliazer;
+    ExpressionAstNode initializer;
     /// The variable name.
     Token* name;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (initiliazer)
-            visitor.visit(initiliazer);
+        if (initializer)
+            visitor.visit(initializer);
     }
 }
 
