@@ -15,3 +15,4 @@ script:
  - dub --build=unittest --config=compiler --compiler=${DC}
  - dub --build=release --config=compiler --compiler=${DC}
  - dub build --build=release --config=library --compiler=${DC}
+ - bin/yatol -p -a <<< "unit a;"
