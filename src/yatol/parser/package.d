@@ -1632,22 +1632,10 @@ private:
                     return result;
                 }
                 assert(false);
-                /*else if (current.isTokDot)
-                {
-                    assert(false);
-                    return dotifyExpression(result);
-                }
-                else
-                {
-                    assert(false);
-                    result = parseExpression(result);
-                    return result;
-                }*/
             }
         }
-
         with(TokenType) if (current.isTokUnaryPrefix || current.isTokIdentifier ||
-            current.isTokNumberLiteral || current.isTokLeftParen ||
+            current.isTokLiteral || current.isTokLeftParen ||
             current.isTokSuper || current.isTokValueKeyword)
         {
             if (exp && (exp.unaryExpression))
@@ -1670,7 +1658,6 @@ private:
                 }
             }
         }
-
         return null;
     }
 
@@ -3161,6 +3148,20 @@ unittest // cover error cases for: unary and dot expr
         function foo()
         {
             (a).....(a);
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            a = "stringLiteral";
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            call("stringLiteral");
         }
     });
 }
