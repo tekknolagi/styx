@@ -1,0 +1,33 @@
+﻿{
+  "name" : "grammar",
+  "authors" : [
+    "Basile Burg"
+  ],
+  "configurations" : [
+    {
+      "name" : "generate",
+      "stringImportPaths" : [
+        "formal"
+      ],
+      "targetType" : "executable",
+      "targetPath" : "bin",
+      "excludedSourceFiles" : [
+        "src\/test.d",
+        "src\/yatol.d"
+      ]
+    },
+    {
+      "name" : "test",
+      "targetPath" : "bin",
+      "targetType" : "executable",
+      "excludedSourceFiles" : [
+        "src\/generate.d"
+      ]
+    }
+  ],
+  "dependencies" : {
+    "pegged" : "~master"
+  },
+  "license" : "BSD 3-clause",
+  "description" : "project to design and test YATOL grammar"
+}

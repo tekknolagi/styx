@@ -1,0 +1,14 @@
+object projectGroup: TProjectGroup
+  items = <  
+    item
+      filename = 'grammar/dub.json'
+      asyncMode = amSequential
+      configurationIndex = 0
+    end  
+    item
+      filename = 'dub.json'
+      asyncMode = amSequential
+      configurationIndex = 0
+    end>
+  index = 1
+end

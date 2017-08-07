@@ -1671,7 +1671,6 @@ private:
         else return null;
     }
 
-
     /**
      * Parses a WhileStatement.
      *
