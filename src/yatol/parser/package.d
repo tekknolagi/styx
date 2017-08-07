@@ -27,8 +27,7 @@ private:
     size_t _errorCount;
     UnitContainerAstNode _uc;
 
-    alias Range = TokenRange!(TokenType.lineComment, TokenType.starComment,
-        TokenType.invalid);
+    alias Range = TokenRange!(TokenType.lineComment, TokenType.starComment);
     Range _range;
 
     void warning(const(char[]) message)
@@ -1246,21 +1245,22 @@ private:
 
         while (true)
         {
-            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
+            with (TokenType) switch (current.type)
             {
-                declsOrStatements ~= dos;
-            }
-            else
-            {
-                with (TokenType) switch (current.type)
+            case virtual, eof:
+                return true; // virtual unit
+            case rightCurly:
+                --_declarationLevels;
+                assert (oldDeclLvl == _declarationLevels);
+                return true;
+            default:
+                if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
                 {
-                case virtual, eof:
-                    return true; // virtual unit
-                case rightCurly:
-                    --_declarationLevels;
-                    assert (oldDeclLvl == _declarationLevels);
-                    return true;
-                default:
+                    declsOrStatements ~= dos;
+                    continue;
+                }
+                else
+                {
                     unexpected();
                     return false;
                 }
@@ -1282,21 +1282,22 @@ private:
         ++_declarationLevels;
         while (true)
         {
-            if (DeclarationAstNode d = parseDeclaration())
+            with (TokenType) switch (current.type)
             {
-                declarations ~= d;
-            }
-            else
-            {
-                with (TokenType) switch (current.type)
+            case virtual, eof:
+                return true; // virtual unit
+            case rightCurly:
+                --_declarationLevels;
+                assert(oldDeclLvl == _declarationLevels);
+                return true;
+            default:
+                if (DeclarationAstNode d = parseDeclaration())
                 {
-                case virtual, eof:
-                    return true; // virtual unit
-                case rightCurly:
-                    --_declarationLevels;
-                    assert(oldDeclLvl == _declarationLevels);
-                    return true;
-                default:
+                    declarations ~= d;
+                    continue;
+                }
+                else
+                {
                     unexpected();
                     return false;
                 }
@@ -1568,11 +1569,14 @@ private:
      */
     ExpressionAstNode parseExpression(ExpressionAstNode exp)
     {
-        with(TokenType) if (current.isTokOperator
-            && !(current.isTokAmp && exp is null) // &(unary)
-            && !(current.isTokMul && exp is null) // *(unary)
-        )
+        with(TokenType)
+        if (exp)
         {
+            if (!current.isTokOperator)
+            {
+                unexpected();
+                return null;
+            }
             Token* op = current();
             advance();
             if (ExpressionAstNode r = parseExpression(null))
@@ -1614,23 +1618,22 @@ private:
                     be.operator = old_RO;
                     be.right = old_RR;
                 }
-
                 if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal))
                 {
                     return result;
                 }
-                assert(false);
+            }
+            else
+            {
+                parseError("invalid binary expression RHS");
+                return null;
             }
         }
-        with(TokenType) if (current.isTokUnaryPrefix || current.isTokIdentifier ||
+        else if (current.isTokUnaryPrefix || current.isTokIdentifier ||
             current.isTokLiteral || current.isTokLeftParen ||
             current.isTokSuper || current.isTokValueKeyword)
         {
-            if (exp && (exp.unaryExpression))
-            {
-                return null;
-            }
-            if (UnaryExpressionAstNode u = parseUnaryExpression)
+            if (UnaryExpressionAstNode u = parseUnaryExpression())
             {
                 ExpressionAstNode result = new ExpressionAstNode;
                 result.unaryExpression = u;
@@ -1639,13 +1642,14 @@ private:
                 {
                     return result;
                 }
-                else
+                else // binary with this unary as LHS
                 {
                     result = parseExpression(result);
                     return result;
                 }
             }
         }
+        parseError("invalid binary or unary expression");
         return null;
     }
 
@@ -2013,8 +2017,6 @@ private:
     {
         with(TokenType) switch(current.type)
         {
-        case eof:
-            return null;
         case semiColon:
         {
             StatementAstNode result = new StatementAstNode;
@@ -2228,15 +2230,6 @@ private:
                 return result;
             }
             else return null;
-        }
-        case virtual:
-        {
-            if (_declarationLevels > 1)
-            {
-                unexpected();
-                parseError("virtual units can only be declared after the main unit declarations");
-            }
-            return null;
         }
         case var, const_:
         {
@@ -2518,12 +2511,17 @@ unittest
 void assertParse(const(char)[] code, bool printAST = false,
     string file = __FILE_FULL_PATH__, size_t line = __LINE__)
 {
+    import core.exception: AssertError;
+
     Lexer lx;
     lx.setSourceFromText(code, file, line, 1);
     lx.lex;
     Parser pr = Parser(&lx);
-    assert(pr.parse() !is null, "code not parsed but should be");
-    if (printAST)
+    if (pr.parse() is null)
+    {
+        throw new AssertError("code not parsed but should be", file, line);
+    }
+    else if (printAST)
     {
         import yatol.parser.debug_visitor;
         DebugVisitor dv = new DebugVisitor;
@@ -2543,11 +2541,38 @@ void assertParse(const(char)[] code, bool printAST = false,
 void assertNotParse(const(char)[] code, string file = __FILE_FULL_PATH__,
     size_t line = __LINE__)
 {
+    import core.exception: AssertError;
+
     Lexer lx;
     lx.setSourceFromText(code, file, line, 1);
     lx.lex;
     Parser pr = Parser(&lx);
-    assert(pr.parse() is null, "code parsed but should not be");
+    if (pr.parse() !is null)
+    {
+        throw new AssertError("code parsed but should not be", file, line);
+    }
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar()
+        {
+            a++;
+        }
+    });
+}
+
+unittest
+{
+    assertNotParse(q{
+        unit a;
+        function bar()
+        {
+            #;
+        }
+    });
 }
 
 unittest
@@ -2675,17 +2700,6 @@ unittest
 {
     assertNotParse(q{
         unit struct.class.function;
-    });
-}
-
-unittest
-{
-    assertParse(q{
-        unit a;
-        function bar()
-        {
-            ++a;
-        }
     });
 }
 
@@ -3807,9 +3821,21 @@ unittest // misc. coverage for errors
 {
     assertNotParse(q{
         unit a;
+        var auto a = 8
+        virtual unit b;
+    });
+    assertNotParse(q{
+        unit a;
         function foo()
         {
             a = 8
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            a =;
         }
     });
     assertNotParse(q{
