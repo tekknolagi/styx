@@ -1482,6 +1482,16 @@ private:
         }
         else
         {
+            if (current.isTokQmark)
+            {
+                result.qmark = current;
+                advance();
+                if (!current.isTokDot)
+                {
+                    expected(TokenType.dot);
+                    return null;
+                }
+            }
             result.dot = current;
             advance();
             if (PrimaryExpressionAstNode pe = parsePrimaryExpression())
@@ -3100,6 +3110,27 @@ unittest // cover error cases for: postfix exp and call params
             a(exp]
         }
     });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            a = b?.c?.d;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            a = b??.c?.d;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            a = .b..c?.d;
+        }
+    });
 }
 
 unittest // cover error cases for: paren expression
@@ -3885,6 +3916,13 @@ unittest // misc. coverage for errors
         function foo()
         {
             if (const s8 0 = 0) {}
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            a = b % c;
         }
     });
 }

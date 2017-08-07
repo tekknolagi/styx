@@ -283,7 +283,7 @@ Yatol:
 
     DollarKw <~Dollar Keyword
 
-    Operator < RelOperator / Mul / Div / Plus / Minus / LShift / RShift / Amp / Pipe / Xor
+    Operator < RelOperator / Mul / Div / PMod / lus / Minus / LShift / RShift / Amp / Pipe / Xor
 
     RelOperator < EqualEqual
                 / NotEqual
@@ -317,6 +317,7 @@ Yatol:
 
     Div         <- '/'
     Mul         <- '*'
+    Mod         <- '%'
     Dot         <- '.'
     Semicolon   <- ';'
     Colon       <- ':'

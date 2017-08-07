@@ -69,6 +69,7 @@ enum TokenType : ubyte
     ureg,
     // symbols
     bang,
+    qmark,
     colon,
     comma,
     dot,
@@ -97,6 +98,7 @@ enum TokenType : ubyte
     // operators
     mul,
     div,
+    mod,
     plus,
     minus,
     amp,
@@ -177,6 +179,7 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     "ureg",
     // symbols
     "!",
+    "?",
     ":",
     ",",
     ".",
@@ -205,6 +208,7 @@ static immutable string[TokenType.max + 1] tokenStringTable =
     // operators
     "*",
     "/",
+    "%",
     "+",
     "-",
     "&",
@@ -692,6 +696,12 @@ public:
     bool isTokOn() const {return type == TokenType.on;}
 
     /// Conveniance function used by the parser.
+    bool isTokMod() const {return type == TokenType.mod;}
+
+    /// Conveniance function used by the parser.
+    bool isTokQmark() const {return type == TokenType.qmark;}
+
+    /// Conveniance function used by the parser.
     bool isTokUnaryPrefix() const
     {
         return type == TokenType.plusPlus || type == TokenType.minusMinus ||
@@ -709,7 +719,7 @@ public:
     {
         return type == TokenType.plusPlus || type == TokenType.minusMinus ||
             type == TokenType.leftSquare || type == TokenType.leftParen ||
-            type == TokenType.colon || type == TokenType.dot;
+            type == TokenType.colon || type == TokenType.dot || type == TokenType.qmark;
     }
 
     /// Conveniance function used by the parser.

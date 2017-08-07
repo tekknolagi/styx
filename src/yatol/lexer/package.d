@@ -668,6 +668,16 @@ public:
                 advance();
                 validateToken();
                 continue;
+            case '?':
+                anticipateToken(TokenType.qmark);
+                advance();
+                validateToken();
+                continue;
+            case '%':
+                anticipateToken(TokenType.mod);
+                advance();
+                validateToken();
+                continue;
             case '$':
                 anticipateToken(TokenType.dollar);
                 advance();
@@ -1187,7 +1197,7 @@ unittest
 unittest
 {
     int line = __LINE__ + 1;
-    enum source = `.:;,()/[]{}*+-!@=><&$^`;
+    enum source = `.:;,()/[]{}*+-!@=><&$^%?`;
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
