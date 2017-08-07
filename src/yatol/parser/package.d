@@ -208,32 +208,6 @@ private:
         return result;
     }
 
-    NumberLiteralAstNode parseNumberLiteral()
-    {
-        if (!current.isTokIntegerLiteral && !current.isTokHexLiteral
-            && !current.isTokFloatLiteral)
-        {
-            unexpected();
-            return null;
-        }
-        NumberLiteralAstNode result = new NumberLiteralAstNode;
-        result.position = current.position;
-        result.literal = current();
-        advance();
-        if (current.isTokColon)
-        {
-            advance();
-            if (!current.isTokBasicType)
-            {
-                parseError("expected a basic type as number literal suffix");
-                return null;
-            }
-            result.literalType = current;
-            advance();
-        }
-        return result;
-    }
-
     /**
      * Parses consecutives TypeModifier.
      *
@@ -810,10 +784,14 @@ private:
         if (current.isTokLeftParen)
         {
             advance();
-            result.priority = parseNumberLiteral();
-            if (!result.priority)
+            if (current.isTokIntegerLiteral || current.isTokHexLiteral)
             {
-                parseError("number literal expected to set the import priority");
+                result.priority = current();
+                advance();
+            }
+            else
+            {
+                parseError("int or hex literal expected to set the import priority");
                 return null;
             }
             if (!current.isTokRightParen)

@@ -77,7 +77,6 @@ class AstVisitor
     void visit(ImportDeclarationAstNode node){node.accept(this);}
     void visit(IndexExpressionAstNode node){node.accept(this);}
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
-    void visit(NumberLiteralAstNode node){node.accept(this);}
     void visit(OnMatchStatementAstNode node){node.accept(this);}
     void visit(ParenExpressionAstNode node){node.accept(this);}
     void visit(PostfixExpressionAstNode node){node.accept(this);}
@@ -136,7 +135,6 @@ class AstVisitorNone: AstVisitor
     override void visit(ImportDeclarationAstNode node){}
     override void visit(IndexExpressionAstNode node){}
     override void visit(InterfaceDeclarationAstNode node){}
-    override void visit(NumberLiteralAstNode node){}
     override void visit(OnMatchStatementAstNode node){}
     override void visit(ParenExpressionAstNode node){}
     override void visit(PostfixExpressionAstNode node){}
@@ -197,58 +195,6 @@ final class IdentifierChainsAstNode: AstNode
 {
     /// The chain of identifiers.
     Token*[][] chains;
-}
-
-/// LiteralAstNode
-final class NumberLiteralAstNode: AstNode
-{
-
-private:
-
-    double _asFloat;
-    ulong  _asInt;
-    bool _cached;
-
-    void tryCacheValue()
-    {
-        if (!_cached)
-        {
-            try _asInt = to!ulong(literal.text());
-            catch(ConvException) _asInt = 0;
-            try _asFloat = to!double(literal.text());
-            catch(ConvException) _asFloat = 0.0;
-        }
-        _cached = true;
-    }
-
-public:
-
-    /// The token that gives the type of literal.
-    Token* literalType;
-    /// The token that gives the literal text.
-    Token* literal;
-    /// Returns: The literal interpreted as a u8.
-    ubyte asU8(){tryCacheValue(); return cast(ubyte) _asInt;}
-    /// Returns: The literal interpreted as a u16.
-    ushort asU16(){tryCacheValue(); return cast(ushort) _asInt;}
-    /// Returns: The literal interpreted as a u32.
-    uint asU32(){tryCacheValue(); return cast(uint) _asInt;}
-    /// Returns: The literal interpreted as a u64.
-    ulong asU64(){tryCacheValue(); return _asInt;}
-
-    /// Returns: The literal interpreted as a s8.
-    byte asS8(){tryCacheValue(); return cast(byte) _asInt;}
-    /// Returns: The literal interpreted as a s16.
-    short asS16(){tryCacheValue(); return cast(short) _asInt;}
-    /// Returns: The literal interpreted as a s32.
-    int asS32(){tryCacheValue(); return cast(int) _asInt;}
-    /// Returns: The literal interpreted as a s64.
-    long asS64(){tryCacheValue(); return _asInt;}
-
-    /// Returns: The literal interpreted as a f32.
-    float asF32(){tryCacheValue(); return cast(float) _asFloat;}
-    /// Returns: The literal interpreted as a f64.
-    double asF64(){tryCacheValue(); return _asFloat;}
 }
 
 /// FunctionType
@@ -314,7 +260,7 @@ final class FunctionDeclarationAstNode: AstNode
 final class ImportDeclarationAstNode: AstNode
 {
     /// The imports priority.
-    NumberLiteralAstNode priority;
+    Token* priority;
     /// An array of tokens chain, each represents a unit to import.
     Token*[][] importList;
     ///
