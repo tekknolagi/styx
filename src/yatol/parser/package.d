@@ -530,9 +530,9 @@ private:
      * Returns:
      *      On success a $(D OnMatchExpressionAstNode) otherwise $(D null).
      */
-    OnMatchExpressionAstNode parseOnMatchExpression()
+    SingleOrRangeExpressionAstNode parseSingleOrRangeExpression()
     {
-        OnMatchExpressionAstNode result = new OnMatchExpressionAstNode;
+        SingleOrRangeExpressionAstNode result = new SingleOrRangeExpressionAstNode;
         if (ExpressionAstNode e1 = parseExpression(null))
         {
             result.singleOrLeftExpression = e1;
@@ -567,7 +567,7 @@ private:
         OnMatchStatementAstNode result = new OnMatchStatementAstNode;
         while (true)
         {
-            if (OnMatchExpressionAstNode e = parseOnMatchExpression)
+            if (SingleOrRangeExpressionAstNode e = parseSingleOrRangeExpression)
             {
                 result.onMatchExpressions ~= e;
                 if (current.isTokRightParen)
@@ -1436,10 +1436,10 @@ private:
                 if (ExpressionAstNode r = parseExpression(null))
                     if (current.isTokRightSquare)
                 {
-                    RangeExpressionAstNode re = new RangeExpressionAstNode;
-                    re.left = e;
-                    re.right = r;
-                    result.rangeExpression = re;
+                    SliceExpressionAstNode se = new SliceExpressionAstNode;
+                    se.left = e;
+                    se.right = r;
+                    result.sliceExpression = se;
                     advance();
                     return result;
                 }
@@ -1766,9 +1766,14 @@ private:
             return null;
         }
         advance();*/
-        if (ExpressionAstNode e = parseExpression(null))
+        if (SingleOrRangeExpressionAstNode sre = parseSingleOrRangeExpression())
         {
-            result.enumerable = e;
+            result.singleOrRangeExpression = sre;
+        }
+        else
+        {
+            parseError("invalid foreach enumarable");
+            return null;
         }
         if (!current.isTokRightParen)
         {
@@ -3711,6 +3716,27 @@ unittest // foreach
         function foo()
         {
             foreach(const s8 a; b) {}
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(const s8 a; 0..10) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(const s8 a; 0..) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(const s8 a; ..) {}
         }
     });
     assertParse(q{

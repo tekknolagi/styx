@@ -50,9 +50,9 @@ string genVisitMethods(string statements)
 class AstVisitor
 {
     void visit(AkaDeclarationAstNode node){node.accept(this);}
-    void visit(AtAttributeAstNode node){node.accept(this);}
     void visit(AssignExpressionAstNode node){node.accept(this);}
     void visit(AstNode node){node.accept(this);}
+    void visit(AtAttributeAstNode node){node.accept(this);}
     void visit(BinaryExpressionAstNode node){node.accept(this);}
     void visit(BlockStatementAstNode node){node.accept(this);}
     void visit(BreakStatementAstNode node){node.accept(this);}
@@ -78,15 +78,15 @@ class AstVisitor
     void visit(IndexExpressionAstNode node){node.accept(this);}
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
     void visit(NumberLiteralAstNode node){node.accept(this);}
-    void visit(OnMatchExpressionAstNode node){node.accept(this);}
     void visit(OnMatchStatementAstNode node){node.accept(this);}
     void visit(ParenExpressionAstNode node){node.accept(this);}
     void visit(PostfixExpressionAstNode node){node.accept(this);}
     void visit(PrimaryExpressionAstNode node){node.accept(this);}
     void visit(ProtectionDeclarationAstNode node){node.accept(this);}
-    void visit(RangeExpressionAstNode node){node.accept(this);}
     void visit(ReturnStatementAstNode node){node.accept(this);}
+    void visit(SingleOrRangeExpressionAstNode node){node.accept(this);}
     void visit(SingleStatementOrBlockAstNode node){node.accept(this);}
+    void visit(SliceExpressionAstNode node){node.accept(this);}
     void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
     void visit(SwitchStatementAstNode node){node.accept(this);}
@@ -109,9 +109,9 @@ class AstVisitor
 class AstVisitorNone: AstVisitor
 {
     override void visit(AkaDeclarationAstNode node){}
-    override void visit(AtAttributeAstNode node){}
     override void visit(AssignExpressionAstNode node){}
     override void visit(AstNode node){}
+    override void visit(AtAttributeAstNode node){}
     override void visit(BinaryExpressionAstNode node){}
     override void visit(BlockStatementAstNode node){}
     override void visit(BreakStatementAstNode node){}
@@ -137,15 +137,15 @@ class AstVisitorNone: AstVisitor
     override void visit(IndexExpressionAstNode node){}
     override void visit(InterfaceDeclarationAstNode node){}
     override void visit(NumberLiteralAstNode node){}
-    override void visit(OnMatchExpressionAstNode node){}
     override void visit(OnMatchStatementAstNode node){}
     override void visit(ParenExpressionAstNode node){}
     override void visit(PostfixExpressionAstNode node){}
     override void visit(PrimaryExpressionAstNode node){}
     override void visit(ProtectionDeclarationAstNode node){}
-    override void visit(RangeExpressionAstNode node){}
     override void visit(ReturnStatementAstNode node){}
+    override void visit(SingleOrRangeExpressionAstNode node){}
     override void visit(SingleStatementOrBlockAstNode node){}
+    override void visit(SliceExpressionAstNode node){}
     override void visit(StatementAstNode node){}
     override void visit(StructDeclarationAstNode node){}
     override void visit(SwitchStatementAstNode node){}
@@ -339,8 +339,8 @@ final class StructDeclarationAstNode: AstNode
     }
 }
 
-/// OnMatchExpression
-final class OnMatchExpressionAstNode: AstNode
+/// SingleOrRangeExpression
+final class SingleOrRangeExpressionAstNode: AstNode
 {
     /// The expression or the left expression of the range.
     ExpressionAstNode singleOrLeftExpression;
@@ -360,7 +360,7 @@ final class OnMatchExpressionAstNode: AstNode
 final class OnMatchStatementAstNode: AstNode
 {
     /// The expressions that match.
-    OnMatchExpressionAstNode[] onMatchExpressions;
+    SingleOrRangeExpressionAstNode[] onMatchExpressions;
     /// Single Statement or block.
     SingleStatementOrBlockAstNode singleStatementOrBlock;
     ///
@@ -611,7 +611,7 @@ final class PostfixExpressionAstNode: AstNode
     /// Assigned if this poststix is an index.
     IndexExpressionAstNode indexExpression;
     /// Assigned if this poststix is a range.
-    RangeExpressionAstNode rangeExpression;
+    SliceExpressionAstNode sliceExpression;
     /// Assigned if this postfix is a call.
     CallParametersAstNode callParameters;
     /// Assigned if this postfix is a cast.
@@ -627,8 +627,8 @@ final class PostfixExpressionAstNode: AstNode
     {
         if (indexExpression)
             visitor.visit(indexExpression);
-        else if (rangeExpression)
-            visitor.visit(rangeExpression);
+        else if (sliceExpression)
+            visitor.visit(sliceExpression);
         else if (callParameters)
             visitor.visit(callParameters);
         else if (castToType)
@@ -683,7 +683,7 @@ final class ForeachStatementAstNode: AstNode
     /// The variable.
     VariableDeclarationAstNode variable;
     /// The expression that give the enumerable.
-    ExpressionAstNode enumerable;
+    SingleOrRangeExpressionAstNode singleOrRangeExpression;
     /// The single statement or block.
     SingleStatementOrBlockAstNode singleStatementOrBlock;
     ///
@@ -691,8 +691,8 @@ final class ForeachStatementAstNode: AstNode
     {
         if (variable)
             visitor.visit(variable);
-        if (enumerable)
-            visitor.visit(enumerable);
+        if (singleOrRangeExpression)
+            visitor.visit(singleOrRangeExpression);
         if (singleStatementOrBlock)
             visitor.visit(singleStatementOrBlock);
     }
@@ -844,8 +844,8 @@ final class IndexExpressionAstNode: AstNode
     }
 }
 
-/// IndexExpression
-final class RangeExpressionAstNode: AstNode
+/// SliceExpression
+final class SliceExpressionAstNode: AstNode
 {
     /// The expression that gives the left index.
     ExpressionAstNode left;

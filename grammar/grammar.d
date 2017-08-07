@@ -139,7 +139,7 @@ Yatol:
 
     WhileStatement < While LeftParen IfCondition RightParen SingleStatementOrBlock
 
-    ForeachStatement < Foreach LeftParen VariableDeclaration Semicolon Expression RightParen SingleStatementOrBlock
+    ForeachStatement < Foreach LeftParen VariableDeclaration Semicolon SingleOrRangeExpression RightParen SingleStatementOrBlock
 
     ReturnStatement < Return AssignExpression? Semicolon
 
@@ -165,10 +165,10 @@ Yatol:
 
     OnMatchStatement < On OnMatchExpressions SingleStatementOrBlock
 
-    OnMatchExpressions < LeftParen OnMatchExpression (Comma OnMatchExpression)* RightParen
+    OnMatchExpressions < LeftParen SingleOrRangeExpression (Comma SingleOrRangeExpression)* RightParen
 
-    OnMatchExpression < Expression DotDot Expression
-                      / Expression
+    SingleOrRangeExpression < RangeExpression
+                            / Expression
 
 ################################################################################
 # Composites expressions
@@ -180,6 +180,8 @@ Yatol:
                 / UnaryExpression
 
     BinaryExpression < Expression Operator Expression
+
+    RangeExpression < Expression DotDot Expression
 
 ################################################################################
 # UnaryExpression
@@ -193,7 +195,7 @@ Yatol:
     PostfixExpression   < PlusPlus
                         / MinusMinus
                         / IndexExpression
-                        / RangeExpression
+                        / SliceExpression
                         / CallParameters
                         / Cast
                         / Dot PrimaryExpression
@@ -201,7 +203,7 @@ Yatol:
 
     IndexExpression < LeftSquare Expression RightSquare
 
-    RangeExpression < LeftSquare Expression DotDot Expression RightSquare
+    SliceExpression < LeftSquare Expression DotDot Expression RightSquare
 
     CallParameters < LeftParen Expression? (Comma Expression)* RightParen
 
