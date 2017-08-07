@@ -61,7 +61,6 @@ class AstVisitor
     void visit(ContinueStatementAstNode node){node.accept(this);}
     void visit(DeclarationAstNode node){node.accept(this);}
     void visit(DeclarationOrStatementAstNode node){node.accept(this);}
-    void visit(DotExpressionAstNode node){node.accept(this);}
     void visit(EmptyStatementAstNode node){node.accept(this);}
     void visit(EnumDeclarationAstNode node){node.accept(this);}
     void visit(EnumMemberAstNode node){node.accept(this);}
@@ -83,6 +82,7 @@ class AstVisitor
     void visit(OnMatchStatementAstNode node){node.accept(this);}
     void visit(ParenExpressionAstNode node){node.accept(this);}
     void visit(PostfixExpressionAstNode node){node.accept(this);}
+    void visit(PrimaryExpressionAstNode node){node.accept(this);}
     void visit(ProtectionDeclarationAstNode node){node.accept(this);}
     void visit(RangeExpressionAstNode node){node.accept(this);}
     void visit(ReturnStatementAstNode node){node.accept(this);}
@@ -120,7 +120,6 @@ class AstVisitorNone: AstVisitor
     override void visit(ContinueStatementAstNode node){}
     override void visit(DeclarationAstNode node){}
     override void visit(DeclarationOrStatementAstNode node){}
-    override void visit(DotExpressionAstNode node){}
     override void visit(EmptyStatementAstNode node){}
     override void visit(EnumDeclarationAstNode node){}
     override void visit(EnumMemberAstNode node){}
@@ -142,6 +141,7 @@ class AstVisitorNone: AstVisitor
     override void visit(OnMatchStatementAstNode node){}
     override void visit(ParenExpressionAstNode node){}
     override void visit(PostfixExpressionAstNode node){}
+    override void visit(PrimaryExpressionAstNode node){}
     override void visit(ProtectionDeclarationAstNode node){}
     override void visit(RangeExpressionAstNode node){}
     override void visit(ReturnStatementAstNode node){}
@@ -461,6 +461,21 @@ final class InterfaceDeclarationAstNode: AstNode
     }
 }
 
+/// PrimaryExpression
+final class PrimaryExpressionAstNode: AstNode
+{
+    /// Either an identifier, "super", a value keyword or a literal.
+    Token* identifierOrKeywordOrLiteral;
+    /// Assigned when no identifierOrKeywordOrLiteral.
+    ExpressionAstNode parenExpression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (parenExpression)
+            visitor.visit(parenExpression);
+    }
+}
+
 /// ProtectionAttribute
 final class ProtectionDeclarationAstNode: AstNode
 {
@@ -601,6 +616,12 @@ final class PostfixExpressionAstNode: AstNode
     CallParametersAstNode callParameters;
     /// Assigned if this postfix is a cast.
     TypeAstNode castToType;
+    /// Assigned if this postfix is a dotted Primary
+    Token* dot;
+    /// Assigned if this postfix is an optional Primary
+    Token* qmark;
+    /// Assigned for dotted and optional primary
+    PrimaryExpressionAstNode primary;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -612,39 +633,34 @@ final class PostfixExpressionAstNode: AstNode
             visitor.visit(callParameters);
         else if (castToType)
             visitor.visit(castToType);
+        else if (primary)
+            visitor.visit(primary);
     }
 }
 
 /// UnaryExpression
 final class UnaryExpressionAstNode: AstNode
 {
-    /// the expression prefix.
+    /// The expression prefix when there's a nest.
     Token* prefix;
-    /// the expression postfixes.
-    PostfixExpressionAstNode[] postfixes;
-    /// the nested unary expression.
+    /// The nested unary expression.
     UnaryExpressionAstNode unary;
-    /// Assigned when no identifierChain.
-    NumberLiteralAstNode numberLitteral;
-    /// Assigned when this unary is a ParenExpression.
-    ParenExpressionAstNode parenExpression;
-    /// Assigned for a simplified / full super call.
-    Token* super_;
-    /// Assigned when no numberLitteral / no value keyword / following super (.)?
-    Token*[] identifierChain;
-    /// Assigned when the unary is a value that's a keyword
-    Token* valueKeyword;
+    /// The primary expression when there's no nest.
+    PrimaryExpressionAstNode primary;
+    /// The primary postfixes.
+    PostfixExpressionAstNode[] postfixes;
     ///
     override void accept(AstVisitor visitor)
     {
         if (unary)
+        {
             visitor.visit(unary);
-        else if (numberLitteral)
-            visitor.visit(numberLitteral);
-        else if (parenExpression)
-            visitor.visit(parenExpression);
-
-        postfixes.each!(a => visitor.visit(a));
+        }
+        else if (primary)
+        {
+            visitor.visit(primary);
+            postfixes.each!(a => visitor.visit(a));
+        }
     }
 }
 
@@ -765,8 +781,6 @@ final class ExpressionAstNode: AstNode
 {
     /// Assigned if this expression is a BinaryExpression.
     BinaryExpressionAstNode binaryExpression;
-    /// Assigned if this expression is a DotExpression.
-    DotExpressionAstNode dotExpression;
     /// Assigned if this expression is an UnaryExpression.
     UnaryExpressionAstNode unaryExpression;
     ///
@@ -774,8 +788,6 @@ final class ExpressionAstNode: AstNode
     {
         if (binaryExpression)
             visitor.visit(binaryExpression);
-        else if (dotExpression)
-            visitor.visit(dotExpression);
         else if (unaryExpression)
             visitor.visit(unaryExpression);
     }
@@ -808,23 +820,6 @@ final class BinaryExpressionAstNode: AstNode
     /// The operator LHS.
     ExpressionAstNode left;
     /// The operator RHS.
-    ExpressionAstNode right;
-    ///
-    override void accept(AstVisitor visitor)
-    {
-        if (left)
-            visitor.visit(left);
-        if (right)
-            visitor.visit(right);
-    }
-}
-
-/// DotExpression
-final class DotExpressionAstNode : AstNode
-{
-    /// Assigned if there's an expression before the dot.
-    ExpressionAstNode left;
-    /// The dot RHS.
     ExpressionAstNode right;
     ///
     override void accept(AstVisitor visitor)

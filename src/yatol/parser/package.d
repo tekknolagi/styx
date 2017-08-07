@@ -1327,33 +1327,6 @@ private:
     }
 
     /**
-     * Parses a ParenExpression.
-     *
-     * Returns: a $(D ParenExpressionAstNode) on success, $(D null) otherwise.
-     */
-    ParenExpressionAstNode parseParenExpression()
-    {
-        advance();
-        if (ExpressionAstNode ex = parseExpression(null))
-        {
-            ParenExpressionAstNode result = new ParenExpressionAstNode;
-            result.position = current.position;
-            result.expression = ex;
-            if (!current.isTokRightParen)
-            {
-                expected(TokenType.rightParen);
-                return null;
-            }
-            else
-            {
-                advance();
-                return result;
-            }
-        }
-        else return null;
-    }
-
-    /**
      * Parses CallParameters.
      *
      * Returns: a $(D CallParametersAstNode) on success, $(D null) otherwise.
@@ -1391,6 +1364,49 @@ private:
         }
     }
 
+    /**
+     * Parses a PrimaryExpression.
+     *
+     * Returns: a $(D PrimaryExpressionAstNode) on success, $(D null) otherwise.
+     */
+    PrimaryExpressionAstNode parsePrimaryExpression()
+    {
+        if (!current.isTokSuper && !current.isTokValueKeyword &&
+            !current.isTokIdentifier && !current.isTokLiteral &&
+            !current.isTokLeftParen)
+        {
+            unexpected();
+            return null;
+        }
+        PrimaryExpressionAstNode result;
+        if (!current.isTokLeftParen)
+        {
+            result = new PrimaryExpressionAstNode;
+            result.identifierOrKeywordOrLiteral = current;
+            advance();
+            return result;
+        }
+        else
+        {
+            advance();
+            if (ExpressionAstNode e = parseExpression(null))
+            {
+                if (!current.isTokRightParen)
+                {
+                    expected(TokenType.rightParen);
+                    return null;
+                }
+                else
+                {
+                    result = new PrimaryExpressionAstNode;
+                    result.parenExpression = e;
+                    advance();
+                    return result;
+                }
+            }
+            else return null;
+        }
+    }
 
     /**
      * Parses a PostfixExpression.
@@ -1399,9 +1415,7 @@ private:
      */
     PostfixExpressionAstNode parsePostfixExpression()
     {
-        assert(current.isTokLeftSquare || current.isTokDotDot||
-            current.isUnarySuffix || current.isTokColon || current.isTokLeftParen);
-
+        assert(current.isTokPostfixStarter);
         PostfixExpressionAstNode result = new PostfixExpressionAstNode;
         result.position = current.position;
         if (current.isTokLeftSquare)
@@ -1433,7 +1447,7 @@ private:
             parseError("invalid index or range expression");
             return null;
         }
-        else if (current.isUnarySuffix)
+        else if (current.isTokUnarySuffix)
         {
             result.plusplusOrMinusMinus = current();
             advance();
@@ -1453,7 +1467,7 @@ private:
                 return null;
             }
         }
-        else /*if (current.isTokLeftParen)*/
+        else if (current.isTokLeftParen)
         {
             if (CallParametersAstNode cp = parseCallParameters())
             {
@@ -1466,7 +1480,21 @@ private:
                 return null;
             }
         }
-        //else return null;
+        else
+        {
+            result.dot = current;
+            advance();
+            if (PrimaryExpressionAstNode pe = parsePrimaryExpression())
+            {
+                result.primary = pe;
+                return result;
+            }
+            else
+            {
+                parseError("invalid primary expression");
+                return null;
+            }
+        }
     }
 
     /**
@@ -1478,90 +1506,31 @@ private:
     {
         UnaryExpressionAstNode result = new UnaryExpressionAstNode;
         result.position = current.position;
-        if (current.isUnaryPrefix)
+        if (current.isTokUnaryPrefix)
         {
             result.prefix = current();
             advance();
-            if (current.isUnaryPrefix)
+            if (UnaryExpressionAstNode u = parseUnaryExpression())
             {
-                if (UnaryExpressionAstNode u = parseUnaryExpression())
-                {
-                    result.unary = u;
-                    return result;
-                }
-                else return null;
-            }
-        }
-        if (current.isTokSuper)
-        {
-            result.super_ = current();
-            advance();
-            if (current.isTokDot)
-            {
-                advance();
-                if (!current.isTokIdentifier)
-                {
-                    expected(TokenType.identifier);
-                    return null;
-                }
-                else
-                {
-                    if (Token*[] idc = parseIdentifierChain())
-                        result.identifierChain = idc;
-                    else
-                        return null;
-                }
-            }
-            else if (!current.isTokSemicolon)
-            {
-                parseError("expected semicolon or dotted identifier after `super`");
-                return null;
-            }
-        }
-        else if (current.isTokIdentifier)
-        {
-            if (Token*[] idc = parseIdentifierChain())
-                result.identifierChain = idc;
-            else
-                return null;
-        }
-        else if (current.isNumberLiteral)
-        {
-            if (NumberLiteralAstNode nl = parseNumberLiteral())
-            {
-                result.numberLitteral = nl;
-            }
-            else
-            {
-                return null;
-            }
-        }
-        else if (current.isTokLeftParen)
-        {
-            if (ParenExpressionAstNode pe = parseParenExpression)
-                result.parenExpression = pe;
-            else
-                return null;
-        }
-        else if (current.isTokValueKeyword)
-        {
-            result.valueKeyword = current();
-            advance();
-        }
-        else
-        {
-            parseError("expected identifier, literal, paren or value keyword");
-            return null;
-        }
-        with(TokenType) while (current.type.among(colon, plusPlus, minusMinus, leftSquare, leftParen))
-        {
-            if (PostfixExpressionAstNode pe = parsePostfixExpression)
-            {
-                result.postfixes ~= pe;
+                result.unary = u;
+                return result;
             }
             else return null;
         }
-        return result;
+        else if (PrimaryExpressionAstNode pe = parsePrimaryExpression())
+        {
+            result.primary = pe;
+            while (current.isTokPostfixStarter)
+            {
+                if (PostfixExpressionAstNode pfe = parsePostfixExpression)
+                {
+                    result.postfixes ~= pfe;
+                }
+                else return null;
+            }
+            return result;
+        }
+        else return null;
     }
 
     /**
@@ -1600,46 +1569,6 @@ private:
                 unexpected();
                 return null;
             }
-        }
-        return null;
-    }
-
-    /**
-     * Parses a DotExpression.
-     *
-     * Returns: a $(D DotExpressionAstNode) on success, $(D null) otherwise.
-     */
-    DotExpressionAstNode parseDotExpression()
-    {
-        assert(current.isTokDot);
-        advance();
-        if (ExpressionAstNode e = parseExpression(null))
-        {
-            DotExpressionAstNode result = new DotExpressionAstNode;
-            e.position = current.position;
-            result.right = e;
-            return result;
-        }
-        return null;
-    }
-
-    /**
-     * Sets an expression as the LHS of a DotExpression.
-     *
-     * Params:
-     *      exp = The current expression.
-     * Returns:
-     *      On success a n$(D ExpressionAstNode) with $(D dotExpression) assigned,
-     *          $(D null) otherwise.
-     */
-    ExpressionAstNode dotifyExpression(ExpressionAstNode exp)
-    {
-        if (exp) if (DotExpressionAstNode de = parseDotExpression())
-        {
-            ExpressionAstNode result = new ExpressionAstNode;
-            result.dotExpression = de;
-            de.left = exp;
-            return result;
         }
         return null;
     }
@@ -1717,8 +1646,8 @@ private:
             }
         }
 
-        with(TokenType) if (current.isUnaryPrefix || current.isTokIdentifier ||
-            current.isNumberLiteral || current.isTokLeftParen ||
+        with(TokenType) if (current.isTokUnaryPrefix || current.isTokIdentifier ||
+            current.isTokNumberLiteral || current.isTokLeftParen ||
             current.isTokSuper || current.isTokValueKeyword)
         {
             if (exp && (exp.unaryExpression))
@@ -1733,10 +1662,6 @@ private:
                 if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal))
                 {
                     return result;
-                }
-                else if (current.isTokDot)
-                {
-                    return dotifyExpression(result);
                 }
                 else
                 {
@@ -2747,7 +2672,6 @@ unittest
     });
 }
 
-
 unittest
 {
     assertParse(q{
@@ -3665,10 +3589,6 @@ unittest // super
     assertNotParse(q{
         unit a;
         class A : B { function foo() {super .;}}
-    });
-    assertNotParse(q{
-        unit a;
-        class A : B { function foo() {super.a.0;}}
     });
     assertParse(q{
         unit a;

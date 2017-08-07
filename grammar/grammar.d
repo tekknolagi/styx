@@ -177,27 +177,15 @@ Yatol:
                         / Expression
 
     Expression  < BinaryExpression
-                / DotExpression
-                / OptionalExpression
                 / UnaryExpression
 
     BinaryExpression < Expression Operator Expression
 
-    DotExpression < Expression Dot Expression
-
-    OptionalExpression  < Expression Qmark
-
 ################################################################################
-# Postfixable single expression
+# UnaryExpression
 
-    ParenExpression < UnaryPrefix? LeftParen Expression RightParen PostfixExpression*
-
-    UnaryExpression < UnaryPrefix? IdentifierChain PostfixExpression*
-                    / NumberLiteral UnarySuffix?
-                    / UnaryPrefix? UnaryExpression
-                    / UnaryPrefix? ParenExpression
-                    / Super (Dot UnaryExpression)?
-                    / ValueKeyword
+    UnaryExpression < UnaryPrefix UnaryExpression
+                    / PrimaryExpression PostfixExpression*
 
 ################################################################################
 # PostfixExpression
@@ -208,12 +196,25 @@ Yatol:
                         / RangeExpression
                         / CallParameters
                         / Cast
+                        / Dot PrimaryExpression
+                        / Qmark Dot PrimaryExpression
 
     IndexExpression < LeftSquare Expression RightSquare
 
     RangeExpression < LeftSquare Expression DotDot Expression RightSquare
 
     CallParameters < LeftParen Expression? (Comma Expression)* RightParen
+
+################################################################################
+# Primary Expression
+
+    PrimaryExpression   < Identifier
+                        / NumberLiteral
+                        / ParenExpression
+                        / Super
+                        / ValueKeyword
+
+    ParenExpression < LeftParen Expression RightParen
 
 ################################################################################
 # Cast
@@ -466,19 +467,17 @@ enum source1 = `
     @const @inline function bar()
     {
         a;
+        a++;
         a = b;
         a = b + c;
-        ++a;
-        --a;
+        a.b = c.d;
         a = a++;
         a = a[0][1];
         a = *derefer;
         a = b:ToType;
         a = b:ToType + c:ToType;;
         if (a == 0) {call(a);}
-
         var s8 a = 8;
-
         if (a == 0) {call(a);}
         else {call(1);}
         a.b(8);
@@ -489,33 +488,26 @@ enum source1 = `
         b = b(b(b(8)));
         ++a = b + c;
         a = ++++b;
+        super.call(a);
+        super.call.call(a);
+        parent?.call(a);
         a = b = c + d;
         a = b[c];
         a = b[c..d];
-
         if (a[8]?.b?.c == 8)
             callThis();
         else
             callThat();
-
         instances[a].instances[b] = 8;
         a = b[c].d[e].f[g];
-
         (a + b)++;
-
         a = (b[c](param0, param1 + stuff):u32):u64;
-
         a = b[c](param0).b[c](param0);
-
         var auto a = 8;
-
         is function*() aka FuncPtr;
-
         const auto a = (b[0].b[1].b[2])(8);
-
         if (const s8 a = call())
             do();
-
         switch(a)
         {
             on (0,1) doThis();
@@ -537,12 +529,12 @@ enum source1 = `
     }
 
     class Foo: Bar.bar, Baz{}
+
 `;
 
 /*
- *
 
- */
+*/
 
 // done
 auto s =

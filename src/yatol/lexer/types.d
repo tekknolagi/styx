@@ -692,22 +692,36 @@ public:
     bool isTokOn() const {return type == TokenType.on;}
 
     /// Conveniance function used by the parser.
-    bool isUnaryPrefix() const
+    bool isTokUnaryPrefix() const
     {
         return type == TokenType.plusPlus || type == TokenType.minusMinus ||
             type == TokenType.mul || type == TokenType.amp || type == TokenType.bang;
     }
 
     /// Conveniance function used by the parser.
-    bool isUnarySuffix() const
+    bool isTokUnarySuffix() const
     {
         return type == TokenType.plusPlus || type == TokenType.minusMinus;
     }
 
     /// Conveniance function used by the parser.
-    bool isNumberLiteral() const
+    bool isTokPostfixStarter() const
+    {
+        return type == TokenType.plusPlus || type == TokenType.minusMinus ||
+            type == TokenType.leftSquare || type == TokenType.leftParen ||
+            type == TokenType.colon || type == TokenType.dot;
+    }
+
+    /// Conveniance function used by the parser.
+    bool isTokNumberLiteral() const
     {
         return firstNumberLiteral <= type && type <= lastNumberLiteral;
+    }
+
+    /// Conveniance function used by the parser.
+    bool isTokLiteral() const
+    {
+        return isTokNumberLiteral || isTokStringLiteral;
     }
 
     /// Conveniance function used by the parser.
