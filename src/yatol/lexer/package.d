@@ -125,7 +125,8 @@ private:
         {
             if (_front > _back)
             {
-                validateToken();
+                error("unterminated string literal");
+                validateToken(TokenType.invalid);
                 return;
             }
             switch(*_front)
@@ -135,6 +136,11 @@ private:
                 advance();
                 validateToken(TokenType.invalid);
                 return;
+            case '\\':
+                if (canLookup() && *lookup() == '"')
+                    advance();
+                advance();
+                continue;
             case '\r', '\n':
                 processlineEnding;
                 advance();
@@ -1365,3 +1371,38 @@ unittest
     assert(lx.tokens[0].isTokUnit);
     assert(lx.tokens[0].line == line + 1);
 }
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `"unterminated`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `"unterminated\"`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `"terminated_by_double_quote\""`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].isTokStringLiteral);
+    assert(lx.tokens[0].rawText == source[1..$-1]);
+}
+

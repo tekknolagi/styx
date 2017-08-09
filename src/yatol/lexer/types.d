@@ -419,6 +419,40 @@ private:
     Position _pos;
     bool _kwAsIdent;
 
+    /* The source is maintained as a storage for the token text so escapes
+    in string literals need to be processed from the constant storage*/
+    const(char)[] postProcessStringLiteral() const
+    {
+        char[] result = new char[](_length);
+        size_t i, j;
+        while (i < _length)
+        {
+            switch (_start[i])
+            {
+            case '\\':
+                ++i;
+                if (_start[i] == 'r')
+                {
+                    result[j] = '\r';
+                    ++i; ++ j;
+                    continue;
+                }
+                else if (_start[i] == 'n')
+                {
+                    result[j] = '\n';
+                    ++i; ++ j;
+                    continue;
+                }
+                else goto default;
+            default:
+                result[j] = _start[i];
+                ++i; ++j;
+                continue;
+            }
+        }
+        return result[0..j];
+    }
+
 public:
 
     /**
@@ -462,7 +496,19 @@ public:
     size_t column() const {return _pos.column;}
 
     /// Returns: The token text.
-    const(char[]) text() const {return _start[0.._length];}
+    const(char[]) text() const
+    {
+        if (_type != TokenType.stringLiteral)
+            return _start[0.._length];
+        else
+            return postProcessStringLiteral();
+    }
+
+    /// Returns: The token text, never post processed.
+    const(char[]) rawText() const
+    {
+        return _start[0.._length];
+    }
 
     /// Conveniance function used by the parser.
     bool isTokOperator() const {return firstOperator <= type && type <= lastOperator;}
@@ -740,5 +786,33 @@ public:
         return type == TokenType.true_ || type == TokenType.false_ ||
             type == TokenType.null_;
     }
+}
+
+unittest
+{
+    char[] s = "test".dup;
+    Token t = Token(s.ptr, s.ptr + s.length, 0, 0, TokenType.stringLiteral);
+    assert(t.text == s);
+}
+
+unittest
+{
+    char[] s = `\"test\"`.dup;
+    Token t = Token(s.ptr, s.ptr + s.length, 0, 0, TokenType.stringLiteral);
+    assert(t.text == `"test"`);
+}
+
+unittest
+{
+    char[] s = `\"1\n2\"`.dup;
+    Token t = Token(s.ptr, s.ptr + s.length, 0, 0, TokenType.stringLiteral);
+    assert(t.text == "\"1\n2\"");
+}
+
+unittest
+{
+    char[] s = `\"1\r\n2\"`.dup;
+    Token t = Token(s.ptr, s.ptr + s.length, 0, 0, TokenType.stringLiteral);
+    assert(t.text == "\"1\r\n2\"");
 }
 

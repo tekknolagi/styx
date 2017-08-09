@@ -6,7 +6,7 @@
  **/
 module yatol.parser;
 
-//TODO-cparser todo: check when advance() reaches the EOF.
+//TODO-cparser: check when advance() reaches the EOF.
 
 import
     core.stdc.stdlib;
@@ -216,6 +216,7 @@ private:
     TypeModifierAstNode parseTypeModifier()
     {
         TypeModifierAstNode result = new TypeModifierAstNode;
+        result.position = current.position();
         TypeModifierAstNode lastMd = result;
         result.position = current.position;
         if (!current.isTokMul && !current.isTokLeftSquare)
@@ -313,6 +314,7 @@ private:
     FunctionParameterGroupAstNode parseFunctionParameterGroup()
     {
         FunctionParameterGroupAstNode result = new FunctionParameterGroupAstNode;
+        result.position = current.position();
         while (true)
         {
             if (current.isTokConst)
@@ -375,14 +377,14 @@ private:
     InterfaceDeclarationAstNode parseInterfaceDeclaration()
     {
         assert(current.isTokInterface);
+        InterfaceDeclarationAstNode result = new InterfaceDeclarationAstNode;
+        result.position = current.position;
         advance();
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
             return null;
         }
-        InterfaceDeclarationAstNode result = new InterfaceDeclarationAstNode;
-        result.position = current.position;
         result.name = current();
         advance();
         if (current.isTokColon)
@@ -423,14 +425,14 @@ private:
     ClassDeclarationAstNode parseClassDeclaration()
     {
         assert(current.isTokClass);
+        ClassDeclarationAstNode result = new ClassDeclarationAstNode;
+        result.position = current.position;
         advance();
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
             return null;
         }
-        ClassDeclarationAstNode result = new ClassDeclarationAstNode;
-        result.position = current.position;
         result.name = current();
         advance();
         if (current.isTokColon)
@@ -471,14 +473,14 @@ private:
     StructDeclarationAstNode parseStructDeclaration()
     {
         assert(current.isTokStruct);
+        StructDeclarationAstNode result = new StructDeclarationAstNode;
+        result.position = current.position;
         advance();
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
             return null;
         }
-        StructDeclarationAstNode result = new StructDeclarationAstNode;
-        result.position = current.position;
         result.name = current();
         advance();
         if (!current.isTokLeftCurly)
@@ -506,6 +508,7 @@ private:
     SingleOrRangeExpressionAstNode parseSingleOrRangeExpression()
     {
         SingleOrRangeExpressionAstNode result = new SingleOrRangeExpressionAstNode;
+        result.position = current.position();
         if (ExpressionAstNode e1 = parseExpression(null))
         {
             result.singleOrLeftExpression = e1;
@@ -530,6 +533,8 @@ private:
     OnMatchStatementAstNode parseOnMatchStatementAstNode()
     {
         assert(current.isTokOn);
+        OnMatchStatementAstNode result = new OnMatchStatementAstNode;
+        result.position = current.position();
         advance();
         if (!current.isTokLeftParen)
         {
@@ -537,7 +542,6 @@ private:
             return null;
         }
         advance();
-        OnMatchStatementAstNode result = new OnMatchStatementAstNode;
         while (true)
         {
             if (SingleOrRangeExpressionAstNode e = parseSingleOrRangeExpression)
@@ -586,6 +590,8 @@ private:
     SwitchStatementAstNode parseSwitchStatement()
     {
         assert(current.isTokSwitch);
+        SwitchStatementAstNode result = new SwitchStatementAstNode;
+        result.position = current.position();
         advance();
         if (!current.isTokLeftParen)
         {
@@ -593,7 +599,6 @@ private:
             return null;
         }
         advance();
-        SwitchStatementAstNode result = new SwitchStatementAstNode;
         if (ExpressionAstNode e = parseExpression(null))
         {
             result.expression = e;
@@ -665,6 +670,7 @@ private:
         }
         EnumMemberAstNode result = new EnumMemberAstNode;
         result.identifier = current();
+        result.position = current.position();
         advance();
         if (current.isTokComma || current.isTokRightCurly)
         {
@@ -708,13 +714,14 @@ private:
     EnumDeclarationAstNode parseEnumDeclaration()
     {
         assert(current.isTokEnum);
+        EnumDeclarationAstNode result = new EnumDeclarationAstNode;
+        result.position = current.position;
         advance();
         if (!current.isTokIdentifier)
         {
             expected(TokenType.identifier);
             return null;
         }
-        EnumDeclarationAstNode result = new EnumDeclarationAstNode;
         result.name = current();
         advance();
         if (current.isTokColon)
@@ -907,13 +914,14 @@ private:
     AtAttributeAstNode parseAtAttribute()
     {
         assert(current.isTokAt);
+        AtAttributeAstNode result = new AtAttributeAstNode;
+        result.position = current.position();
         advance();
         if (!current.isTokKeyword && !current.isTokIdentifier)
         {
             parseError("expected a keyword or an identifier after `@`");
             return null;
         }
-        AtAttributeAstNode result = new AtAttributeAstNode;
         result.identifierOrKeyword = current();
         advance();
         return result;
@@ -928,6 +936,7 @@ private:
     FunctionHeaderAstNode parseFunctionHeader()
     {
         FunctionHeaderAstNode result = new FunctionHeaderAstNode;
+        result.position = current.position();
         while (current.isTokAt)
         {
             if (AtAttributeAstNode aa = parseAtAttribute())
@@ -1003,7 +1012,7 @@ private:
         if (!header)
             return null;
         FunctionDeclarationAstNode result = new FunctionDeclarationAstNode;
-        result.position = current.position;
+        result.position = header.position;
         result.header = header;
         if (!current.isTokLeftCurly && !current.isTokSemicolon)
         {
@@ -1038,6 +1047,8 @@ private:
     ProtectionDeclarationAstNode parseProtectionDeclaration()
     {
         assert(current.isTokProtection);
+        ProtectionDeclarationAstNode result = new ProtectionDeclarationAstNode;
+        result.position = current.position;
         advance();
         if (!current.isTokLeftParen)
         {
@@ -1050,9 +1061,7 @@ private:
             expected(TokenType.identifier);
             return null;
         }
-        ProtectionDeclarationAstNode result = new ProtectionDeclarationAstNode;
         result.protection = current();
-        result.position = current.position;
         advance();
         if (!current.isTokRightParen)
         {
@@ -1108,6 +1117,8 @@ private:
     {
         bool isStatic;
         bool isConst;
+        VariableDeclarationAstNode result = new VariableDeclarationAstNode;
+        result.position = current.position();
         if (current.isTokConst)
         {
             isConst = true;
@@ -1129,7 +1140,6 @@ private:
         }
         if (TypeAstNode t = parseType())
         {
-            VariableDeclarationAstNode result = new VariableDeclarationAstNode;
             result.type = t;
             result.isStatic = isStatic;
             result.isConst = isConst;
@@ -1174,6 +1184,8 @@ private:
     AkaDeclarationAstNode parseAkaDeclaration()
     {
         assert(current.isTokIs);
+        AkaDeclarationAstNode result = new AkaDeclarationAstNode;
+        result.position = current.position;
         advance();
         if (TypeAstNode t = parseType())
         {
@@ -1188,7 +1200,6 @@ private:
                 expected(TokenType.identifier);
                 return null;
             }
-            AkaDeclarationAstNode result = new AkaDeclarationAstNode;
             result.type = t;
             result.name = current();
             advance();
@@ -1357,10 +1368,10 @@ private:
             unexpected();
             return null;
         }
-        PrimaryExpressionAstNode result;
+        PrimaryExpressionAstNode result = new PrimaryExpressionAstNode;
+        result.position = current.position;
         if (!current.isTokLeftParen)
         {
-            result = new PrimaryExpressionAstNode;
             result.identifierOrKeywordOrLiteral = current;
             advance();
             return result;
@@ -1377,7 +1388,6 @@ private:
                 }
                 else
                 {
-                    result = new PrimaryExpressionAstNode;
                     result.parenExpression = e;
                     advance();
                     return result;
@@ -1679,6 +1689,8 @@ private:
     WhileStatementAstNode parseWhileStatement()
     {
         assert(current.isTokWhile);
+        WhileStatementAstNode result = new WhileStatementAstNode;
+        result.position = current.position();
         advance();
         if (!current.isTokLeftParen)
         {
@@ -1686,7 +1698,6 @@ private:
             return null;
         }
         advance();
-        WhileStatementAstNode result = new WhileStatementAstNode;
         if (ExpressionAstNode c = parseExpression(null))
         {
             result.condition = c;
@@ -1723,6 +1734,8 @@ private:
     ForeachStatementAstNode parseForeachStatement()
     {
         assert(current.isTokForeach);
+        ForeachStatementAstNode result = new ForeachStatementAstNode;
+        result.position = current.position();
         advance();
         if (!current.isTokLeftParen)
         {
@@ -1730,7 +1743,6 @@ private:
             return null;
         }
         advance();
-        ForeachStatementAstNode result = new ForeachStatementAstNode;
         if (VariableDeclarationAstNode vd = parseVariableDeclaration)
         {
             result.variable = vd;
@@ -1783,6 +1795,7 @@ private:
     {
         assert(current.isTokConst || current.isTokVar);
         IfConditionVariableAstNode result = new IfConditionVariableAstNode;
+        result.position = current.position();
         result.isConst = current.isTokConst;
         advance();
         if (TypeAstNode t = parseType())
@@ -1815,6 +1828,8 @@ private:
     IfElseStatementAstNode parseIfElseStatement()
     {
         assert(current.isTokIf);
+        IfElseStatementAstNode result = new IfElseStatementAstNode;
+        result.position = current.position();
         advance();
         if (!current.isTokLeftParen)
         {
@@ -1822,7 +1837,6 @@ private:
             return null;
         }
         advance();
-        IfElseStatementAstNode result = new IfElseStatementAstNode;
         if (current.isTokStorageClass)
         {
             if (IfConditionVariableAstNode icv = parseIfConditionVariableAstNode())
@@ -1976,6 +1990,8 @@ private:
      */
     SingleStatementOrBlockAstNode parseSingleStatementOrBlock()
     {
+        SingleStatementOrBlockAstNode result = new SingleStatementOrBlockAstNode;
+        result.position = current.position();
         if (current.isTokLeftCurly)
         {
             advance();
@@ -1987,7 +2003,6 @@ private:
                 return null;
             }
             advance();
-            SingleStatementOrBlockAstNode result = new SingleStatementOrBlockAstNode;
             result.block = bs;
             return result;
         }
@@ -1995,7 +2010,6 @@ private:
         {
             if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
             {
-                SingleStatementOrBlockAstNode result = new SingleStatementOrBlockAstNode;
                 result.singleStatement = dos;
                 return result;
             }
