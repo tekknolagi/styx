@@ -250,12 +250,14 @@ Yatol:
     LeftRightSquares < LeftSquare RightSquare
 
 ################################################################################
-# Comments, should be considered as part of to the spaces allowed with " < "
+# Comments and spacing
+
+    Spacing <- :(' ' / '\t' / '\r' / '\n' / '\r\n' / Comment)*
 
     Comment <~ LineComment / StarComment
 
-    LineComment < : "//" (!Eol .)* :Eol
-    StarComment < : "/*" (!"*/" .)* :"*/"
+    LineComment <- : "//" (!Eol .)* :Eol
+    StarComment <- : "/*" (!"*/" .)* :"*/"
 
 ################################################################################
 # Identifier and literals
