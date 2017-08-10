@@ -222,6 +222,7 @@ Yatol:
 # Type
 
     Type    < TypeIdentifier TypeModifiers?
+            / LeftParen TypeIdentifier RightParen TypeModifiers?
             / Auto
 
     TypeIdentifier  < BasicType

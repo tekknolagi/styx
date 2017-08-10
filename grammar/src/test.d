@@ -73,6 +73,11 @@ enum source1 = `
             }
         }
 
+        var function*():s8 a;
+        var function*():(function*():s8[])[] arrayOfFuncReturnArrayOfS8;
+
+
+
     }
 
     enum A

@@ -223,7 +223,7 @@ private:
         {
             return null;
         }
-        while (current.isTokMul || current.isTokLeftSquare)
+        while ((current.isTokMul || current.isTokLeftSquare) && !current.isTokRightParen)
         {
             if (lastMd.kind != ModifierKind.none)
             {
@@ -270,16 +270,22 @@ private:
     {
         TypeAstNode result = new TypeAstNode;
         result.position = current.position;
-        if (current.isTokBasicType)
-        {
-            result.basicOrQualifiedType ~= current();
-            advance();
-        }
-        else if (current.isTokAuto)
+        bool isBetweenParens;
+        if (current.isTokAuto)
         {
             result.basicOrQualifiedType ~= current();
             advance();
             return result;
+        }
+        else if (current.isTokLeftParen)
+        {
+            isBetweenParens = true;
+            advance();
+        }
+        if (current.isTokBasicType)
+        {
+            result.basicOrQualifiedType ~= current();
+            advance();
         }
         else if (current.isTokFunction || current.isTokStatic)
         {
@@ -290,6 +296,20 @@ private:
         else
         {
             result.basicOrQualifiedType = parseIdentifierChain();
+        }
+        if (current.isTokRightParen)
+        {
+            if (!isBetweenParens)
+            {
+                parseError("invalid type delimiter, missing left paren");
+                return null;
+            }
+            else advance();
+        }
+        else if (isBetweenParens && !current.isTokRightParen)
+        {
+            parseError("invalid type delimiter, missing right paren");
+            return null;
         }
         if (result.basicOrQualifiedType.length || result.functionType)
         {
@@ -4315,5 +4335,37 @@ unittest // switch
 
         }
     ");
+}
+
+unittest // issue #1 ambiguous type modifiers when return is a func
+{
+    assertParse(q{
+        unit a;
+        const (s8)[] a;
+    });
+    assertNotParse(q{
+        unit a;
+        const s8)[] a;
+    });
+    assertNotParse(q{
+        unit a;
+        const (s8[] a;
+    });
+    assertNotParse(q{
+        unit a;
+        const (s8[]) a;
+    });
+    assertNotParse(q{
+        unit a;
+        const (auto) a;
+    });
+    assertParse(q{
+        unit a;
+        const (function*():s8[])[] a;
+    });
+    assertParse(q{
+        unit a;
+    var function*():(function*():s8[])[] a;
+    });
 }
 
