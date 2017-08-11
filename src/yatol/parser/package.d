@@ -216,8 +216,6 @@ private:
             {
                 if (current.isTokRightSquare)
                 {
-                    //advance();
-                    writeln("sdgsdh");
                     break;
                 }
                 else if (InitializerAstNode i = parseInitializer())
