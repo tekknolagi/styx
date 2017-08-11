@@ -6,8 +6,6 @@
  **/
 module yatol.parser;
 
-//TODO-cparser: check when advance() reaches the EOF.
-
 import
     core.stdc.stdlib;
 import
@@ -205,6 +203,50 @@ private:
         IdentifierChainsAstNode result = new IdentifierChainsAstNode;
         result.chains = chains;
         return result;
+    }
+
+    InitializerAstNode parseInitializer()
+    {
+        InitializerAstNode result = new InitializerAstNode;
+        result.position = current.position();
+        if (current.isTokLeftSquare)
+        {
+            advance();
+            while (true)
+            {
+                if (current.isTokRightSquare)
+                {
+                    //advance();
+                    writeln("sdgsdh");
+                    break;
+                }
+                else if (InitializerAstNode i = parseInitializer())
+                {
+                    result.arrayInitializerElements ~= i;
+                }
+                else
+                {
+                    parseError("invalid array initializer");
+                    return null;
+                }
+                if (current.isTokComma)
+                {
+                    advance();
+                }
+            }
+            advance();
+            return result;
+        }
+        else if (ExpressionAstNode e = parseExpression(null))
+        {
+            result.singleInitializer = e;
+            return result;
+        }
+        else
+        {
+            parseError("invalid initializer");
+            return null;
+        }
     }
 
     /**
@@ -1112,9 +1154,9 @@ private:
         if (current.isTokEqual)
         {
             advance();
-            if (ExpressionAstNode e = parseExpression(null))
+            if (InitializerAstNode i = parseInitializer())
             {
-                result.initializer = e;
+                result.initializer = i;
             }
             else return null;
         }
@@ -2562,6 +2604,17 @@ void assertParse(const(char)[] code, bool printAST = false,
         dv.printText();
     }
 }
+///
+unittest
+{
+    assertParse(q{
+        unit a;
+        function bar()
+        {
+            a++;
+        }
+    });
+}
 
 /**
  * Tests invalid code.
@@ -2585,14 +2638,14 @@ void assertNotParse(const(char)[] code, string file = __FILE_FULL_PATH__,
         throw new AssertError("code parsed but should not be", file, line);
     }
 }
-
+///
 unittest
 {
-    assertParse(q{
+    assertNotParse(q{
         unit a;
         function bar()
         {
-            a++;
+            a ?= 0;
         }
     });
 }
@@ -4335,6 +4388,50 @@ unittest // switch
 
         }
     ");
+}
+
+unittest // initializer
+{
+    assertParse(q{
+        unit a;
+        const auto a = 0:s8;
+    });
+    assertNotParse(q{
+        unit a;
+        const auto a 0:s8;
+    });
+    assertParse(q{
+        unit a;
+        const auto a = [];
+    });
+    assertParse(q{
+        unit a;
+        const auto a = [0];
+    });
+    assertParse(q{
+        unit a;
+        const auto a = [0,1];
+    });
+    assertParse(q{
+        unit a;
+        const auto a = [[0,1]];
+    });
+    assertParse(q{
+        unit a;
+        const auto a = [[0,1],[2,3]];
+    });
+    assertNotParse(q{
+        unit a;
+        const auto a = [0,1],[2,3]];
+    });
+    assertNotParse(q{
+        unit a;
+        const auto a = [0,1][2,3]];
+    });
+    assertNotParse(q{
+        unit a;
+        const auto a = 0,1],[2,3]];
+    });
 }
 
 unittest // issue #1 ambiguous type modifiers when return is a func

@@ -76,8 +76,10 @@ enum source1 = `
         var function*():s8 a;
         var function*():(function*():s8[])[] arrayOfFuncReturnArrayOfS8;
 
-
-
+        const auto a = [];
+        const auto a = [1,2];
+        const auto a = [[1,2]];
+        const auto a = [[1,2],[1,2]];
     }
 
     enum A
@@ -88,7 +90,6 @@ enum source1 = `
     }
 
     class Foo: Bar.bar, Baz{}
-
 `;
 
 void main()

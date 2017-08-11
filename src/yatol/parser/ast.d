@@ -76,6 +76,7 @@ class AstVisitor
     void visit(IfElseStatementAstNode node){node.accept(this);}
     void visit(ImportDeclarationAstNode node){node.accept(this);}
     void visit(IndexExpressionAstNode node){node.accept(this);}
+    void visit(InitializerAstNode node){node.accept(this);}
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
     void visit(OnMatchStatementAstNode node){node.accept(this);}
     void visit(ParenExpressionAstNode node){node.accept(this);}
@@ -134,6 +135,7 @@ class AstVisitorNone: AstVisitor
     override void visit(IfElseStatementAstNode  node){}
     override void visit(ImportDeclarationAstNode node){}
     override void visit(IndexExpressionAstNode node){}
+    override void visit(InitializerAstNode node){}
     override void visit(InterfaceDeclarationAstNode node){}
     override void visit(OnMatchStatementAstNode node){}
     override void visit(ParenExpressionAstNode node){}
@@ -435,7 +437,7 @@ final class ProtectionDeclarationAstNode: AstNode
 final class VariableDeclarationItemAstNode: AstNode
 {
     /// The expression that gives trhe initial value;
-    ExpressionAstNode initializer;
+    InitializerAstNode initializer;
     /// The variable name.
     Token* name;
     ///
@@ -787,6 +789,23 @@ final class IndexExpressionAstNode: AstNode
     {
         if (index)
             visitor.visit(index);
+    }
+}
+
+/// Initializer
+final class InitializerAstNode: AstNode
+{
+    /// When no arrayInitiliazer the expression that initializes.
+    ExpressionAstNode singleInitializer;
+    /// Initializes an array.
+    InitializerAstNode[] arrayInitializerElements;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (singleInitializer)
+            visitor.visit(singleInitializer);
+        else
+            arrayInitializerElements.each!(a => visitor.visit(a));
     }
 }
 

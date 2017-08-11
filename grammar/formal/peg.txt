@@ -39,11 +39,11 @@ Yatol:
 
     VariableDeclarationList < VariableDeclarationItem (Comma VariableDeclarationItem)*
 
-    VariableDeclarationItem < Identifier Initializer?
+    VariableDeclarationItem < Identifier (Equal Initializer)?
 
     EnumDeclaration < Enum Identifier Cast? LeftCurly EnumMember (Comma EnumMember)* RightCurly
 
-    EnumMember    < Identifier BasicTypeInitializer?
+    EnumMember    < Identifier (Equal Initializer)?
 
     #The IdentifierChain in Type may represent a symbol
     AkaDeclaration  < Is Type Aka Identifier
@@ -87,13 +87,12 @@ Yatol:
 ################################################################################
 # Initializer
 
-    Initializer < BasicTypeInitializer
-                / ArrayDimInitializer
+    Initializer < Expression
+                / ArrayInitializer
 
-    BasicTypeInitializer < Equal Expression
-    ArrayDimInitializer < Equal LeftSquare ArrayInitializerElements? RightSquare
+    ArrayInitializer < LeftSquare ArrayInitializerElements? RightSquare
 
-    ArrayInitializerElements < Expression (Comma UnaryExpression)*
+    ArrayInitializerElements < Initializer (Comma Initializer)*
 
 ################################################################################
 # DeclarationOrStatement
