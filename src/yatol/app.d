@@ -23,6 +23,7 @@ __gshared:
     bool ast;
     bool pipe;
     Until until;
+    string[] userVersions;
 }
 
 alias options = Options;
@@ -78,6 +79,7 @@ Options:
     -t or --time          : measure the time spent to compile.
           --until=<phase> : compiles and stops after <phase>, either "lexing", "parsing" or "semantic".
     -v or --verbose       : verbose output.
+          --versions<=ids>: defines the version() identifiers list, comma separated.
 `
     );
 }
@@ -110,12 +112,14 @@ int main(string[] args)
         }
     }
 
+    arraySep = ",";
     try gr = getopt(args,
         "a|ast", &options.ast,
         "p|pipe", &options.pipe,
         "t|time", &options.mtime,
         "until", &options.until,
         "v|verbose", &options.verbose,
+        "versions", &options.userVersions,
     );
     catch (GetOptException ge)
     {
@@ -131,7 +135,7 @@ int main(string[] args)
     if (!sources.length && !options.pipe)
     {
         showHelp();
-        writeln("nothing to compile, exited !");
+        writeln("\nnothing to compile, exited !");
         return 0;
     }
 
