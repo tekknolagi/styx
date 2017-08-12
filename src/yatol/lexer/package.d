@@ -774,6 +774,54 @@ unittest
     assert(lx.tokens[20].text == "...");
     assert(lx.tokens[21].text == "..");
 }
+/// Tests the symbols and single char operators.
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `.:;,()/[]{}*+-!@=><&$^%?`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == source.length + 1);
+    foreach(i, tk; lx.tokens)
+        if (i != lx.tokens.length-1)
+            assert(lx.tokens[i].text == source[i..i+1]);
+}
+
+/// Tests a token iterator that skips the line comments
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "://comment\n;//comment\n.";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 6);
+    alias NoCommentRange = TokenRange!(TokenType.lineComment);
+    NoCommentRange range = NoCommentRange(lx.tokens);
+    assert(range.front().type == TokenType.colon);
+    range.popFront();
+    assert(range.front().type == TokenType.semiColon);
+    range.popFront();
+    assert(range.front().type == TokenType.dot);
+    range.popFront();
+    assert(range.empty());
+    assert(lx.filename == __FILE_FULL_PATH__);
+}
+
+/// Null chars are allowed between two tokens
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "1a\x00b";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].text == "1a");
+    assert(lx.tokens[1].isTokIdentifier);
+    assert(lx.tokens[1].text == "b");
+}
 
 /**
  * Returns: An array of tokens pointer converted to an array of string.
@@ -1197,55 +1245,6 @@ unittest
     assert(lx.tokens.length == 3);
     assert(lx.tokens[0].isTokBang);
     assert(lx.tokens[1].isTokNotEqual);
-}
-
-/// Tests the symbols and single char operators.
-unittest
-{
-    int line = __LINE__ + 1;
-    enum source = `.:;,()/[]{}*+-!@=><&$^%?`;
-    Lexer lx;
-    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
-    lx.lex();
-    assert(lx.tokens.length == source.length + 1);
-    foreach(i, tk; lx.tokens)
-        if (i != lx.tokens.length-1)
-            assert(lx.tokens[i].text == source[i..i+1]);
-}
-
-/// Tests a token iterator that skips the line comments
-unittest
-{
-    int line = __LINE__ + 1;
-    enum source = "://comment\n;//comment\n.";
-    Lexer lx;
-    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
-    lx.lex();
-    assert(lx.tokens.length == 6);
-    alias NoCommentRange = TokenRange!(TokenType.lineComment);
-    NoCommentRange range = NoCommentRange(lx.tokens);
-    assert(range.front().type == TokenType.colon);
-    range.popFront();
-    assert(range.front().type == TokenType.semiColon);
-    range.popFront();
-    assert(range.front().type == TokenType.dot);
-    range.popFront();
-    assert(range.empty());
-    assert(lx.filename == __FILE_FULL_PATH__);
-}
-
-/// Null chars are allowed between two tokens
-unittest
-{
-    int line = __LINE__ + 1;
-    enum source = "1a\x00b";
-    Lexer lx;
-    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
-    lx.lex();
-    assert(lx.tokens.length == 3);
-    assert(lx.tokens[0].text == "1a");
-    assert(lx.tokens[1].isTokIdentifier);
-    assert(lx.tokens[1].text == "b");
 }
 
 unittest

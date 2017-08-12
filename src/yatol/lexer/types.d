@@ -117,11 +117,7 @@ unittest
     static assert(tokenStringTable.length == TokenType.max + 1);
 }
 
-/**
- * Maps a $(D TokenType) to a string, between parens when the
- * token string is variable.
- */
-static immutable string[TokenType.max + 1] tokenStringTable =
+private static immutable string[TokenType.max + 1] tokenStringTable =
 [
     "(invalid)",
     "(eof)",
@@ -231,38 +227,38 @@ unittest
 }
 
 /**
- * Maps a $(D TokenType) to a string, between parens when the
- * token string is variable.
+ * Maps a $(D TokenType) to a string. The text is between parens when the
+ * token string is not constant, lie for a $(D TokenType.identifier).
  */
 string tokenString(TokenType type)
 {
     return tokenStringTable[type];
 }
 
-/// The value of the first keyword.
-static immutable ptrdiff_t firstKeyword = TokenType.aka;
-/// The value of the last keyword.
-static immutable ptrdiff_t lastKeyword = TokenType.while_;
+/// The $(D TokenType) of the first keyword.
+static immutable TokenType firstKeyword = TokenType.aka;
+/// The $(D TokenType) of the last keyword.
+static immutable TokenType lastKeyword = TokenType.while_;
 
-/// The value of the first basic type.
-static immutable ptrdiff_t firstBasicType = TokenType.bool_;
-/// The value of the last keyword.
-static immutable ptrdiff_t lastBasicType = TokenType.ureg;
+/// The $(D TokenType) of the first basic type.
+static immutable TokenType firstBasicType = TokenType.bool_;
+/// The $(D TokenType) of the last keyword.
+static immutable TokenType lastBasicType = TokenType.ureg;
 
-/// The value of the first symbol.
-static immutable firstSymbol = TokenType.bang;
-/// The value of the last symbol.
-static immutable lastSymbol = TokenType.ellipsis;
+/// The $(D TokenType) of the first symbol.
+static immutable TokenType firstSymbol = TokenType.bang;
+/// The $(D TokenType) of the last symbol.
+static immutable TokenType lastSymbol = TokenType.ellipsis;
 
-/// The value of the first operator.
-static immutable firstOperator = TokenType.equalEqual;
-/// The value of the last operator.
-static immutable lastOperator = TokenType.xor;
+/// The $(D TokenType) of the first operator.
+static immutable TokenType firstOperator = TokenType.equalEqual;
+/// The $(D TokenType) of the last operator.
+static immutable TokenType lastOperator = TokenType.xor;
 
-/// The value of the first number literal.
-static immutable firstNumberLiteral = TokenType.intLiteral;
-/// The value of the last number literal.
-static immutable lastNumberLiteral = TokenType.hexLiteral;
+/// The $(D TokenType) of the first number literal.
+static immutable TokenType firstNumberLiteral = TokenType.intLiteral;
+/// The $(D TokenType) of the last number literal.
+static immutable TokenType lastNumberLiteral = TokenType.hexLiteral;
 
 /**
  * Hashset that allows to distinguish efficiently the identifiers
@@ -357,8 +353,8 @@ alias TokensList = Tokens[];
 /**
  * Tokens iterator.
  *
- * Prams:
- *  TokenTypes = The $(D TokenType) to skip.
+ * Params:
+ *      TokenTypes = A list of $(D TokenType) to skip.
  */
 struct TokenRange(TokenTypes...)
 {
@@ -369,13 +365,13 @@ private:
 
 public:
 
-    ///
+    /// Constructs the ieterator from an array of $(D Token).
     this()(auto ref Tokens tokens)
     {
         _tokens = tokens;
     }
 
-    ///
+    /// Advances the iterator.
     void popFront()
     {
         import std.range: popFront, front, empty;
@@ -389,14 +385,14 @@ public:
         }
     }
 
-    ///
+    /// Returns: The current token.
     ref const(Token) front() const
     {
         import std.range: front;
         return front(_tokens);
     }
 
-    ///
+    /// Indicates wether no tokens are available.
     bool empty() const
     {
         import std.range: empty;

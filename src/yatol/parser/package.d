@@ -84,7 +84,7 @@ private:
      * Parses a UnitDeclaration.
      *
      * Params:
-     *      virtual = Indicates if the previous token is of type ($D TokenType.virtual).
+     *      virtual = Indicates if the previous token is of type $(D TokenType.virtual).
      * Returns:
      *      $(D true) on success, $(D false) otherwise.
      */
