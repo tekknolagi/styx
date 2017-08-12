@@ -25,6 +25,7 @@ Yatol:
                     / InterfaceDeclaration
                     / BlockStatement
                     / AkaDeclaration
+                    / VersionBlockDeclaration
                 #   / AtAttributeSectionDeclaration
 
     ProtectionDeclaration   < Prot LeftParen Identifier RightParen
@@ -47,6 +48,23 @@ Yatol:
 
     #The IdentifierChain in Type may represent a symbol
     AkaDeclaration  < Is Type Aka Identifier
+
+################################################################################
+# Version declaration
+
+    VersionBlockDeclaration < VersionDeclaration DeclarationOrStatementsBlock (Else DeclarationOrStatementsBlock)?
+
+    VersionDeclaration < Version VersionParenExpression
+
+    VersionParenExpression < LeftParen VersionOrExpression RightParen
+
+    VersionOrExpression     < VersionAndExpression Pipe VersionOrExpression
+                            / VersionAndExpression
+
+    VersionAndExpression    < VersionPrimaryExpression Amp VersionAndExpression
+                            / VersionPrimaryExpression
+
+    VersionPrimaryExpression < Identifier / VersionParenExpression
 
 ################################################################################
 # Imports declaration
@@ -150,8 +168,6 @@ Yatol:
     IfCondition < LeftParen Expression RightParen
                 / LeftParen ConditionalIdentifierChain RightParen
                 / LeftParen IfConditionVariable RightParen
-                #/ Expression Then
-                #/ IdentifierChain Then
 
     IfConditionVariable < StorageClass Type VariableDeclarationItem
 
@@ -376,6 +392,9 @@ Yatol:
             / Null
             / On
             / Bool
+            / Enum
+            / ValueKeyword
+            / Version
 
     ValueKeyword    < Null
                     / False
@@ -425,6 +444,7 @@ Yatol:
     Switch  <- "switch"
     Null    <- "null"
     Enum    <- "enum"
+    Version <- "version"
 
     SREG    <- "sreg"
     UREG    <- "ureg"

@@ -2082,6 +2082,171 @@ private:
     }
 
     /**
+     * Parses a VersionBlockDeclaration.
+     *
+     * Returns: a $(D VersionBlockDeclarationAstNode) on success, $(D null) otherwise.
+     */
+    VersionBlockDeclarationAstNode parseVersionBlockDeclaration()
+    {
+        assert(current.isTokVersion);
+        advance();
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        VersionBlockDeclarationAstNode result = new VersionBlockDeclarationAstNode;
+        result.position = current.position;
+        if (VersionParenExpressionAstNode vpe = parseVersionParenExpression())
+        {
+            result.versionExpression = vpe;
+        }
+        else
+        {
+            parseError("invalid version paren expression");
+            return null;
+        }
+        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+        {
+            result.trueDeclarationOrBlock = ssob;
+        }
+        else
+        {
+            parseError("invalid true single statement or block");
+            return null;
+        }
+        if (current.isTokElse)
+        {
+            advance();
+            if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+            {
+                result.falseDeclarationOrBlock = ssob;
+            }
+            else
+            {
+                parseError("invalid false single statement or block");
+                return null;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Parses a VersionParenExpression.
+     *
+     * Returns: a $(D VersionParenExpressionAstNode) on success, $(D null) otherwise.
+     */
+    VersionParenExpressionAstNode parseVersionParenExpression()
+    {
+        assert(current.isTokLeftParen);
+        advance();
+        if (current.isTokRightParen)
+        {
+            parseError("empty version expression");
+            return null;
+        }
+        if (VersionOrExpressionAstNode voe = parseVersionOrExpression())
+        {
+            VersionParenExpressionAstNode result = new VersionParenExpressionAstNode;
+            result.expression = voe;
+            advance();
+            return result;
+        }
+        else return null;
+    }
+
+    /**
+     * Parses a VersionOrExpression.
+     *
+     * Returns: a $(D VersionOrExpressionAstNode) on success, $(D null) otherwise.
+     */
+    VersionOrExpressionAstNode parseVersionOrExpression()
+    {
+        if (VersionAndExpressionAstNode vae = parseVersionAndExpression())
+        {
+            VersionOrExpressionAstNode result = new VersionOrExpressionAstNode;
+            result.leftExpression = vae;
+            if (current.isTokPipe)
+            {
+                advance();
+                if (VersionOrExpressionAstNode voe = parseVersionOrExpression())
+                {
+                    result.rightExpression = voe;
+                    return result;
+                }
+                else return null;
+            }
+            else return result;
+        }
+        else return null;
+    }
+
+    /**
+     * Parses a VersionAndExpression.
+     *
+     * Returns: a $(D VersionAndExpressionAstNode) on success, $(D null) otherwise.
+     */
+    VersionAndExpressionAstNode parseVersionAndExpression()
+    {
+        if (VersionPrimaryExpressionAstNode vpe = parseVersionPrimaryExpression())
+        {
+            VersionAndExpressionAstNode result = new VersionAndExpressionAstNode;
+            result.leftExpression = vpe;
+            if (current.isTokAmp)
+            {
+                advance();
+                if (VersionAndExpressionAstNode vae = parseVersionAndExpression())
+                {
+                    result.rightExpression = vae;
+                    return result;
+                }
+                else return null;
+            }
+            else return result;
+        }
+        else return null;
+    }
+
+    /**
+     * Parses a VersionPrimaryExpression.
+     *
+     * Returns: a $(D VersionPrimaryExpressionAstNode) on success, $(D null) otherwise.
+     */
+    VersionPrimaryExpressionAstNode parseVersionPrimaryExpression()
+    {
+        if (current.isTokIdentifier)
+        {
+            VersionPrimaryExpressionAstNode result = new VersionPrimaryExpressionAstNode;
+            result.identifier = current;
+            advance();
+            if (current.isTokRightParen || current.isTokPipe || current.isTokAmp)
+            {
+                return result;
+            }
+            else
+            {
+                unexpected();
+                return null;
+            }
+        }
+        else if (current.isTokLeftParen)
+        {
+            if (VersionParenExpressionAstNode vpe = parseVersionParenExpression())
+            {
+                VersionPrimaryExpressionAstNode result = new VersionPrimaryExpressionAstNode;
+                result.parenExpression = vpe;
+                return result;
+            }
+            else return null;
+        }
+        else
+        {
+            parseError("expected an identifier or `(`");
+            return null;
+        }
+    }
+
+    /**
      * Parses a Statement.
      *
      * Returns: a $(D StatementAstNode) on success, $(D null) otherwise.
@@ -2320,6 +2485,16 @@ private:
             {
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.akaDeclaration = ad;
+                return result;
+            }
+            else return null;
+        }
+        case version_:
+        {
+            if (VersionBlockDeclarationAstNode decl = parseVersionBlockDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.versionBlockDeclaration = decl;
                 return result;
             }
             else return null;
@@ -4429,6 +4604,94 @@ unittest // initializer
     assertNotParse(q{
         unit a;
         const auto a = 0,1],[2,3]];
+    });
+}
+
+unittest // version
+{
+    assertParse(q{
+        unit a;
+        version(a) const s8 b;
+    });
+    assertNotParse(q{
+        unit a;
+        version a) const s8 b;
+    });
+    assertNotParse(q{
+        unit a;
+        version (a const s8 b;
+    });
+    assertParse(q{
+        unit a;
+        version(a) const s8 b; else const s16 b;
+    });
+    assertParse(q{
+        unit a;
+        version(a | b) const s8 c;
+    });
+    assertNotParse(q{
+        unit a;
+        version(a |) const s8 c;
+    });
+    assertParse(q{
+        unit a;
+        version(a & b) const s8 c;
+    });
+    assertNotParse(q{
+        unit a;
+        version(a &) const s8 c;
+    });
+    assertNotParse(q{
+        unit a;
+        version(&) const s8 c;
+    });
+    assertNotParse(q{
+        unit a;
+        version const s8 c;
+    });
+    assertParse(q{
+        unit a;
+        version(a & b | c) const s8 d;
+    });
+    assertParse(q{
+        unit a;
+        version(a | b & c) const s8 d;
+    });
+    assertParse(q{
+        unit a;
+        version((a | b) & c) const s8 d;
+    });
+    assertParse(q{
+        unit a;
+        version((a | b) & (c)) const s8 d;
+    });
+    assertParse(q{
+        unit a;
+        version((a | b) & (c | d)) const s8 e;
+    });
+    assertParse(q{
+        unit a;
+        version(a) {const s8 b;} else {const s16 b;}
+    });
+    assertNotParse(q{
+        unit a;
+        version() {const s8 b;}
+    });
+    assertNotParse(q{
+        unit a;
+        version(a & ;) {const s8 b;}
+    });
+    assertNotParse(q{
+        unit a;
+        version(a & ()) {const s8 b;}
+    });
+    assertNotParse(q{
+        unit a;
+        version(a) const
+    });
+    assertNotParse(q{
+        unit a;
+        version(a) {const s8 b;} else const
     });
 }
 

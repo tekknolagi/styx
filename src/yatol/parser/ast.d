@@ -98,6 +98,11 @@ class AstVisitor
     void visit(UnitContainerAstNode node){node.accept(this);}
     void visit(VariableDeclarationAstNode node){node.accept(this);}
     void visit(VariableDeclarationItemAstNode node){node.accept(this);}
+    void visit(VersionBlockDeclarationAstNode node){node.accept(this);}
+    void visit(VersionAndExpressionAstNode node){node.accept(this);}
+    void visit(VersionOrExpressionAstNode node){node.accept(this);}
+    void visit(VersionParenExpressionAstNode node){node.accept(this);}
+    void visit(VersionPrimaryExpressionAstNode node){node.accept(this);}
     void visit(WhileStatementAstNode node){node.accept(this);}
 }
 
@@ -156,6 +161,11 @@ class AstVisitorNone: AstVisitor
     override void visit(UnitContainerAstNode node){node.accept(this);}
     override void visit(VariableDeclarationAstNode node){}
     override void visit(VariableDeclarationItemAstNode node){}
+    override void visit(VersionBlockDeclarationAstNode node){}
+    override void visit(VersionAndExpressionAstNode node){}
+    override void visit(VersionOrExpressionAstNode node){}
+    override void visit(VersionParenExpressionAstNode node){}
+    override void visit(VersionPrimaryExpressionAstNode node){}
     override void visit(WhileStatementAstNode node){}
 }
 
@@ -511,8 +521,10 @@ final class DeclarationAstNode: AstNode
     BlockStatementAstNode declarationBlock;
     /// Assigned if this declaration is a VariableDeclaration.
     VariableDeclarationAstNode variableDeclaration;
-    /// Assigned if this declaration is an akaDeclaration.
+    /// Assigned if this declaration is an AkaDeclaration.
     AkaDeclarationAstNode akaDeclaration;
+    /// Assigned if this declaration is an VersionBlockDeclaration.
+    VersionBlockDeclarationAstNode versionBlockDeclaration;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -536,6 +548,8 @@ final class DeclarationAstNode: AstNode
             visitor.visit(variableDeclaration);
         else if (akaDeclaration)
             visitor.visit(akaDeclaration);
+        else if (versionBlockDeclaration)
+            visitor.visit(versionBlockDeclaration);
     }
 }
 
@@ -1050,6 +1064,89 @@ final class UnitContainerAstNode: AstNode
         if (mainUnit)
             visitor.visit(mainUnit);
         virtualUnits.each!(a => visitor.visit(a));
+    }
+}
+
+/// VersionBlockDeclaration
+final class VersionBlockDeclarationAstNode: AstNode
+{
+    /// Defines the version(s) for the block or single statement.
+    VersionParenExpressionAstNode versionExpression;
+    /// The block or single statement when the versionExpression is verified.
+    SingleStatementOrBlockAstNode trueDeclarationOrBlock;
+    /// The block or single statement when the versionExpression is not verified.
+    SingleStatementOrBlockAstNode falseDeclarationOrBlock;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (versionExpression)
+            visitor.visit(versionExpression);
+        if (trueDeclarationOrBlock)
+            visitor.visit(trueDeclarationOrBlock);
+        if (falseDeclarationOrBlock)
+            visitor.visit(falseDeclarationOrBlock);
+    }
+}
+
+/// VersionParenExpression
+final class VersionParenExpressionAstNode: AstNode
+{
+    /// The expression between parens.
+    VersionOrExpressionAstNode expression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (expression)
+            visitor.visit(expression);
+    }
+}
+
+/// VersionOrExpression
+final class VersionOrExpressionAstNode: AstNode
+{
+    /// The LHS or the andExpression when no rightExpression.
+    VersionAndExpressionAstNode leftExpression;
+    /// The RHS, when assigned there's a pipe operator.
+    VersionOrExpressionAstNode rightExpression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (leftExpression)
+            visitor.visit(leftExpression);
+        if (rightExpression)
+            visitor.visit(rightExpression);
+    }
+}
+
+/// VersionAndExpression
+final class VersionAndExpressionAstNode: AstNode
+{
+    /// The LHS or the primary when no rightExpression.
+    VersionPrimaryExpressionAstNode leftExpression;
+    /// The RHS, when assigned there's an ampersand operator.
+    VersionAndExpressionAstNode rightExpression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (leftExpression)
+            visitor.visit(leftExpression);
+        if (rightExpression)
+            visitor.visit(rightExpression);
+    }
+}
+
+/// VersionPrimaryExpression
+final class VersionPrimaryExpressionAstNode: AstNode
+{
+    /// Assigned when the primary expression is an identifier.
+    Token* identifier;
+    /// Assigned when the primary expression is a paren expression.
+    VersionParenExpressionAstNode parenExpression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (parenExpression)
+            visitor.visit(parenExpression);
     }
 }
 

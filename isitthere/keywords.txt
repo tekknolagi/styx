@@ -25,6 +25,7 @@ switch
 true
 unit
 var
+version
 virtual
 while
 
