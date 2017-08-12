@@ -98,6 +98,12 @@ private:
     }
 
     pragma(inline, true)
+    bool canLookup2()
+    {
+        return _front + 1 < _back;
+    }
+
+    pragma(inline, true)
     char* lookup()
     {
         return _front + 1;
@@ -446,6 +452,13 @@ public:
                     lexLineComment();
                 else if (canLookup && *lookup() == '*')
                     lexStarComment();
+                else if (canLookup && *lookup() == '=')
+                {
+                    anticipateToken(TokenType.divEqual);
+                    advance();
+                    advance();
+                    validateToken();
+                }
                 else
                 {
                     anticipateToken(TokenType.div);
@@ -489,6 +502,13 @@ public:
                         advance();
                         validateToken();
                     }
+                    else if (*lookup() == '=')
+                    {
+                        anticipateToken(TokenType.minusEqual);
+                        advance();
+                        advance();
+                        validateToken();
+                    }
                     else
                     {
                         anticipateToken(TokenType.minus);
@@ -512,6 +532,11 @@ public:
                     anticipateToken(TokenType.andAnd);
                     advance();
                 }
+                else if (canLookup() && *lookup() == '=')
+                {
+                    anticipateToken(TokenType.ampEqual);
+                    advance();
+                }
                 else
                 {
                     anticipateToken(TokenType.amp);
@@ -525,6 +550,11 @@ public:
                     anticipateToken(TokenType.orOr);
                     advance();
                 }
+                else if (canLookup() && *lookup() == '=')
+                {
+                    anticipateToken(TokenType.pipeEqual);
+                    advance();
+                }
                 else
                 {
                     anticipateToken(TokenType.pipe);
@@ -533,36 +563,70 @@ public:
                 validateToken();
                 continue;
             case '+':
-                anticipateToken(TokenType.plus);
                 if (canLookup() && *lookup() == '+')
                 {
+                    anticipateToken(TokenType.plusPlus);
                     advance();
+                }
+                else if (canLookup() && *lookup() == '=')
+                {
+                    anticipateToken(TokenType.plusEqual);
                     advance();
-                    validateToken(TokenType.plusPlus);
                 }
                 else
                 {
-                    advance();
-                    validateToken();
+                    anticipateToken(TokenType.plus);
                 }
-                continue;
-            case '@':
-                anticipateToken(TokenType.at);
                 advance();
                 validateToken();
                 continue;
             case '*':
-                anticipateToken(TokenType.mul);
+                if (canLookup() && *lookup() == '=')
+                {
+                    anticipateToken(TokenType.mulEqual);
+                    advance();
+                }
+                else
+                {
+                    anticipateToken(TokenType.mul);
+                }
+                advance();
+                validateToken();
+                continue;
+            case '%':
+                if (canLookup() && *lookup() == '=')
+                {
+                    anticipateToken(TokenType.modEqual);
+                    advance();
+                }
+                else
+                {
+                    anticipateToken(TokenType.mod);
+                }
                 advance();
                 validateToken();
                 continue;
             case '^':
-                anticipateToken(TokenType.xor);
+                if (canLookup() && *lookup() == '=')
+                {
+                    anticipateToken(TokenType.xorEqual);
+                    advance();
+                }
+                else
+                {
+                    anticipateToken(TokenType.xor);
+                }
                 advance();
                 validateToken();
                 continue;
             case '>':
-                if (canLookup() && *lookup() == '=')
+                if (canLookup2() && (lookup())[0..2] == ">=")
+                {
+                    anticipateToken(TokenType.rshiftEqual);
+                    advance();
+                    advance();
+                }
+                else if (canLookup() && *lookup() == '=')
                 {
                     anticipateToken(TokenType.greaterEqual);
                     advance();
@@ -580,7 +644,13 @@ public:
                 validateToken();
                 continue;
             case '<':
-                if (canLookup() && *lookup() == '=')
+                if (canLookup2() && (lookup())[0..2] == "<=")
+                {
+                    anticipateToken(TokenType.lshiftEqual);
+                    advance();
+                    advance();
+                }
+                else if (canLookup() && *lookup() == '=')
                 {
                     anticipateToken(TokenType.lesserEqual);
                     advance();
@@ -615,6 +685,11 @@ public:
                     advance();
                     validateToken();
                 }
+                continue;
+            case '@':
+                anticipateToken(TokenType.at);
+                advance();
+                validateToken();
                 continue;
             case ';':
                 anticipateToken(TokenType.semiColon);
@@ -679,29 +754,23 @@ public:
                 advance();
                 validateToken();
                 continue;
-            case '%':
-                anticipateToken(TokenType.mod);
-                advance();
-                validateToken();
-                continue;
             case '$':
                 anticipateToken(TokenType.dollar);
                 advance();
                 validateToken();
                 continue;
             case '=':
-                anticipateToken(TokenType.equal);
                 if (canLookup() && *lookup() == '=')
                 {
+                    anticipateToken(TokenType.equalEqual);
                     advance();
-                    advance();
-                    validateToken(TokenType.equalEqual);
                 }
                 else
                 {
-                    advance();
-                    validateToken();
+                    anticipateToken(TokenType.equal);
                 }
+                advance();
+                validateToken();
                 continue;
             default:
                 anticipateToken(TokenType.invalid);
@@ -1403,5 +1472,125 @@ unittest
     assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokStringLiteral);
     assert(lx.tokens[0].rawText == source[1..$-1]);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `a+=`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[1].isTokPlusEqual);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `a-=`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[1].isTokMinusEqual);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `a*=`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[1].isTokMulEqual);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `a/=`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[1].isTokDivEqual);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `a%=`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[1].isTokModEqual);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `a&=`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[1].isTokAmpEqual);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `a|=`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[1].isTokPipeEqual);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `a^=`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[1].isTokXorEqual);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `a<<=`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[1].isTokLeftShiftEqual);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `a>>=`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[1].isTokRightShiftEqual);
 }
 

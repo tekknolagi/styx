@@ -183,7 +183,7 @@ Yatol:
 ################################################################################
 # Composites expressions
 
-    AssignExpression    < Expression Equal AssignExpression
+    AssignExpression    < Expression AssignOperator AssignExpression
                         / Expression
 
     Expression  < BinaryExpression
@@ -298,6 +298,8 @@ Yatol:
 
     DollarKw <~Dollar Keyword
 
+    AssignOperator < Equal / DivEqual / MulEqual / ModEqual / MinusEqual / PlusEqual / AmpEqual / XorEqual / PipeEqual / LShiftEqual / RShiftEqual
+
     Operator < RelOperator / Mul / Div / Mod / Plus / Minus / LShift / RShift / Amp / Pipe / Xor
 
     RelOperator < EqualEqual
@@ -330,6 +332,18 @@ Yatol:
     HexAlpha    <- [a-fA-F]
     Alpha       <- [a-zA-Z_]
 
+    Equal       <- '='
+    DivEqual    <- '/='
+    MulEqual    <- '*='
+    ModEqual    <- '%='
+    MinusEqual  <- '-='
+    PlusEqual   <- '+='
+    AmpEqual    <- '&='
+    XorEqual    <- '^='
+    PipeEqual   <- '|='
+    LShiftEqual <- '<<='
+    RShiftEqual <- '>>='
+
     Div         <- '/'
     Mul         <- '*'
     Mod         <- '%'
@@ -345,7 +359,6 @@ Yatol:
     RightCurly  <- '}'
     Minus       <- '-'
     Plus        <- '+'
-    Equal       <- '='
     At          <- '@'
     Bang        <- '!'
     Amp         <- '&'

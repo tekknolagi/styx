@@ -1608,7 +1608,7 @@ private:
             {
                 return result;
             }
-            else if (current.isTokEqual)
+            else if (current.isTokAssignOperator)
             {
                 result.operator = current();
                 advance();
@@ -1688,7 +1688,8 @@ private:
                     be.operator = old_RO;
                     be.right = old_RR;
                 }
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal) ||
+                    current.isTokAssignOperator)
                 {
                     return result;
                 }
@@ -1708,7 +1709,8 @@ private:
                 ExpressionAstNode result = new ExpressionAstNode;
                 result.unaryExpression = u;
                 u.position = current.position;
-                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal))
+                if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal) ||
+                    current.isTokAssignOperator)
                 {
                     return result;
                 }
@@ -3334,6 +3336,24 @@ unittest
             a = b + c * d;
         }
     }, true);
+}
+
+unittest
+{
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            a += b;
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            *a + 8 += b;
+        }
+    });
 }
 
 unittest // cover error cases for: postfix exp and call params

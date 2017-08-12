@@ -74,7 +74,6 @@ enum TokenType : ubyte
     colon,
     comma,
     dot,
-    equal,
     semiColon,
     leftCurly,
     leftParen,
@@ -86,6 +85,18 @@ enum TokenType : ubyte
     dollar,
     dotDot,
     ellipsis,
+    // assign
+    equal,
+    mulEqual,
+    divEqual,
+    modEqual,
+    plusEqual,
+    minusEqual,
+    ampEqual,
+    pipeEqual,
+    xorEqual,
+    lshiftEqual,
+    rshiftEqual,
     // relational
     equalEqual,
     notEqual,
@@ -181,7 +192,6 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     ":",
     ",",
     ".",
-    "=",
     ";",
     "{",
     "(",
@@ -193,6 +203,18 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     "$",
     "..",
     "...",
+    // assign
+    "=",
+    "*=",
+    "/=",
+    "%=",
+    "+=",
+    "-=",
+    "&=",
+    "|=",
+    "^=",
+    "<<=",
+    ">>=",
     // relational
     "==",
     "!=",
@@ -259,6 +281,11 @@ static immutable TokenType lastOperator = TokenType.xor;
 static immutable TokenType firstNumberLiteral = TokenType.intLiteral;
 /// The $(D TokenType) of the last number literal.
 static immutable TokenType lastNumberLiteral = TokenType.hexLiteral;
+
+/// The $(D TokenType) of the first assignement operator.
+static immutable TokenType firstAssignOperator = TokenType.equal;
+/// The $(D TokenType) of the last assignement operator.
+static immutable TokenType lastAssignOperator = TokenType.rshiftEqual;
 
 /**
  * Hashset that allows to distinguish efficiently the identifiers
@@ -572,6 +599,9 @@ public:
     bool isTokDiv() const {return type == TokenType.div;}
 
     /// Conveniance function used by the parser.
+    bool isTokDivEqual() const {return type == TokenType.divEqual;}
+
+    /// Conveniance function used by the parser.
     bool isTokClass() const {return type == TokenType.class_;}
 
     /// Conveniance function used by the parser.
@@ -585,6 +615,9 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokMul() const {return type == TokenType.mul;}
+
+    /// Conveniance function used by the parser.
+    bool isTokMulEqual() const {return type == TokenType.mulEqual;}
 
     /// Conveniance function used by the parser.
     bool isTokInterface() const {return type == TokenType.interface_;}
@@ -605,16 +638,31 @@ public:
     bool isTokMinus() const {return type == TokenType.minus;}
 
     /// Conveniance function used by the parser.
+    bool isTokMinusEqual() const {return type == TokenType.minusEqual;}
+
+    /// Conveniance function used by the parser.
     bool isTokPlus() const {return type == TokenType.plus;}
+
+    /// Conveniance function used by the parser.
+    bool isTokPlusEqual() const {return type == TokenType.plusEqual;}
 
     /// Conveniance function used by the parser.
     bool isTokLeftShift() const {return type == TokenType.lShift;}
 
     /// Conveniance function used by the parser.
+    bool isTokLeftShiftEqual() const {return type == TokenType.lshiftEqual;}
+
+    /// Conveniance function used by the parser.
     bool isTokRightShift() const {return type == TokenType.rShift;}
 
     /// Conveniance function used by the parser.
+    bool isTokRightShiftEqual() const {return type == TokenType.rshiftEqual;}
+
+    /// Conveniance function used by the parser.
     bool isTokXor() const {return type == TokenType.xor;}
+
+    /// Conveniance function used by the parser.
+    bool isTokXorEqual() const {return type == TokenType.xorEqual;}
 
     /// Conveniance function used by the parser.
     bool isTokAt() const {return type == TokenType.at;}
@@ -657,6 +705,9 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokAmp() const {return type == TokenType.amp;}
+
+    /// Conveniance function used by the parser.
+    bool isTokAmpEqual() const {return type == TokenType.ampEqual;}
 
     /// Conveniance function used by the parser.
     bool isTokPlusPlus() const {return type == TokenType.plusPlus;}
@@ -704,6 +755,9 @@ public:
     bool isTokPipe() const {return type == TokenType.pipe;}
 
     /// Conveniance function used by the parser.
+    bool isTokPipeEqual() const {return type == TokenType.pipeEqual;}
+
+    /// Conveniance function used by the parser.
     bool isTokAka() const {return type == TokenType.aka;}
 
     /// Conveniance function used by the parser.
@@ -741,6 +795,9 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokMod() const {return type == TokenType.mod;}
+
+    /// Conveniance function used by the parser.
+    bool isTokModEqual() const {return type == TokenType.modEqual;}
 
     /// Conveniance function used by the parser.
     bool isTokQmark() const {return type == TokenType.qmark;}
@@ -786,6 +843,12 @@ public:
     {
         return type == TokenType.true_ || type == TokenType.false_ ||
             type == TokenType.null_;
+    }
+
+    /// Conveniance function used by the parser.
+    bool isTokAssignOperator() const
+    {
+        return firstAssignOperator <= type && type <= lastAssignOperator;
     }
 }
 

@@ -91,6 +91,9 @@ enum source1 = `
         version(a1 | a2 & a3) const int a1or_a2anda3 = 8;
         version(a1 | a2 & a3 | a4) const int a1or_a2anda3_ora4 = 8;
         version(a1 | a2 & (a3 | a4)) const int a1or_a2and_a3ora4 = 8;
+
+        a += b;
+        a *= b = c;
     }
 
     enum A

@@ -760,7 +760,7 @@ final class AssignExpressionAstNode: AstNode
 {
     /// The equal LHS.
     ExpressionAstNode left;
-    ///The assignation operator
+    ///The assignement operator
     Token* operator;
     /// The equal RHS.
     AssignExpressionAstNode right;
