@@ -4801,7 +4801,7 @@ unittest // initializer
         unit a;
         const auto a = ;
     });
-    /*assertParse(q{
+    assertParse(q{
         unit a;
         function foo()
         {
@@ -4816,7 +4816,7 @@ unittest // initializer
             var s8[] a;
             a = [const
         }
-    });*/
+    });
 }
 
 unittest // version
