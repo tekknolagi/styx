@@ -136,10 +136,7 @@ Yatol:
                 / BreakStatement
                 / BlockStatement
                 / SwitchStatement
-#               / OnStatement
-#               / TryStatement
-#               / OnTriedStatement
-#               / FinallyStatement
+                / TryOnFinallyStatement
 
     EmptyStatment < Semicolon
 
@@ -179,6 +176,14 @@ Yatol:
 
     SingleOrRangeExpression < RangeExpression
                             / Expression
+
+    TryOnFinallyStatement < Try SingleStatementOrBlock OnExceptionStatement* FinallyStatement?
+
+    OnExceptionInstance < Type Identifier
+
+    OnExceptionStatement < On LeftParen OnExceptionInstance (Comma OnExceptionInstance)* RightParen SingleStatementOrBlock
+
+    FinallyStatement < Finally SingleStatementOrBlock
 
 ################################################################################
 # Composites expressions
@@ -408,6 +413,8 @@ Yatol:
             / Enum
             / ValueKeyword
             / Version
+            / Try
+            / Finally
 
     ValueKeyword    < Null
                     / False
@@ -458,6 +465,8 @@ Yatol:
     Null    <- "null"
     Enum    <- "enum"
     Version <- "version"
+    Try     <- "try"
+    Finally <- "finally"
 
     SREG    <- "sreg"
     UREG    <- "ureg"

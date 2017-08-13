@@ -7,6 +7,7 @@ continue
 else
 enum
 false
+finally
 foreach
 function
 if
@@ -23,6 +24,7 @@ struct
 super
 switch
 true
+try
 unit
 var
 version

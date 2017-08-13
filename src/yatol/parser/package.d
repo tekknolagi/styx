@@ -2,7 +2,7 @@
 /**
  * YATOL parser.
  *
- * to maintain unittest coverage: 99%
+ * to maintain unittest coverage: 100% - 1LOC
  **/
 module yatol.parser;
 
@@ -711,6 +711,143 @@ private:
             else return null;
         }
         assert(current.isTokRightCurly);
+        advance();
+        return result;
+    }
+
+    /**
+     * Parses a TryStatement.
+     *
+     * Returns:
+     *      On success a $(D TryStatementAstNode) otherwise $(D null).
+     */
+    TryOnFinallyStatementAstNode parseTryOnFinallyStatement()
+    {
+        assert(current.isTokTry);
+        TryOnFinallyStatementAstNode result = new TryOnFinallyStatementAstNode;
+        result.position = current.position;
+        advance();
+        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+        {
+            result.triedStatementOrBlock = ssob;
+        }
+        else return null;
+        while (current.isTokOn)
+        {
+            if (OnExceptionStatementAstNode oes = parseOnExceptionStatemtent())
+            {
+                result.exceptionStatements ~= oes;
+            }
+            else
+            {
+                parseError("invalid on exception statement");
+                return null;
+            }
+        }
+        if (current.isTokFinally)
+        {
+            advance();
+            if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+            {
+                result.finalStatementOrBlock = ssob;
+            }
+            else return null;
+        }
+        return result;
+    }
+
+    /**
+     * Parses an OnExceptionStatemtent.
+     *
+     * Returns:
+     *      On success a $(D OnExceptionStatemtentAstNode) otherwise $(D null).
+     */
+    OnExceptionStatementAstNode parseOnExceptionStatemtent()
+    {
+        assert(current.isTokOn);
+        OnExceptionStatementAstNode result = new OnExceptionStatementAstNode;
+        result.position = current.position();
+        advance();
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        advance();
+        if (current.isTokRightParen)
+        {
+            parseError("expected at least one on exception instance");
+            return null;
+        }
+        while (true)
+        {
+            if (OnExceptionInstanceAstNode oei = parseOnExceptionInstance())
+            {
+                result.exceptionsInstances ~= oei;
+            }
+            else
+            {
+                parseError("invalid exception instance");
+                return null;
+            }
+            if (current.isTokComma)
+            {
+                advance();
+                continue;
+            }
+            else if (current.isTokRightParen)
+            {
+                advance();
+                break;
+            }
+            else
+            {
+                unexpected();
+                return null;
+            }
+        }
+        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+        {
+            result.exceptionsStatementorBlock = ssob;
+            return result;
+        }
+        else
+        {
+            parseError("invalid on exception statement");
+            return null;
+        }
+    }
+
+    /**
+     * Parses an OnExceptionInstance.
+     *
+     * Returns:
+     *      On success a $(D OnExceptionInstanceAstNode) otherwise $(D null).
+     */
+    OnExceptionInstanceAstNode parseOnExceptionInstance()
+    {
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        OnExceptionInstanceAstNode result = new OnExceptionInstanceAstNode;
+        result.position = current.position();
+        if (TypeAstNode t = parseType())
+        {
+            result.exceptionType = t;
+        }
+        else
+        {
+            parseError("invalid on exception type");
+            return null;
+        }
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        result.identifier = current();
         advance();
         return result;
     }
@@ -2363,6 +2500,20 @@ private:
                 return null;
             }
         }
+        case try_:
+        {
+            if (TryOnFinallyStatementAstNode tofs = parseTryOnFinallyStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.tryOnFinallyStatement = tofs;
+                return result;
+            }
+            else
+            {
+                parseError("invalid try statement");
+                return null;
+            }
+        }
         case leftCurly:
         {
             advance();
@@ -2607,7 +2758,7 @@ unittest
     lx.setSourceFromText(source, __FILE__, line + 1, 1);
     lx.lex;
     Parser prs = Parser(&lx);
-    const TypeAstNode tan = prs.parseCustomNode!TypeAstNode;
+    const TypeAstNode tan = prs.parseCustomNode!TypeAstNode();
     assert(tan);
 }
 
@@ -2620,7 +2771,7 @@ unittest
     lx.setSourceFromText(source, __FILE__, line + 1, 1);
     lx.lex;
     Parser prs = Parser(&lx);
-    const TypeModifierAstNode tman = prs.parseCustomNode!TypeModifierAstNode;
+    const TypeModifierAstNode tman = prs.parseCustomNode!TypeModifierAstNode();
     assert(!tman);
 }
 
@@ -2633,7 +2784,7 @@ unittest
     lx.setSourceFromText(source, __FILE__, line + 1, 1);
     lx.lex;
     Parser prs = Parser(&lx);
-    const TypeAstNode tan = prs.parseCustomNode!TypeAstNode;
+    const TypeAstNode tan = prs.parseCustomNode!TypeAstNode();
     assert(!tan);
 }
 
@@ -4728,6 +4879,142 @@ unittest // version
     assertNotParse(q{
         unit a;
         version(a) {const s8 b;} else const
+    });
+}
+
+unittest // try
+{
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            try something();
+            on(Error e) doThat();
+            finally doThis();
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            try something();
+            finally doThis();
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            try something();
+            on(Error e, Oops o){doThat();doThat();}
+            finally doThis();
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            try {something();}
+            on(Error e, Oops o){doThat();doThat();}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            try finally doThis();
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            try something();
+            on ();
+            finally doThis();
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            try something();
+            on (E,K);
+            finally doThis();
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            try const
+            on (E,K);
+            finally doThis();
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            try this();
+            on (E e) const
+            finally doThis();
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            try thjis();
+            on (E e) doThat();
+            finally const
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            try this();
+            on E e) doThat();
+            finally doThis();
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            try this();
+            on (E e doThat();
+            finally doThis();
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            try this();
+            on (const e) doThat();
+            finally doThis();
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            try thise();
+            on (E.const e) doThat();
+            finally doThis();
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            try doThis();
+            on (E e) handleE();
+            on (F f) handleF();
+            finally doThis();
+        }
     });
 }
 

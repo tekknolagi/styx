@@ -33,6 +33,7 @@ enum TokenType : ubyte
     else_,
     enum_,
     false_,
+    finally_,
     foreach_,
     function_,
     if_,
@@ -48,6 +49,7 @@ enum TokenType : ubyte
     struct_,
     switch_,
     true_,
+    try_,
     unit,
     var,
     version_,
@@ -151,6 +153,7 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     "else",
     "enum",
     "false",
+    "finally",
     "foreach",
     "function",
     "if",
@@ -166,6 +169,7 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     "struct",
     "switch",
     "true",
+    "try",
     "unit",
     "var",
     "version",
@@ -296,22 +300,22 @@ struct Keywords
 
 private:
 
-/*
-        rendered on 2017-Apr-20 08:16:26.2478601 by IsItThere.
+    /*
+        rendered on 2017-Aug-13 16:54:32.0581152 by IsItThere.
          - PRNG seed: 6574
-         - map length: 64
+         - map length: 128
          - case sensitive: true
     */
 
-    static const string[64] _words = ["", "", "virtual", "", "", "foreach", "", "const", "u16", "function", "u32", "continue", "null", "super", "s8", "unit", "enum", "", "false", "import", "", "in", "version", "ureg", "on", "u64", "", "", "auto", "s16", "static", "s32", "", "protection", "f32", "", "return", "aka", "else", "", "while", "", "struct", "class", "sreg", "", "s64", "", "is", "f64", "break", "if", "switch", "", "", "", "var", "u8", "", "", "", "bool", "interface", "true"];
+    static const string[128] _words = ["", "protection", "", "f64", "", "s8", "class", "", "finally", "", "try", "", "false", "if", "", "", "", "", "", "", "break", "u64", "", "", "", "", "", "", "", "", "static", "", "return", "", "", "", "", "", "in", "s64", "", "", "", "", "f32", "", "virtual", "", "aka", "is", "", "version", "", "", "", "", "continue", "", "", "", "", "", "u32", "", "", "", "", "var", "", "", "", "u16", "", "", "const", "true", "", "", "", "switch", "s32", "enum", "unit", "", "", "function", "import", "", "", "s16", "foreach", "", "on", "", "", "struct", "interface", "", "", "", "while", "", "", "", "ureg", "", "", "null", "", "", "", "auto", "", "super", "", "u8", "", "", "", "", "else", "", "sreg", "", "", "bool", "", ""];
 
-    static const ubyte[256] _coefficients = [164, 45, 60, 106, 140, 246, 82, 193, 191, 205, 147, 237, 88, 67, 105, 161, 200, 2, 206, 54, 143, 188, 138, 192, 222, 227, 133, 246, 255, 156, 58, 153, 183, 158, 72, 132, 120, 108, 176, 186, 82, 89, 110, 113, 181, 250, 163, 159, 4, 232, 242, 238, 185, 143, 246, 191, 207, 121, 250, 216, 23, 192, 53, 79, 185, 241, 176, 153, 134, 157, 12, 246, 161, 185, 69, 129, 58, 221, 17, 128, 102, 211, 78, 175, 219, 215, 232, 169, 22, 188, 203, 223, 177, 91, 214, 220, 117, 110, 246, 96, 200, 68, 130, 40, 252, 49, 190, 73, 159, 62, 228, 180, 223, 192, 1, 191, 80, 170, 201, 88, 121, 34, 162, 81, 213, 195, 165, 88, 201, 35, 170, 198, 203, 30, 10, 235, 93, 186, 120, 112, 201, 228, 49, 33, 107, 177, 156, 5, 53, 131, 219, 250, 64, 139, 218, 253, 6, 122, 147, 202, 59, 212, 101, 31, 112, 231, 155, 14, 75, 133, 114, 172, 218, 234, 69, 164, 65, 145, 148, 58, 232, 47, 51, 131, 156, 167, 63, 58, 244, 199, 72, 241, 112, 82, 154, 101, 9, 137, 18, 25, 12, 170, 21, 103, 87, 19, 38, 48, 236, 199, 169, 174, 44, 5, 222, 177, 108, 227, 247, 13, 25, 240, 4, 65, 193, 85, 34, 120, 227, 72, 162, 217, 169, 247, 88, 36, 249, 104, 78, 206, 53, 200, 177, 187, 118, 83, 200, 193, 145, 33, 17, 85, 61, 217, 241, 190];
+    static const ubyte[256] _coefficients = [1, 51, 40, 67, 132, 162, 139, 224, 156, 25, 106, 185, 63, 242, 164, 108, 243, 222, 63, 40, 46, 150, 66, 186, 0, 173, 223, 187, 238, 71, 63, 26, 147, 102, 81, 239, 149, 25, 125, 91, 77, 43, 4, 167, 213, 128, 175, 18, 29, 61, 84, 225, 11, 104, 129, 35, 234, 254, 202, 114, 81, 117, 255, 211, 46, 229, 216, 211, 79, 242, 248, 20, 176, 85, 165, 177, 30, 6, 160, 39, 235, 69, 137, 254, 131, 6, 240, 6, 41, 165, 37, 54, 86, 62, 150, 144, 110, 247, 188, 48, 152, 90, 119, 64, 81, 22, 137, 66, 169, 94, 144, 76, 174, 16, 197, 155, 35, 9, 135, 122, 185, 34, 92, 187, 83, 164, 181, 158, 87, 54, 8, 246, 161, 243, 103, 103, 25, 105, 137, 219, 172, 79, 41, 121, 67, 231, 144, 50, 76, 171, 116, 239, 239, 239, 144, 131, 117, 179, 245, 15, 76, 6, 16, 86, 126, 176, 223, 138, 221, 152, 225, 2, 122, 118, 222, 50, 6, 248, 225, 139, 132, 113, 128, 158, 183, 190, 226, 75, 98, 56, 188, 17, 115, 121, 99, 228, 193, 200, 184, 170, 246, 135, 51, 120, 6, 165, 251, 222, 227, 165, 150, 202, 99, 86, 179, 100, 219, 196, 93, 15, 40, 167, 31, 174, 53, 168, 153, 166, 13, 185, 185, 109, 155, 173, 246, 233, 69, 35, 179, 196, 136, 149, 253, 70, 199, 237, 18, 240, 115, 106, 173, 8, 4, 11, 157, 1];
 
     static string generateFilledTable()
     {
         import std.algorithm: countUntil;
         import std.conv: to;
-        string result = "static const TokenType[64] _filled = [";
+        string result = "static const TokenType[128] _filled = [";
         foreach(w; _words)
         {
             ptrdiff_t index = tokenStringTable[].countUntil(w);
@@ -333,7 +337,7 @@ private:
         {
             result += _coefficients[word[i]];
         }
-        return result % 64;
+        return result % 128;
     }
 
 public:
@@ -804,6 +808,12 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokVersion() const {return type == TokenType.version_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokTry() const {return type == TokenType.try_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokFinally() const {return type == TokenType.finally_;}
 
     /// Conveniance function used by the parser.
     bool isTokUnaryPrefix() const

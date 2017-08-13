@@ -94,6 +94,32 @@ enum source1 = `
 
         a += b;
         a *= b = c;
+
+        try
+            call();
+        on(FileError fe, OptionError oe)
+            cleanup1();
+        on(StreamError se)
+            cleanup2();
+        finally
+            alwaysDoThis();
+
+        try
+        {
+            try
+                call();
+            on(FileError fe, OptionError oe)
+                cleanup1();
+            on(StreamError se)
+                cleanup2();
+            finally
+                alwaysDoThis();
+        }
+        finally
+        {
+            return 0;
+        }
+
     }
 
     enum A

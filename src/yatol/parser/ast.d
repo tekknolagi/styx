@@ -78,6 +78,8 @@ class AstVisitor
     void visit(IndexExpressionAstNode node){node.accept(this);}
     void visit(InitializerAstNode node){node.accept(this);}
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
+    void visit(OnExceptionInstanceAstNode node){node.accept(this);}
+    void visit(OnExceptionStatementAstNode node){node.accept(this);}
     void visit(OnMatchStatementAstNode node){node.accept(this);}
     void visit(ParenExpressionAstNode node){node.accept(this);}
     void visit(PostfixExpressionAstNode node){node.accept(this);}
@@ -91,6 +93,7 @@ class AstVisitor
     void visit(StructDeclarationAstNode node){node.accept(this);}
     void visit(SwitchStatementAstNode node){node.accept(this);}
     void visit(Token* token){}
+    void visit(TryOnFinallyStatementAstNode node){node.accept(this);}
     void visit(TypeAstNode node){node.accept(this);}
     void visit(TypeModifierAstNode node){node.accept(this);}
     void visit(UnaryExpressionAstNode node){node.accept(this);}
@@ -142,6 +145,8 @@ class AstVisitorNone: AstVisitor
     override void visit(IndexExpressionAstNode node){}
     override void visit(InitializerAstNode node){}
     override void visit(InterfaceDeclarationAstNode node){}
+    override void visit(OnExceptionInstanceAstNode node){}
+    override void visit(OnExceptionStatementAstNode node){}
     override void visit(OnMatchStatementAstNode node){}
     override void visit(ParenExpressionAstNode node){}
     override void visit(PostfixExpressionAstNode node){}
@@ -154,6 +159,7 @@ class AstVisitorNone: AstVisitor
     override void visit(StatementAstNode node){}
     override void visit(StructDeclarationAstNode node){}
     override void visit(SwitchStatementAstNode node){}
+    override void visit(TryOnFinallyStatementAstNode node){}
     override void visit(TypeAstNode node){}
     override void visit(TypeModifierAstNode node){}
     override void visit(UnaryExpressionAstNode node){}
@@ -183,7 +189,7 @@ class AstNode
     /// Set $(D true) if this node represents something protected.
     @Semantic bool isProtected;
     /// Set to a non null value if this node has a matching type.
-    @Semantic TypeAstNode type;
+    //@Semantic TypeAstNode type;
 }
 
 
@@ -919,6 +925,8 @@ final class StatementAstNode: AstNode
     ForeachStatementAstNode foreachStatement;
     /// Assigned if this statement is a SwitchStatement.
     SwitchStatementAstNode switchStatement;
+    /// Assigned if this statement is a TryStatement.
+    TryOnFinallyStatementAstNode tryOnFinallyStatement;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -942,6 +950,8 @@ final class StatementAstNode: AstNode
             visitor.visit(foreachStatement);
         else if (switchStatement)
             visitor.visit(switchStatement);
+        else if (tryOnFinallyStatement)
+            visitor.visit(tryOnFinallyStatement);
     }
 }
 
@@ -978,6 +988,56 @@ final class FunctionParameterGroupAstNode: AstNode
     {
         if (type)
             visitor.visit(type);
+    }
+}
+
+/// TryStatement
+final class TryOnFinallyStatementAstNode: AstNode
+{
+    /// The statement to try.
+    SingleStatementOrBlockAstNode triedStatementOrBlock;
+    /// The Exceptions handlers.
+    OnExceptionStatementAstNode[] exceptionStatements;
+    /// The final statement.
+    SingleStatementOrBlockAstNode finalStatementOrBlock;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (triedStatementOrBlock)
+            visitor.visit(triedStatementOrBlock);
+        exceptionStatements.each!(a => visitor.visit(a));
+        if (finalStatementOrBlock)
+            visitor.visit(finalStatementOrBlock);
+    }
+}
+
+/// OnExceptionInstance
+final class OnExceptionInstanceAstNode: AstNode
+{
+    /// The exception type.
+    TypeAstNode exceptionType;
+    /// The instance identifier.
+    Token* identifier;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        visitor.visit(exceptionType);
+    }
+}
+
+/// OnExceptionStatement
+final class OnExceptionStatementAstNode: AstNode
+{
+    /// The list of exceptions for this case.
+    OnExceptionInstanceAstNode[] exceptionsInstances;
+    /// The statement or block for these exceptions.
+    SingleStatementOrBlockAstNode exceptionsStatementorBlock;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        exceptionsInstances.each!(a => visitor.visit(a));
+        if (exceptionsStatementorBlock)
+            visitor.visit(exceptionsStatementorBlock);
     }
 }
 
