@@ -2827,6 +2827,14 @@ unittest
 
 unittest
 {
+    import core.exception: AssertError;
+    import std.exception: assertThrown;
+    assertThrown!AssertError(assertParse(q{unit}));
+    assertThrown!AssertError(assertNotParse(q{unit a;}));
+}
+
+unittest
+{
     assertNotParse(q{
         unit a;
         function bar()
@@ -4624,6 +4632,14 @@ unittest // initializer
     assertNotParse(q{
         unit a;
         const auto a = 0,1],[2,3]];
+    });
+    assertNotParse(q{
+        unit a;
+        const auto a = [;
+    });
+    assertNotParse(q{
+        unit a;
+        const auto a = ;
     });
 }
 
