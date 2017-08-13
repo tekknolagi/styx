@@ -120,6 +120,8 @@ enum source1 = `
             return 0;
         }
 
+        var s8[] b;
+        b = [0:s8,1:s8];
     }
 
     enum A

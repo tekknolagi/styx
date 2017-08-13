@@ -1560,14 +1560,23 @@ private:
     {
         if (!current.isTokSuper && !current.isTokValueKeyword &&
             !current.isTokIdentifier && !current.isTokLiteral &&
-            !current.isTokLeftParen)
+            !current.isTokLeftParen && !current.isTokLeftSquare)
         {
             unexpected();
             return null;
         }
         PrimaryExpressionAstNode result = new PrimaryExpressionAstNode;
         result.position = current.position;
-        if (!current.isTokLeftParen)
+        if (current.isTokLeftSquare)
+        {
+            if (InitializerAstNode i = parseInitializer())
+            {
+                result.arrayLiteral = i;
+                return result;
+            }
+            else return null;
+        }
+        else if (!current.isTokLeftParen)
         {
             result.identifierOrKeywordOrLiteral = current;
             advance();
@@ -1838,7 +1847,7 @@ private:
             }
         }
         else if (current.isTokUnaryPrefix || current.isTokIdentifier ||
-            current.isTokLiteral || current.isTokLeftParen ||
+            current.isTokLiteral || current.isTokLeftParen || current.isTokLeftSquare ||
             current.isTokSuper || current.isTokValueKeyword)
         {
             if (UnaryExpressionAstNode u = parseUnaryExpression())
@@ -4792,6 +4801,22 @@ unittest // initializer
         unit a;
         const auto a = ;
     });
+    /*assertParse(q{
+        unit a;
+        function foo()
+        {
+            var s8[] a;
+            a = [0,1];
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            var s8[] a;
+            a = [const
+        }
+    });*/
 }
 
 unittest // version

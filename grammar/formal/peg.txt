@@ -230,6 +230,7 @@ Yatol:
                         / ParenExpression
                         / Super
                         / ValueKeyword
+                        / ArrayInitializer
 
     ParenExpression < LeftParen Expression RightParen
 

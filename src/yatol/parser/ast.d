@@ -430,12 +430,16 @@ final class PrimaryExpressionAstNode: AstNode
 {
     /// Either an identifier, "super", a value keyword or a literal.
     Token* identifierOrKeywordOrLiteral;
+    /// Assigned when the primary is an array literal.
+    InitializerAstNode arrayLiteral;
     /// Assigned when no identifierOrKeywordOrLiteral.
     ExpressionAstNode parenExpression;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (parenExpression)
+        if (arrayLiteral)
+            visitor.visit(arrayLiteral);
+        else if (parenExpression)
             visitor.visit(parenExpression);
     }
 }
