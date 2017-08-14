@@ -1,7 +1,8 @@
 module yatol.semantic;
 
 import
-    yatol.lexer, yatol.parser.ast, yatol.semantic.node_protection;
+    yatol.lexer, yatol.parser.ast,
+    yatol.semantic.node_protection, yatol.semantic.versions;
 
 
 /**

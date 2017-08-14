@@ -1150,6 +1150,8 @@ final class VersionBlockDeclarationAstNode: AstNode
         if (falseDeclarationOrBlock)
             visitor.visit(falseDeclarationOrBlock);
     }
+    /// Indicates wether $(D trueDeclarationOrBlock) or $(D falseDeclarationOrBlock) is the valid branch.
+    @Semantic bool isTrue;
 }
 
 /// VersionParenExpression
@@ -1212,5 +1214,7 @@ final class VersionPrimaryExpressionAstNode: AstNode
         if (parenExpression)
             visitor.visit(parenExpression);
     }
+    /// Returns: If $(D identifier) is set and defined $(D true), otherwise $(D false).
+    @Semantic bool isDefined;
 }
 
