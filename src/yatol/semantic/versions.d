@@ -81,6 +81,33 @@ public:
             destroy(node.trueDeclarationOrBlock);
     }
 
+    override void visit(VersionParenExpressionAstNode node)
+    {
+        const bool[] savedBoolStack = _boolStack.dup;
+        const VersionOperator[] savedOperatorStack = _operatorStack.dup;
+        _boolStack.length = 0;
+        _operatorStack.length = 0;
+
+        node.accept(this);
+
+        _boolStack = savedBoolStack.dup ~ evaluate;
+        _operatorStack = savedOperatorStack.dup;
+    }
+
+    override void visit(VersionOrExpressionAstNode node)
+    {
+        node.accept(this);
+        if (node.leftExpression && node.rightExpression)
+            _operatorStack ~= VersionOperator.or;
+    }
+
+    override void visit(VersionAndExpressionAstNode node)
+    {
+        node.accept(this);
+        if (node.leftExpression && node.rightExpression)
+            _operatorStack ~= VersionOperator.and;
+    }
+
     override void visit(VersionPrimaryExpressionAstNode node)
     {
         node.accept(this);
@@ -99,33 +126,6 @@ public:
             }
         }
     }
-
-    override void visit(VersionParenExpressionAstNode node)
-    {
-        bool[] savedBoolStack = _boolStack.dup;
-        VersionOperator[] savedOperatorStack = _operatorStack.dup;
-        _boolStack.length = 0;
-        _operatorStack.length = 0;
-
-        node.accept(this);
-
-        _boolStack = savedBoolStack.dup ~ [evaluate];
-        _operatorStack = savedOperatorStack.dup;
-    }
-
-    override void visit(VersionOrExpressionAstNode node)
-    {
-        node.accept(this);
-        if (node.leftExpression && node.rightExpression)
-            _operatorStack ~= VersionOperator.or;
-    }
-
-    override void visit(VersionAndExpressionAstNode node)
-    {
-        node.accept(this);
-        if (node.leftExpression && node.rightExpression)
-            _operatorStack ~= VersionOperator.and;
-    }
 }
 
 /**
@@ -139,13 +139,10 @@ void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions,
     string file = __FILE_FULL_PATH__, size_t line = __LINE__)
 {
     import core.exception: AssertError;
-    import yatol.lexer, yatol.parser;
+    import yatol.utils;
 
-    Lexer lx;
-    lx.setSourceFromText(code, file, line, 1);
-    lx.lex;
-    Parser pr = Parser(&lx);
-    UnitContainerAstNode uc = pr.parse();
+    UnitContainerAstNode uc = lexAndParse(code, file, line);
+
     if (uc is null || !uc.mainUnit || !uc.mainUnit.declarations.length ||
         !uc.mainUnit.declarations[0].versionBlockDeclaration)
     {
@@ -175,13 +172,10 @@ void assertFirstVersionIsFalse(const(char)[] code, string[] userVersions,
     string file = __FILE_FULL_PATH__, size_t line = __LINE__)
 {
     import core.exception: AssertError;
-    import yatol.lexer, yatol.parser;
+    import yatol.utils;
 
-    Lexer lx;
-    lx.setSourceFromText(code, file, line, 1);
-    lx.lex;
-    Parser pr = Parser(&lx);
-    UnitContainerAstNode uc = pr.parse();
+    UnitContainerAstNode uc = lexAndParse(code, file, line);
+
     if (uc is null || !uc.mainUnit || !uc.mainUnit.declarations.length ||
         !uc.mainUnit.declarations[0].versionBlockDeclaration)
     {
