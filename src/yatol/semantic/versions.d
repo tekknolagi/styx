@@ -1,12 +1,14 @@
 /**
  * Semantic processing for the VersionBlockDeclaration.
+ *
+ * to maintain unittest coverage: 95%
  */
 module yatol.semantic.versions;
 
 import
     yatol.parser.ast;
 
-// TODO: create the list of predefined versions + vhevk for conflicts in the driver.
+// TODO: create the list of predefined versions + check for conflicts in the driver.
 // TODO-csemantic: plug VersionEvaluatorVisitor to unit semantic.
 
 /**
@@ -68,8 +70,20 @@ public:
         _userVersions = userVersions;
     }
 
+    override void visit(VersionBlockDeclarationAstNode node)
+    {
+        node.accept(this);
+        node.isTrue = evaluate();
+
+        if (node.isTrue && node.falseDeclarationOrBlock)
+            destroy(node.falseDeclarationOrBlock);
+        else if (!node.isTrue && node.trueDeclarationOrBlock)
+            destroy(node.trueDeclarationOrBlock);
+    }
+
     override void visit(VersionPrimaryExpressionAstNode node)
     {
+        node.accept(this);
         if (node.identifier)
         {
             if (isPredefinedVersion(node.identifier.text))
@@ -84,18 +98,19 @@ public:
                 _boolStack ~= node.isDefined;
             }
         }
-        else super.visit(node);
     }
 
-    override void visit(VersionBlockDeclarationAstNode node)
+    override void visit(VersionParenExpressionAstNode node)
     {
-        node.accept(this);
-        node.isTrue = evaluate();
+        bool[] savedBoolStack = _boolStack.dup;
+        VersionOperator[] savedOperatorStack = _operatorStack.dup;
+        _boolStack.length = 0;
+        _operatorStack.length = 0;
 
-        if (node.isTrue && node.falseDeclarationOrBlock)
-            destroy(node.falseDeclarationOrBlock);
-        else if (!node.isTrue && node.trueDeclarationOrBlock)
-            destroy(node.trueDeclarationOrBlock);
+        node.accept(this);
+
+        _boolStack = savedBoolStack.dup ~ [evaluate];
+        _operatorStack = savedOperatorStack.dup;
     }
 
     override void visit(VersionOrExpressionAstNode node)
@@ -196,6 +211,16 @@ unittest
     }, ["a"]);
 }
 
+unittest
+{
+    import std.exception: assertThrown;
+    import core.exception: AssertError;
+    assertThrown!AssertError(assertFirstVersionIsTrue(q{unit}, ["a"]));
+    assertThrown!AssertError(assertFirstVersionIsFalse(q{unit}, ["a"]));
+    assertThrown!AssertError(assertFirstVersionIsTrue(q{unit a;version(b) const s32 b;}, ["a"]));
+    assertThrown!AssertError(assertFirstVersionIsFalse(q{unit a;version(a) const s32 b;}, ["a"]));
+}
+
 unittest // single versions
 {
     assertFirstVersionIsTrue(q{
@@ -270,5 +295,17 @@ unittest // more complex cases involving precedence
         unit a;
         version((a | b) & c) const s32 b;
     }, ["b"]);
+    assertFirstVersionIsTrue(q{
+        unit a;
+        version((a | b) & c) const s32 b;
+    }, ["b", "c"]);
+    assertFirstVersionIsTrue(q{
+        unit a;
+        version((a | b) & (c | d)) const s32 b;
+    }, ["a", "c"]);
+    assertFirstVersionIsFalse(q{
+        unit a;
+        version((a | b) & (c | d)) const s32 b;
+    }, ["a", "e"]);
 }
 
