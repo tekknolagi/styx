@@ -48,6 +48,7 @@ enum TokenType : ubyte
     static_,
     struct_,
     switch_,
+    throw_,
     true_,
     try_,
     unit,
@@ -168,6 +169,7 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     "static",
     "struct",
     "switch",
+    "throw",
     "true",
     "try",
     "unit",
@@ -301,13 +303,13 @@ struct Keywords
 private:
 
     /*
-        rendered on 2017-Aug-13 16:54:32.0581152 by IsItThere.
+        rendered on 2017-Aug-14 19:16:33.5916097 by IsItThere.
          - PRNG seed: 6574
          - map length: 128
          - case sensitive: true
     */
 
-    static const string[128] _words = ["", "protection", "", "f64", "", "s8", "class", "", "finally", "", "try", "", "false", "if", "", "", "", "", "", "", "break", "u64", "", "", "", "", "", "", "", "", "static", "", "return", "", "", "", "", "", "in", "s64", "", "", "", "", "f32", "", "virtual", "", "aka", "is", "", "version", "", "", "", "", "continue", "", "", "", "", "", "u32", "", "", "", "", "var", "", "", "", "u16", "", "", "const", "true", "", "", "", "switch", "s32", "enum", "unit", "", "", "function", "import", "", "", "s16", "foreach", "", "on", "", "", "struct", "interface", "", "", "", "while", "", "", "", "ureg", "", "", "null", "", "", "", "auto", "", "super", "", "u8", "", "", "", "", "else", "", "sreg", "", "", "bool", "", ""];
+    static const string[128] _words = ["", "protection", "", "f64", "", "s8", "class", "", "finally", "", "try", "", "false", "if", "", "", "", "", "", "", "break", "u64", "", "", "", "", "", "", "", "", "static", "", "return", "", "", "", "", "", "in", "s64", "", "", "", "", "f32", "", "virtual", "", "aka", "is", "", "version", "", "", "", "", "continue", "", "", "", "", "", "u32", "", "", "", "", "var", "", "", "", "u16", "", "", "const", "true", "", "", "", "switch", "s32", "enum", "unit", "", "", "function", "import", "", "", "s16", "foreach", "", "on", "", "", "struct", "interface", "", "", "", "while", "", "", "", "ureg", "", "", "null", "", "", "", "auto", "", "super", "", "u8", "", "", "", "", "else", "", "sreg", "", "", "bool", "", "throw"];
 
     static const ubyte[256] _coefficients = [1, 51, 40, 67, 132, 162, 139, 224, 156, 25, 106, 185, 63, 242, 164, 108, 243, 222, 63, 40, 46, 150, 66, 186, 0, 173, 223, 187, 238, 71, 63, 26, 147, 102, 81, 239, 149, 25, 125, 91, 77, 43, 4, 167, 213, 128, 175, 18, 29, 61, 84, 225, 11, 104, 129, 35, 234, 254, 202, 114, 81, 117, 255, 211, 46, 229, 216, 211, 79, 242, 248, 20, 176, 85, 165, 177, 30, 6, 160, 39, 235, 69, 137, 254, 131, 6, 240, 6, 41, 165, 37, 54, 86, 62, 150, 144, 110, 247, 188, 48, 152, 90, 119, 64, 81, 22, 137, 66, 169, 94, 144, 76, 174, 16, 197, 155, 35, 9, 135, 122, 185, 34, 92, 187, 83, 164, 181, 158, 87, 54, 8, 246, 161, 243, 103, 103, 25, 105, 137, 219, 172, 79, 41, 121, 67, 231, 144, 50, 76, 171, 116, 239, 239, 239, 144, 131, 117, 179, 245, 15, 76, 6, 16, 86, 126, 176, 223, 138, 221, 152, 225, 2, 122, 118, 222, 50, 6, 248, 225, 139, 132, 113, 128, 158, 183, 190, 226, 75, 98, 56, 188, 17, 115, 121, 99, 228, 193, 200, 184, 170, 246, 135, 51, 120, 6, 165, 251, 222, 227, 165, 150, 202, 99, 86, 179, 100, 219, 196, 93, 15, 40, 167, 31, 174, 53, 168, 153, 166, 13, 185, 185, 109, 155, 173, 246, 233, 69, 35, 179, 196, 136, 149, 253, 70, 199, 237, 18, 240, 115, 106, 173, 8, 4, 11, 157, 1];
 
@@ -814,6 +816,9 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokFinally() const {return type == TokenType.finally_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokThrow() const {return type == TokenType.throw_;}
 
     /// Conveniance function used by the parser.
     bool isTokUnaryPrefix() const

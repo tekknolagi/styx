@@ -23,6 +23,7 @@ static
 struct
 super
 switch
+throw
 true
 try
 unit

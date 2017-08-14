@@ -137,6 +137,7 @@ Yatol:
                 / BlockStatement
                 / SwitchStatement
                 / TryOnFinallyStatement
+                / ThrowStatement
 
     EmptyStatment < Semicolon
 
@@ -184,6 +185,8 @@ Yatol:
     OnExceptionStatement < On LeftParen OnExceptionInstance (Comma OnExceptionInstance)* RightParen SingleStatementOrBlock
 
     FinallyStatement < Finally SingleStatementOrBlock
+
+    ThrowStatement < Throw UnaryExpression Semicolon
 
 ################################################################################
 # Composites expressions
@@ -416,6 +419,7 @@ Yatol:
             / Version
             / Try
             / Finally
+            / Throw
 
     ValueKeyword    < Null
                     / False
@@ -468,6 +472,7 @@ Yatol:
     Version <- "version"
     Try     <- "try"
     Finally <- "finally"
+    Throw   <- "throw"
 
     SREG    <- "sreg"
     UREG    <- "ureg"

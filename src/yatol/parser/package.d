@@ -716,6 +716,32 @@ private:
     }
 
     /**
+     * Parses an ThrowStatement.
+     *
+     * Returns:
+     *      On success a $(D ThrowStatementAstNode) otherwise $(D null).
+     */
+    ThrowStatementAstNode parseThrowStatement()
+    {
+        assert(current.isTokThrow);
+        ThrowStatementAstNode result = new ThrowStatementAstNode;
+        result.position = current.position;
+        advance();
+        if (UnaryExpressionAstNode ue = parseUnaryExpression())
+        {
+            if (!current.isTokSemicolon)
+            {
+                expected(TokenType.semiColon);
+                return null;
+            }
+            result.unary = ue;
+            advance();
+            return result;
+        }
+        else return null;
+    }
+
+    /**
      * Parses a TryStatement.
      *
      * Returns:
@@ -2520,6 +2546,20 @@ private:
             else
             {
                 parseError("invalid try statement");
+                return null;
+            }
+        }
+        case throw_:
+        {
+            if (ThrowStatementAstNode ts = parseThrowStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.throwStatement = ts;
+                return result;
+            }
+            else
+            {
+                parseError("invalid throw statement");
                 return null;
             }
         }
@@ -5039,6 +5079,31 @@ unittest // try
             on (E e) handleE();
             on (F f) handleF();
             finally doThis();
+        }
+    });
+}
+
+unittest // throw
+{
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            throw Exception.create("boom");
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            throw Exception.create("boom")
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            throw = Exception.create("boom")
         }
     });
 }

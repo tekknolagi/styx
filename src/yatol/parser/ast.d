@@ -92,6 +92,7 @@ class AstVisitor
     void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
     void visit(SwitchStatementAstNode node){node.accept(this);}
+    void visit(ThrowStatementAstNode node){node.accept(this);}
     void visit(Token* token){}
     void visit(TryOnFinallyStatementAstNode node){node.accept(this);}
     void visit(TypeAstNode node){node.accept(this);}
@@ -159,6 +160,7 @@ class AstVisitorNone: AstVisitor
     override void visit(StatementAstNode node){}
     override void visit(StructDeclarationAstNode node){}
     override void visit(SwitchStatementAstNode node){}
+    override void visit(ThrowStatementAstNode node){}
     override void visit(TryOnFinallyStatementAstNode node){}
     override void visit(TypeAstNode node){}
     override void visit(TypeModifierAstNode node){}
@@ -931,6 +933,8 @@ final class StatementAstNode: AstNode
     SwitchStatementAstNode switchStatement;
     /// Assigned if this statement is a TryStatement.
     TryOnFinallyStatementAstNode tryOnFinallyStatement;
+    /// Assigned if this statement is a ThrowStatement.
+    ThrowStatementAstNode throwStatement;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -956,6 +960,8 @@ final class StatementAstNode: AstNode
             visitor.visit(switchStatement);
         else if (tryOnFinallyStatement)
             visitor.visit(tryOnFinallyStatement);
+        else if (throwStatement)
+            visitor.visit(throwStatement);
     }
 }
 
@@ -992,6 +998,19 @@ final class FunctionParameterGroupAstNode: AstNode
     {
         if (type)
             visitor.visit(type);
+    }
+}
+
+/// ThrowStatement
+final class ThrowStatementAstNode: AstNode
+{
+    /// The unary expression that represents an instance construction
+    UnaryExpressionAstNode unary;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (unary)
+            visitor.visit(unary);
     }
 }
 
