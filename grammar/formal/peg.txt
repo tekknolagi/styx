@@ -164,7 +164,6 @@ Yatol:
     AtLabel < LeftParen Identifier RightParen
 
     IfCondition < LeftParen Expression RightParen
-                / LeftParen ConditionalIdentifierChain RightParen
                 / LeftParen IfConditionVariable RightParen
 
     IfConditionVariable < StorageClass Type VariableDeclarationItem
@@ -217,7 +216,7 @@ Yatol:
                         / CallParameters
                         / Cast
                         / Dot PrimaryExpression
-                        / Qmark Dot PrimaryExpression
+                        / OptAccess PrimaryExpression
 
     IndexExpression < LeftSquare Expression RightSquare
 
@@ -262,17 +261,11 @@ Yatol:
 ################################################################################
 # List, chain, etc
 
-    ConditionalIdentifierChain < Identifier (ConditionalIdentifierChainKnot Identifier)*
-
-    ConditionalIdentifierChainKnot < Dot / OptAccess
-
     IdentifierChains < IdentifierChain (Comma IdentifierChain)*
 
     IdentifierChain < Identifier (Dot Identifier)*
 
     IdentifierList  < Identifier (Comma Identifier)*
-
-    LeftRightSquares < LeftSquare RightSquare
 
 ################################################################################
 # Comments and spacing
@@ -285,7 +278,7 @@ Yatol:
     StarComment <- : "/*" (!"*/" .)* :"*/"
 
 ################################################################################
-# Identifier and literals
+# Identifier, literals, symbols, operators
 
     NumberLiteral   < IntLiteral
                     / HexLiteral
@@ -310,6 +303,8 @@ Yatol:
     AssignOperator < Equal / DivEqual / MulEqual / ModEqual / MinusEqual / PlusEqual / AmpEqual / XorEqual / PipeEqual / LShiftEqual / RShiftEqual
 
     Operator < RelOperator / Mul / Div / Mod / Plus / Minus / LShift / RShift / Amp / Pipe / Xor
+
+    LeftRightSquares < LeftSquare RightSquare
 
     RelOperator < EqualEqual
                 / NotEqual

@@ -1703,17 +1703,8 @@ private:
         }
         else
         {
-            if (current.isTokQmark)
-            {
-                result.qmark = current;
-                advance();
-                if (!current.isTokDot)
-                {
-                    expected(TokenType.dot);
-                    return null;
-                }
-            }
-            result.dot = current;
+            assert(current.isTokOptAccess || current.isTokDot);
+            result.dotOrOptAccess = current;
             advance();
             if (PrimaryExpressionAstNode pe = parsePrimaryExpression())
             {

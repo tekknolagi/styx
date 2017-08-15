@@ -750,7 +750,15 @@ public:
                 validateToken();
                 continue;
             case '?':
-                anticipateToken(TokenType.qmark);
+                if (canLookup() && *lookup() == '.')
+                {
+                    anticipateToken(TokenType.optAccess);
+                    advance();
+                }
+                else
+                {
+                    anticipateToken(TokenType.qmark);
+                }
                 advance();
                 validateToken();
                 continue;
@@ -1592,5 +1600,18 @@ unittest
     assert(lx.tokens.length == 3);
     assert(lx.tokens[0].isTokIdentifier);
     assert(lx.tokens[1].isTokRightShiftEqual);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = `a?..`;
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 4);
+    assert(lx.tokens[0].isTokIdentifier);
+    assert(lx.tokens[1].isTokOptAccess);
+    assert(lx.tokens[2].isTokDot);
 }
 

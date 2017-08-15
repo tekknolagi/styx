@@ -446,7 +446,7 @@ final class PrimaryExpressionAstNode: AstNode
     }
 }
 
-/// ProtectionAttribute
+/// ProtectionDeclaration
 final class ProtectionDeclarationAstNode: AstNode
 {
     /// The token that specifies the new protection.
@@ -590,10 +590,8 @@ final class PostfixExpressionAstNode: AstNode
     CallParametersAstNode callParameters;
     /// Assigned if this postfix is a cast.
     TypeAstNode castToType;
-    /// Assigned if this postfix is a dotted Primary
-    Token* dot;
-    /// Assigned if this postfix is an optional Primary
-    Token* qmark;
+    /// Assigned if this postfix is an optional or dotted Primary
+    Token* dotOrOptAccess;
     /// Assigned for dotted and optional primary
     PrimaryExpressionAstNode primary;
     ///

@@ -88,6 +88,7 @@ enum TokenType : ubyte
     dollar,
     dotDot,
     ellipsis,
+    optAccess,
     // assign
     equal,
     mulEqual,
@@ -209,6 +210,7 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     "$",
     "..",
     "...",
+    "?.",
     // assign
     "=",
     "*=",
@@ -276,7 +278,7 @@ static immutable TokenType lastBasicType = TokenType.ureg;
 /// The $(D TokenType) of the first symbol.
 static immutable TokenType firstSymbol = TokenType.bang;
 /// The $(D TokenType) of the last symbol.
-static immutable TokenType lastSymbol = TokenType.ellipsis;
+static immutable TokenType lastSymbol = TokenType.optAccess;
 
 /// The $(D TokenType) of the first operator.
 static immutable TokenType firstOperator = TokenType.equalEqual;
@@ -575,6 +577,9 @@ public:
     bool isTokDot() const {return type == TokenType.dot;}
 
     /// Conveniance function used by the parser.
+    bool isTokOptAccess() const {return type == TokenType.optAccess;}
+
+    /// Conveniance function used by the parser.
     bool isTokColon() const {return type == TokenType.colon;}
 
     /// Conveniance function used by the parser.
@@ -838,7 +843,7 @@ public:
     {
         return type == TokenType.plusPlus || type == TokenType.minusMinus ||
             type == TokenType.leftSquare || type == TokenType.leftParen ||
-            type == TokenType.colon || type == TokenType.dot || type == TokenType.qmark;
+            type == TokenType.colon || type == TokenType.dot || type == TokenType.optAccess;
     }
 
     /// Conveniance function used by the parser.
