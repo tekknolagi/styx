@@ -1,9 +1,12 @@
-module yatol.parser.ast;
+/**
+ * Contains the AST node classes and a visitor class.
+ */
+module yatol.ast;
 
 import
     std.conv, std.algorithm.iteration, std.meta, std.stdio;
 import
-    yatol.lexer.types;
+    yatol.token;
 
 /// Used to annotate the fields set by the semantic.
 enum Semantic;

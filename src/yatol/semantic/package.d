@@ -1,7 +1,10 @@
+/**
+ * Drives the semantic phase.
+ */
 module yatol.semantic;
 
 import
-    yatol.lexer, yatol.parser.ast, yatol.session,
+    yatol.lexer, yatol.ast, yatol.session,
     yatol.semantic.node_protection, yatol.semantic.versions;
 
 

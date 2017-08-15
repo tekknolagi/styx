@@ -1,4 +1,8 @@
-module yatol.lexer.types;
+/**
+ * The yatol token type, as produced by the lexer.
+ * Also contains a static hash map used to match the keywords.
+ */
+module yatol.token;
 
 /// Stores a position in the source code.
 struct Position

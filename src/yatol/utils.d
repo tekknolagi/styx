@@ -1,7 +1,10 @@
+/**
+ * Utilities and miscellaneous sub routines.
+ */
 module yatol.utils;
 
 import
-    yatol.lexer, yatol.parser, yatol.parser.ast;
+    yatol.lexer, yatol.parser, yatol.ast;
 
 /**
  * Lexes and parses some code. Usually used for the embedded compiler tests.

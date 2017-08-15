@@ -1,12 +1,13 @@
+/**
+ * Yatol compiler main application.
+ */
 module app;
 
 import
     std.getopt, std.file, std.stdio, std.path, std.datetime, std.array;
 import
-    yatol.lexer, yatol.lexer.types, yatol.parser, yatol.parser.ast,
-    yatol.session,
-    yatol.semantic,
-    yatol.parser.debug_visitor;
+    yatol.token, yatol.lexer, yatol.parser, yatol.ast,
+    yatol.session, yatol.semantic, yatol.ast_printer;
 
 enum Until
 {
@@ -192,9 +193,9 @@ int main(string[] args)
             if (options.ast && options.until == Until.parsing)
             {
                 writeln("AST for ", lexer.filename);
-                DebugVisitor dbgv = new DebugVisitor();
-                dbgv.visit(uc);
-                dbgv.printText;
+                AstPrinter ap = new AstPrinter();
+                ap.visit(uc);
+                ap.printText;
                 writeln;
             }
         }
@@ -225,9 +226,9 @@ int main(string[] args)
         if (options.ast)
         {
             writeln("AST for ", lexers[i].filename);
-            DebugVisitor dbgv = new DebugVisitor();
-            dbgv.visit(parser.unitContainer);
-            dbgv.printText;
+            AstPrinter ap = new AstPrinter();
+            ap.visit(parser.unitContainer);
+            ap.printText;
             writeln;
         }
     }

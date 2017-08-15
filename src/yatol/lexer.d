@@ -1,7 +1,5 @@
 /**
- * YATOL lexer.
- *
- * to maintain unittest coverage: 98%
+ * YATOL's lexer.
  */
 module yatol.lexer;
 
@@ -10,7 +8,9 @@ import
 import
     std.stdio, std.file;
 import
-    yatol.lexer.types;
+    yatol.token;
+
+// to maintain unittest coverage: 98%
 
 /**
  * Scans a yatol source file.

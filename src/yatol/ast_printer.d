@@ -1,12 +1,17 @@
-module yatol.parser.debug_visitor;
+/**
+ * Contains an AstVisitor that prints the AST of a UnitContainer.
+ */
+module yatol.ast_printer;
 
 import
     std.stdio, std.traits, std.format, std.algorithm;
 import
-    yatol.lexer.types, yatol.lexer, yatol.parser.ast;
+    yatol.token, yatol.lexer, yatol.ast;
 
-
-class DebugVisitor: AstVisitor
+/**
+ * An $(D AstVisitor) that prints the AST of a $(D UnitContainer).
+ */
+class AstPrinter: AstVisitor
 {
 
     alias visit = AstVisitor.visit;

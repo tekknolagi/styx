@@ -1,17 +1,17 @@
 #!runnable: -g -gs
 /**
- * YATOL parser.
- *
- * to maintain unittest coverage: 100% - 1LOC
- **/
+ * YATOL's parser.
+ */
 module yatol.parser;
+
+// to maintain unittest coverage: 100% - 1LOC
 
 import
     core.stdc.stdlib;
 import
     std.stdio, std.format, std.algorithm;
 import
-    yatol.lexer.types, yatol.lexer, yatol.parser.ast;
+    yatol.token, yatol.lexer, yatol.ast;
 
 /// The parser
 struct Parser
@@ -2883,7 +2883,7 @@ unittest
 
 unittest
 {
-    import yatol.parser.debug_visitor;
+    import yatol.ast_printer;
     enum line = __LINE__;
     enum source = `
     unit a;
@@ -2984,13 +2984,13 @@ unittest
     lx.lex;
 
     Parser pr = Parser(&lx);
-    DebugVisitor dv = new DebugVisitor();
+    AstPrinter ap = new AstPrinter();
     if (UnitContainerAstNode uc = pr.parse())
     {
-        dv.visit(uc);
+        ap.visit(uc);
         //import std.process;
         //if ("CI" !in environment)
-            dv.printText();
+            ap.printText();
     }
 }
 
@@ -3017,10 +3017,10 @@ void assertParse(const(char)[] code, bool printAST = false,
     }
     else if (printAST)
     {
-        import yatol.parser.debug_visitor;
-        DebugVisitor dv = new DebugVisitor;
-        dv.visit(pr.unitContainer);
-        dv.printText();
+        import yatol.ast_printer;
+        AstPrinter ap = new AstPrinter;
+        ap.visit(pr.unitContainer);
+        ap.printText();
     }
 }
 ///

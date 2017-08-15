@@ -3,7 +3,7 @@ module yatol.semantic.node_protection;
 import
     std.stdio;
 import
-    yatol.lexer.types, yatol.lexer, yatol.parser.ast;
+    yatol.token, yatol.lexer, yatol.ast;
 
 /**
  * An AST visitor that set the protection of each node.
