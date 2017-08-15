@@ -8,10 +8,10 @@ import
 /**
  * An AST visitor that set the protection of each node.
  */
-final class NodeProtectionVisitor: AstVisitorNone
+final class NodeProtectionVisitor: AstVisitor
 {
 
-    alias visit = AstVisitorNone.visit;
+    alias visit = AstVisitor.visit;
 
 private:
 
@@ -70,7 +70,7 @@ public:
         visit(node);
     }
 
-    /// Returns: true if the protection have been set correctly.
+    /// Returns: $(D true) if the protections have been set correctly.
     bool success() {return _success;}
 
     override void visit(DeclarationAstNode node)

@@ -1,20 +1,21 @@
 /**
- * Semantic processing for the VersionBlockDeclaration.
+ * Semantic processing for the VersionBlockDeclaration and VersionBlockStatement
  *
- * to maintain unittest coverage: 95%
+ * to maintain unittest coverage: 96%
  */
 module yatol.semantic.versions;
 
 import
+    std.algorithm.iteration : each;
+import
     yatol.parser.ast;
 
 // TODO: create the list of predefined versions + check for conflicts in the driver.
-// TODO-csemantic: plug VersionEvaluatorVisitor to unit semantic.
 
 /**
  * This $(D AstVisitor) is used to determine which branch of a
- * VersionBlockDeclaration is valid. After the visit, the nodes of the
- * unreachable branches are supressed.
+ * VersionBlockDeclaration or of a VersionBlockStatement is valid.
+ * After the visit, the nodes of the unreachable branches are supressed.
  */
 final class VersionEvaluatorVisitor: AstVisitor
 {
@@ -70,15 +71,64 @@ public:
         _userVersions = userVersions;
     }
 
+    /// Constructs an instance with an AST and a list of user defined version.
+    this(UnitContainerAstNode uc, string[] userVersions)
+    {
+        _userVersions = userVersions;
+        visit(uc);
+    }
+
+    /// $(D version) semantic should never fail.
+    bool success(){return true;}
+
     override void visit(VersionBlockDeclarationAstNode node)
     {
-        node.accept(this);
+        visit(node.versionExpression);
         node.isTrue = evaluate();
 
-        if (node.isTrue && node.falseDeclarationOrBlock)
-            destroy(node.falseDeclarationOrBlock);
-        else if (!node.isTrue && node.trueDeclarationOrBlock)
-            destroy(node.trueDeclarationOrBlock);
+        if (node.isTrue)
+        {
+            if (node.falseDeclarations)
+            {
+                destroy(node.falseDeclarations);
+                node.falseDeclarations = null;
+            }
+            node.trueDeclarations.each!(a => visit(a));
+        }
+        else
+        {
+            if (node.trueDeclarations)
+            {
+                destroy(node.trueDeclarations);
+                node.trueDeclarations = null;
+            }
+            node.falseDeclarations.each!(a => visit(a));
+        }
+    }
+
+    override void visit(VersionBlockStatementAstNode node)
+    {
+        visit(node.versionExpression);
+        node.isTrue = evaluate();
+
+        if (node.isTrue)
+        {
+            if (node.falseDeclarationsOrStatements)
+            {
+                destroy(node.falseDeclarationsOrStatements);
+                node.falseDeclarationsOrStatements = null;
+            }
+            node.trueDeclarationsOrStatements.each!(a => visit(a));
+        }
+        else
+        {
+            if (node.trueDeclarationsOrStatements)
+            {
+                destroy(node.trueDeclarationsOrStatements);
+                node.trueDeclarationsOrStatements = null;
+            }
+            node.falseDeclarationsOrStatements.each!(a => visit(a));
+        }
     }
 
     override void visit(VersionParenExpressionAstNode node)
@@ -233,6 +283,10 @@ unittest // simple "and" versions
         unit a;
         version(a & b) const s32 b;
     }, ["a", "b"]);
+    assertFirstVersionIsTrue(q{
+        unit a;
+        version(a & b) const s32 b; else const s32 c;
+    }, ["a", "b"]);
     assertFirstVersionIsFalse(q{
         unit a;
         version(a & b) const s32 b;
@@ -301,5 +355,31 @@ unittest // more complex cases involving precedence
         unit a;
         version((a | b) & (c | d)) const s32 b;
     }, ["a", "e"]);
+}
+
+unittest // version statements
+{
+    assertFirstVersionIsTrue(q{
+        unit a;
+        version(a) function foo()
+        {
+            version(b)
+            {
+                const s32 c;
+            }
+            else const s32 d;
+        }
+    }, ["a","b"]);
+    assertFirstVersionIsTrue(q{
+        unit a;
+        version(a) function foo()
+        {
+            version(b)
+            {
+                const s32 c;
+            }
+            else const s32 d;
+        }
+    }, ["a"]);
 }
 

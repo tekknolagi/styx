@@ -629,14 +629,14 @@ private:
                 return null;
             }
         }
-        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+        if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
         {
-            result.singleStatementOrBlock = ssob;
+            result.declarationOrStatement = dos;
             return result;
         }
         else
         {
-            parseError("invalid on match statement");
+            parseError("invalid on match declaration or statement");
             return null;
         }
     }
@@ -704,9 +704,9 @@ private:
         if (current.isTokElse)
         {
             advance();
-            if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
             {
-                result.elseStatement = ssob;
+                result.elseStatement = dos;
             }
             else return null;
         }
@@ -753,16 +753,16 @@ private:
         TryOnFinallyStatementAstNode result = new TryOnFinallyStatementAstNode;
         result.position = current.position;
         advance();
-        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+        if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
         {
-            result.triedStatementOrBlock = ssob;
+            result.triedDeclarationOrStatement = dos;
         }
         else return null;
         while (current.isTokOn)
         {
             if (OnExceptionStatementAstNode oes = parseOnExceptionStatemtent())
             {
-                result.exceptionStatements ~= oes;
+                result.exceptionDeclarationsOrStatements ~= oes;
             }
             else
             {
@@ -773,9 +773,9 @@ private:
         if (current.isTokFinally)
         {
             advance();
-            if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
             {
-                result.finalStatementOrBlock = ssob;
+                result.finalDeclarationOrStatement = dos;
             }
             else return null;
         }
@@ -832,9 +832,9 @@ private:
                 return null;
             }
         }
-        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+        if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
         {
-            result.exceptionsStatementorBlock = ssob;
+            result.exceptionsDeclarationOrStatement = dos;
             return result;
         }
         else
@@ -1438,20 +1438,23 @@ private:
     }
 
     /**
-     * Parses a DeclarationOrStatement.
+     * Parses a DeclarationOrStatementAstNode.
      *
      * Returns:
      *      A $(D DeclarationOrStatementAstNode) on success, $(D null) otherwise.
      */
     DeclarationOrStatementAstNode parseDeclarationOrStatement()
     {
-        if (DeclarationAstNode d = parseDeclaration())
+        if (!current.isTokVersion)
         {
-            DeclarationOrStatementAstNode result = new DeclarationOrStatementAstNode;
-            result.declaration = d;
-            return result;
+            if (DeclarationAstNode d = parseDeclaration())
+            {
+                DeclarationOrStatementAstNode result = new DeclarationOrStatementAstNode;
+                result.declaration = d;
+                return result;
+            }
         }
-        else if (StatementAstNode s = parseStatement())
+        if (StatementAstNode s = parseStatement())
         {
             DeclarationOrStatementAstNode result = new DeclarationOrStatementAstNode;
             result.statement  = s;
@@ -1938,9 +1941,9 @@ private:
             return null;
         }
         advance();
-        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+        if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
         {
-            result.singleStatementOrBlock = ssob;
+            result.declarationOrStatement = dos;
             return result;
         }
         else
@@ -1999,9 +2002,9 @@ private:
             return null;
         }
         advance();
-        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+        if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
         {
-            result.singleStatementOrBlock = ssob;
+            result.declarationOrStatement = dos;
             return result;
         }
         else
@@ -2082,9 +2085,9 @@ private:
             return null;
         }
         advance();
-        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+        if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
         {
-            result.trueStatementOrBlock = ssob;
+            result.trueDeclarationOrStatement = dos;
         }
         else
         {
@@ -2094,9 +2097,9 @@ private:
         if (current.isTokElse)
         {
             advance();
-            if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
             {
-                result.falseStatementOrBlock = ssob;
+                result.falseDeclarationOrStatement = dos;
             }
             else
             {
@@ -2209,44 +2212,6 @@ private:
     }
 
     /**
-     * Parses a SingleStatementOrBlock.
-     *
-     * Returns: a $(D SingleStatementOrBlockAstNode) on success, $(D null) otherwise.
-     */
-    SingleStatementOrBlockAstNode parseSingleStatementOrBlock()
-    {
-        SingleStatementOrBlockAstNode result = new SingleStatementOrBlockAstNode;
-        result.position = current.position();
-        if (current.isTokLeftCurly)
-        {
-            advance();
-            BlockStatementAstNode bs = new BlockStatementAstNode;
-            parseDeclarationsOrStatements(bs.declarationsOrStatements);
-            if (!current.isTokRightCurly)
-            {
-                expected(TokenType.rightCurly);
-                return null;
-            }
-            advance();
-            result.block = bs;
-            return result;
-        }
-        else
-        {
-            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
-            {
-                result.singleStatement = dos;
-                return result;
-            }
-            else
-            {
-                parseError("invalid single statement");
-                return null;
-            }
-        }
-    }
-
-    /**
      * Parses a VersionBlockDeclaration.
      *
      * Returns: a $(D VersionBlockDeclarationAstNode) on success, $(D null) otherwise.
@@ -2271,26 +2236,100 @@ private:
             parseError("invalid version paren expression");
             return null;
         }
-        if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+        if (current.isTokLeftCurly)
         {
-            result.trueDeclarationOrBlock = ssob;
+            advance();
+            if (!parseDeclarations(result.trueDeclarations))
+                return null;
+            advance();
         }
         else
         {
-            parseError("invalid true single statement or block");
-            return null;
+            if (DeclarationAstNode d = parseDeclaration())
+            {
+                result.trueDeclarations ~= d;
+            }
+            else return null;
         }
         if (current.isTokElse)
         {
             advance();
-            if (SingleStatementOrBlockAstNode ssob = parseSingleStatementOrBlock())
+            if (current.isTokLeftCurly)
             {
-                result.falseDeclarationOrBlock = ssob;
+                advance();
+                if (!parseDeclarations(result.falseDeclarations))
+                    return null;
+                advance();
             }
             else
             {
-                parseError("invalid false single statement or block");
+                if (DeclarationAstNode d = parseDeclaration())
+                {
+                    result.falseDeclarations ~= d;
+                }
+                else return null;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Parses a VersionBlockStatement.
+     *
+     * Returns: a $(D VersionBlockStatementAstNode) on success, $(D null) otherwise.
+     */
+    VersionBlockStatementAstNode parseVersionBlockStatement()
+    {
+        assert(current.isTokVersion);
+        advance();
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        VersionBlockStatementAstNode result = new VersionBlockStatementAstNode;
+        result.position = current.position;
+        if (VersionParenExpressionAstNode vpe = parseVersionParenExpression())
+        {
+            result.versionExpression = vpe;
+        }
+        else
+        {
+            parseError("invalid version paren expression");
+            return null;
+        }
+        if (current.isTokLeftCurly)
+        {
+            advance();
+            if (!parseDeclarationsOrStatements(result.trueDeclarationsOrStatements))
                 return null;
+            advance();
+        }
+        else
+        {
+            if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
+            {
+                result.trueDeclarationsOrStatements ~= dos;
+            }
+            else return null;
+        }
+        if (current.isTokElse)
+        {
+            advance();
+            if (current.isTokLeftCurly)
+            {
+                advance();
+                if (!parseDeclarationsOrStatements(result.falseDeclarationsOrStatements))
+                    return null;
+                advance();
+            }
+            else
+            {
+                if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
+                {
+                    result.falseDeclarationsOrStatements ~= dos;
+                }
+                else return null;
             }
         }
         return result;
@@ -2551,6 +2590,20 @@ private:
             else
             {
                 parseError("invalid throw statement");
+                return null;
+            }
+        }
+        case version_:
+        {
+            if (VersionBlockStatementAstNode vbs = parseVersionBlockStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.versionBlockStatement = vbs;
+                return result;
+            }
+            else
+            {
+                parseError("invalid version block statement");
                 return null;
             }
         }
@@ -4850,7 +4903,7 @@ unittest // initializer
     });
 }
 
-unittest // version
+unittest // version block declaration
 {
     assertParse(q{
         unit a;
@@ -4935,6 +4988,110 @@ unittest // version
     assertNotParse(q{
         unit a;
         version(a) {const s8 b;} else const
+    });
+    assertNotParse(q{
+        unit a;
+        version(a) {const;}
+    });
+    assertNotParse(q{
+        unit a;
+        version(a) {const A a;} else {const}
+    });
+}
+
+unittest // version block statement
+{
+    assertParse(q{
+        unit a;
+        function foo(){version(a) ++b;}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version a) const s8 b;}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version (a const s8 b;}
+    });
+    assertParse(q{
+        unit a;
+        function foo(){version(a) const s8 b; else const s16 b;}
+    });
+    assertParse(q{
+        unit a;
+        function foo(){version(a | b) const s8 c;}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version(a |) const s8 c;}
+    });
+    assertParse(q{
+        unit a;
+        function foo(){version(a & b) const s8 c;}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version(a &) const s8 c;}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version(&) const s8 c;}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version const s8 c;}
+    });
+    assertParse(q{
+        unit a;
+        function foo(){version(a & b | c) const s8 d;}
+    });
+    assertParse(q{
+        unit a;
+        function foo(){version(a | b & c) const s8 d;}
+    });
+    assertParse(q{
+        unit a;
+        function foo(){version((a | b) & c) const s8 d;}
+    });
+    assertParse(q{
+        unit a;
+        function foo(){version((a | b) & (c)) const s8 d;}
+    });
+    assertParse(q{
+        unit a;
+        function foo(){version((a | b) & (c | d)) const s8 e;}
+    });
+    assertParse(q{
+        unit a;
+        function foo(){version(a) {const s8 b;} else {const s16 b;}}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version() {const s8 b;}}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version(a & ;) {const s8 b;}}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version(a & ()) {const s8 b;}}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version(a) const}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version(a) {const s8 b;} else const}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version(a) {const}}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo(){version(a) {const A a;} else {const}}
     });
 }
 

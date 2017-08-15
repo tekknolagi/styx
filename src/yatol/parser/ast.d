@@ -87,7 +87,6 @@ class AstVisitor
     void visit(ProtectionDeclarationAstNode node){node.accept(this);}
     void visit(ReturnStatementAstNode node){node.accept(this);}
     void visit(SingleOrRangeExpressionAstNode node){node.accept(this);}
-    void visit(SingleStatementOrBlockAstNode node){node.accept(this);}
     void visit(SliceExpressionAstNode node){node.accept(this);}
     void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
@@ -103,6 +102,7 @@ class AstVisitor
     void visit(VariableDeclarationAstNode node){node.accept(this);}
     void visit(VariableDeclarationItemAstNode node){node.accept(this);}
     void visit(VersionBlockDeclarationAstNode node){node.accept(this);}
+    void visit(VersionBlockStatementAstNode node){node.accept(this);}
     void visit(VersionAndExpressionAstNode node){node.accept(this);}
     void visit(VersionOrExpressionAstNode node){node.accept(this);}
     void visit(VersionParenExpressionAstNode node){node.accept(this);}
@@ -155,7 +155,6 @@ class AstVisitorNone: AstVisitor
     override void visit(ProtectionDeclarationAstNode node){}
     override void visit(ReturnStatementAstNode node){}
     override void visit(SingleOrRangeExpressionAstNode node){}
-    override void visit(SingleStatementOrBlockAstNode node){}
     override void visit(SliceExpressionAstNode node){}
     override void visit(StatementAstNode node){}
     override void visit(StructDeclarationAstNode node){}
@@ -170,6 +169,7 @@ class AstVisitorNone: AstVisitor
     override void visit(VariableDeclarationAstNode node){}
     override void visit(VariableDeclarationItemAstNode node){}
     override void visit(VersionBlockDeclarationAstNode node){}
+    override void visit(VersionBlockStatementAstNode node){}
     override void visit(VersionAndExpressionAstNode node){}
     override void visit(VersionOrExpressionAstNode node){}
     override void visit(VersionParenExpressionAstNode node){}
@@ -328,13 +328,13 @@ final class OnMatchStatementAstNode: AstNode
     /// The expressions that match.
     SingleOrRangeExpressionAstNode[] onMatchExpressions;
     /// Single Statement or block.
-    SingleStatementOrBlockAstNode singleStatementOrBlock;
+    DeclarationOrStatementAstNode declarationOrStatement;
     ///
     override void accept(AstVisitor visitor)
     {
         onMatchExpressions.each!(a => visitor.visit(a));
-        if (singleStatementOrBlock)
-            visitor.visit(singleStatementOrBlock);
+        if (declarationOrStatement)
+            visitor.visit(declarationOrStatement);
     }
 }
 
@@ -346,7 +346,7 @@ final class SwitchStatementAstNode: AstNode
     /// The matches.
     OnMatchStatementAstNode[] onMatchStatements;
     /// The fallback for unmatched cases.
-    SingleStatementOrBlockAstNode elseStatement;
+    DeclarationOrStatementAstNode elseStatement;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -657,7 +657,7 @@ final class ForeachStatementAstNode: AstNode
     /// The expression that give the enumerable.
     SingleOrRangeExpressionAstNode singleOrRangeExpression;
     /// The single statement or block.
-    SingleStatementOrBlockAstNode singleStatementOrBlock;
+    DeclarationOrStatementAstNode declarationOrStatement;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -665,8 +665,8 @@ final class ForeachStatementAstNode: AstNode
             visitor.visit(variable);
         if (singleOrRangeExpression)
             visitor.visit(singleOrRangeExpression);
-        if (singleStatementOrBlock)
-            visitor.visit(singleStatementOrBlock);
+        if (declarationOrStatement)
+            visitor.visit(declarationOrStatement);
     }
 }
 
@@ -676,14 +676,14 @@ final class WhileStatementAstNode: AstNode
     /// The condition
     ExpressionAstNode condition;
     /// The single statement or block.
-    SingleStatementOrBlockAstNode singleStatementOrBlock;
+    DeclarationOrStatementAstNode declarationOrStatement;
     ///
     override void accept(AstVisitor visitor)
     {
         if (condition)
             visitor.visit(condition);
-        if (singleStatementOrBlock)
-            visitor.visit(singleStatementOrBlock);
+        if (declarationOrStatement)
+            visitor.visit(declarationOrStatement);
     }
 }
 
@@ -706,23 +706,6 @@ final class IfConditionVariableAstNode: AstNode
     }
 }
 
-/// SingleStatementOrBlock
-final class SingleStatementOrBlockAstNode: AstNode
-{
-    /// The single statement.
-    DeclarationOrStatementAstNode singleStatement;
-    /// The block.
-    BlockStatementAstNode block;
-    ///
-    override void accept(AstVisitor visitor)
-    {
-        if (singleStatement)
-            visitor.visit(singleStatement);
-        else if (block)
-            visitor.visit(block);
-    }
-}
-
 /// IfElseStatement
 final class IfElseStatementAstNode: AstNode
 {
@@ -731,9 +714,9 @@ final class IfElseStatementAstNode: AstNode
     /// The consition when it's a new scoped variable.
     IfConditionVariableAstNode ifVariable;
     /// The single statement or block when condition is true.
-    SingleStatementOrBlockAstNode trueStatementOrBlock;
+    DeclarationOrStatementAstNode trueDeclarationOrStatement;
     /// The single statement or block when condition is false.
-    SingleStatementOrBlockAstNode falseStatementOrBlock;
+    DeclarationOrStatementAstNode falseDeclarationOrStatement;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -741,10 +724,10 @@ final class IfElseStatementAstNode: AstNode
             visitor.visit(condition);
         else if (ifVariable)
             visitor.visit(ifVariable);
-        if (trueStatementOrBlock)
-            visitor.visit(trueStatementOrBlock);
-        if (falseStatementOrBlock)
-            visitor.visit(falseStatementOrBlock);
+        if (trueDeclarationOrStatement)
+            visitor.visit(trueDeclarationOrStatement);
+        if (falseDeclarationOrStatement)
+            visitor.visit(falseDeclarationOrStatement);
     }
 }
 
@@ -933,6 +916,8 @@ final class StatementAstNode: AstNode
     TryOnFinallyStatementAstNode tryOnFinallyStatement;
     /// Assigned if this statement is a ThrowStatement.
     ThrowStatementAstNode throwStatement;
+    /// Assigned if this statement is a VersionBlockStatement.
+    VersionBlockStatementAstNode versionBlockStatement;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -960,6 +945,8 @@ final class StatementAstNode: AstNode
             visitor.visit(tryOnFinallyStatement);
         else if (throwStatement)
             visitor.visit(throwStatement);
+        else if (versionBlockStatement)
+            visitor.visit(versionBlockStatement);
     }
 }
 
@@ -1016,19 +1003,19 @@ final class ThrowStatementAstNode: AstNode
 final class TryOnFinallyStatementAstNode: AstNode
 {
     /// The statement to try.
-    SingleStatementOrBlockAstNode triedStatementOrBlock;
+    DeclarationOrStatementAstNode triedDeclarationOrStatement;
     /// The Exceptions handlers.
-    OnExceptionStatementAstNode[] exceptionStatements;
+    OnExceptionStatementAstNode[] exceptionDeclarationsOrStatements;
     /// The final statement.
-    SingleStatementOrBlockAstNode finalStatementOrBlock;
+    DeclarationOrStatementAstNode finalDeclarationOrStatement;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (triedStatementOrBlock)
-            visitor.visit(triedStatementOrBlock);
-        exceptionStatements.each!(a => visitor.visit(a));
-        if (finalStatementOrBlock)
-            visitor.visit(finalStatementOrBlock);
+        if (triedDeclarationOrStatement)
+            visitor.visit(triedDeclarationOrStatement);
+        exceptionDeclarationsOrStatements.each!(a => visitor.visit(a));
+        if (finalDeclarationOrStatement)
+            visitor.visit(finalDeclarationOrStatement);
     }
 }
 
@@ -1052,13 +1039,13 @@ final class OnExceptionStatementAstNode: AstNode
     /// The list of exceptions for this case.
     OnExceptionInstanceAstNode[] exceptionsInstances;
     /// The statement or block for these exceptions.
-    SingleStatementOrBlockAstNode exceptionsStatementorBlock;
+    DeclarationOrStatementAstNode exceptionsDeclarationOrStatement;
     ///
     override void accept(AstVisitor visitor)
     {
         exceptionsInstances.each!(a => visitor.visit(a));
-        if (exceptionsStatementorBlock)
-            visitor.visit(exceptionsStatementorBlock);
+        if (exceptionsDeclarationOrStatement)
+            visitor.visit(exceptionsDeclarationOrStatement);
     }
 }
 
@@ -1151,23 +1138,46 @@ final class UnitContainerAstNode: AstNode
 /// VersionBlockDeclaration
 final class VersionBlockDeclarationAstNode: AstNode
 {
-    /// Defines the version(s) for the block or single statement.
+    //note: other "compile time conditions" can be put here, like in D, debug{} or static if(){}
+
+    /// Expressions allowing to select the true or false declarations.
     VersionParenExpressionAstNode versionExpression;
-    /// The block or single statement when the versionExpression is verified.
-    SingleStatementOrBlockAstNode trueDeclarationOrBlock;
-    /// The block or single statement when the versionExpression is not verified.
-    SingleStatementOrBlockAstNode falseDeclarationOrBlock;
+    /// The declarations when the versionExpression is verified.
+    DeclarationAstNode[] trueDeclarations;
+    /// The declarations when the versionExpression is not verified.
+    DeclarationAstNode[] falseDeclarations;
     ///
     override void accept(AstVisitor visitor)
     {
         if (versionExpression)
             visitor.visit(versionExpression);
-        if (trueDeclarationOrBlock)
-            visitor.visit(trueDeclarationOrBlock);
-        if (falseDeclarationOrBlock)
-            visitor.visit(falseDeclarationOrBlock);
+        trueDeclarations.each!(a => visitor.visit(a));
+        falseDeclarations.each!(a => visitor.visit(a));
     }
-    /// Indicates wether $(D trueDeclarationOrBlock) or $(D falseDeclarationOrBlock) is the valid branch.
+    /// Indicates which declarations are valid.
+    @Semantic bool isTrue;
+}
+
+/// VersionBlockStatement
+final class VersionBlockStatementAstNode: AstNode
+{
+    //note: other "compile time conditions" can be put here, like in D, debug{} or static if(){}
+
+    /// Expressions allowing to select the true or false declarations or statements.
+    VersionParenExpressionAstNode versionExpression;
+    /// The declarations or statements when the versionExpression is verified.
+    DeclarationOrStatementAstNode[] trueDeclarationsOrStatements;
+    /// The declarations or statements when the versionExpression is not verified.
+    DeclarationOrStatementAstNode[] falseDeclarationsOrStatements;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (versionExpression)
+            visitor.visit(versionExpression);
+        trueDeclarationsOrStatements.each!(a => visitor.visit(a));
+        falseDeclarationsOrStatements.each!(a => visitor.visit(a));
+    }
+    /// Indicates which declarations or statements are valid.
     @Semantic bool isTrue;
 }
 

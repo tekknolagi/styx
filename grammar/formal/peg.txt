@@ -23,10 +23,12 @@ Yatol:
                     / EnumDeclaration
                     / FunctionDeclaration
                     / InterfaceDeclaration
-                    / BlockStatement
                     / AkaDeclaration
                     / VersionBlockDeclaration
                 #   / AtAttributeSectionDeclaration
+
+    SingleOrDeclarationBlock    < Declaration
+                                / LeftCurly Declarations RightCurly
 
     ProtectionDeclaration   < Prot LeftParen Identifier RightParen
     StructDeclaration       < Struct Identifier LeftCurly Declarations? RightCurly
@@ -50,11 +52,11 @@ Yatol:
     AkaDeclaration  < Is Type Aka Identifier
 
 ################################################################################
-# Version declaration
+# Version
 
-    VersionBlockDeclaration < VersionDeclaration DeclarationOrStatementsBlock (Else DeclarationOrStatementsBlock)?
+    VersionBlockDeclaration < VersionConditions SingleOrDeclarationBlock (Else SingleOrDeclarationBlock)?
 
-    VersionDeclaration < Version VersionParenExpression
+    VersionConditions < Version VersionParenExpression
 
     VersionParenExpression < LeftParen VersionOrExpression RightParen
 
@@ -80,7 +82,7 @@ Yatol:
 
     FunctionHeader < AtAttributes? Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
 
-    FunctionBody < LeftCurly DeclarationOrStatements? RightCurly
+    FunctionBody < LeftCurly DeclarationOrStatement* RightCurly
                  / Semicolon
 
     FunctionPointerType < AtAttributes? Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
@@ -113,12 +115,7 @@ Yatol:
     ArrayInitializerElements < Initializer (Comma Initializer)*
 
 ################################################################################
-# DeclarationOrStatement
-
-    DeclarationOrStatementsBlock < DeclarationOrStatement
-                                 / BlockStatement
-
-    DeclarationOrStatements < DeclarationOrStatement+
+# Mixed Declaration and Statement
 
     DeclarationOrStatement  < Declaration
                             / Statement
@@ -138,18 +135,19 @@ Yatol:
                 / SwitchStatement
                 / TryOnFinallyStatement
                 / ThrowStatement
+                / VersionBlockStatement
 
     EmptyStatment < Semicolon
 
     ExpressionStatement < AssignExpression Semicolon
 
-    IfElseStatement < If IfCondition SingleStatementOrBlock ElseStatement?
+    IfElseStatement < If IfCondition DeclarationOrStatement ElseStatement?
 
-    ElseStatement < Else SingleStatementOrBlock
+    ElseStatement < Else DeclarationOrStatement
 
-    WhileStatement < While LeftParen IfCondition RightParen SingleStatementOrBlock
+    WhileStatement < While LeftParen IfCondition RightParen DeclarationOrStatement
 
-    ForeachStatement < Foreach LeftParen VariableDeclaration Semicolon SingleOrRangeExpression RightParen SingleStatementOrBlock
+    ForeachStatement < Foreach LeftParen VariableDeclaration Semicolon SingleOrRangeExpression RightParen DeclarationOrStatement
 
     ReturnStatement < Return AssignExpression? Semicolon
 
@@ -157,9 +155,7 @@ Yatol:
 
     BreakStatement < Break AtLabel? AssignExpression? Semicolon
 
-    SingleStatementOrBlock < BlockStatement / DeclarationOrStatement
-
-    BlockStatement < LeftCurly DeclarationOrStatementsBlock RightCurly
+    BlockStatement < LeftCurly DeclarationOrStatement* RightCurly
 
     AtLabel < LeftParen Identifier RightParen
 
@@ -170,22 +166,24 @@ Yatol:
 
     SwitchStatement < Switch LeftParen Expression RightParen LeftCurly OnMatchStatement* ElseStatement? RightCurly
 
-    OnMatchStatement < On OnMatchExpressions SingleStatementOrBlock
+    OnMatchStatement < On OnMatchExpressions DeclarationOrStatement
 
     OnMatchExpressions < LeftParen SingleOrRangeExpression (Comma SingleOrRangeExpression)* RightParen
 
     SingleOrRangeExpression < RangeExpression
                             / Expression
 
-    TryOnFinallyStatement < Try SingleStatementOrBlock OnExceptionStatement* FinallyStatement?
+    TryOnFinallyStatement < Try DeclarationOrStatement OnExceptionStatement* FinallyStatement?
 
     OnExceptionInstance < Type Identifier
 
-    OnExceptionStatement < On LeftParen OnExceptionInstance (Comma OnExceptionInstance)* RightParen SingleStatementOrBlock
+    OnExceptionStatement < On LeftParen OnExceptionInstance (Comma OnExceptionInstance)* RightParen DeclarationOrStatement
 
-    FinallyStatement < Finally SingleStatementOrBlock
+    FinallyStatement < Finally DeclarationOrStatement
 
     ThrowStatement < Throw UnaryExpression Semicolon
+
+    VersionBlockStatement < VersionConditions DeclarationOrStatement (Else DeclarationOrStatement)?
 
 ################################################################################
 # Composites expressions

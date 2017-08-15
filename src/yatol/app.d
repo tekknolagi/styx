@@ -4,6 +4,7 @@ import
     std.getopt, std.file, std.stdio, std.path, std.datetime, std.array;
 import
     yatol.lexer, yatol.lexer.types, yatol.parser, yatol.parser.ast,
+    yatol.session,
     yatol.semantic,
     yatol.parser.debug_visitor;
 
@@ -19,11 +20,9 @@ struct Options
 {
 __gshared:
     bool mtime;
-    bool verbose;
     bool ast;
     bool pipe;
     Until until;
-    string[] userVersions;
 }
 
 alias options = Options;
@@ -73,10 +72,10 @@ Command line syntax:
 Files:
     a list of yatol source files, space-separated.
 Options:
-    -a or --ast           : print the AST of each source.
+    -a or --ast           : prints the AST of each source.
     -h or --help          : prints this message.
-    -p or --pipe          : create a source named "stdin" by piping the input.
-    -t or --time          : measure the time spent to compile.
+    -p or --pipe          : creates a source named "stdin" by piping the input.
+    -t or --time          : measures the time spent to compile.
           --until=<phase> : compiles and stops after <phase>, either "lexing", "parsing" or "semantic".
     -v or --verbose       : verbose output.
           --versions<=ids>: defines the version() identifiers list, comma separated.
@@ -118,8 +117,8 @@ int main(string[] args)
         "p|pipe", &options.pipe,
         "t|time", &options.mtime,
         "until", &options.until,
-        "v|verbose", &options.verbose,
-        "versions", &options.userVersions,
+        "v|verbose", &session.verbose,
+        "versions", &session.userVersions,
     );
     catch (GetOptException ge)
     {
@@ -156,7 +155,7 @@ int main(string[] args)
     }
     foreach (source; sources)
     {
-        if (options.verbose)
+        if (session.verbose)
             writeln("lexing ", source, "...");
         try
         {
@@ -185,12 +184,12 @@ int main(string[] args)
     // parses each lexer
     foreach (ref lexer; lexers)
     {
-        if (options.verbose)
+        if (session.verbose)
             writeln("parsing ", lexer.filename, "...");
         parsers ~= new Parser(lexer);
         if (UnitContainerAstNode uc = parsers[$-1].parse())
         {
-            if (options.ast)
+            if (options.ast && options.until == Until.parsing)
             {
                 writeln("AST for ", lexer.filename);
                 DebugVisitor dbgv = new DebugVisitor();
@@ -219,10 +218,18 @@ int main(string[] args)
 
     foreach (i, ref parser; parsers)
     {
-        if (options.verbose)
+        if (session.verbose)
             writeln("unit semantic for ", lexers[i].filename, "...");
         if (!unitSemantic(parser.unitContainer, lexers[i]))
             return 1;
+        if (options.ast)
+        {
+            writeln("AST for ", lexers[i].filename);
+            DebugVisitor dbgv = new DebugVisitor();
+            dbgv.visit(parser.unitContainer);
+            dbgv.printText;
+            writeln;
+        }
     }
     if (options.mtime)
     {
