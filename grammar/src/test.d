@@ -123,7 +123,7 @@ enum source1 = `
         var s8[] b;
         b = [0:s8,1:s8];
 
-        throw Exception.create();
+        throw Exception.create("oops");
     }
 
     enum A

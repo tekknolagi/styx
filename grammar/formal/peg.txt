@@ -229,6 +229,7 @@ Yatol:
 
     PrimaryExpression   < Identifier
                         / NumberLiteral
+                        / StringLiteral
                         / ParenExpression
                         / Super
                         / ValueKeyword
@@ -283,6 +284,9 @@ Yatol:
     NumberLiteral   < IntLiteral
                     / HexLiteral
                     / FloatLiteral
+
+    # also used as char literal, implicit or infered from cast
+    StringLiteral   <- : "\"" (!"\"" .)* :"\""
 
     HexLiteral  <~ HexPrefix HexDigits+ HexLiteralSuffix?
     HexLiteralSuffix <- Colon BasicType
