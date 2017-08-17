@@ -251,7 +251,7 @@ Yatol:
                     / FunctionPointerType
                     / typeIdentifiersUnion
 
-    TypeIdentifierUnion < LeftSquare TypeIdentifier (Pipe TypeIdentifier)+ RightSquare
+    typeIdentifiersUnion < LeftSquare TypeIdentifier (Pipe TypeIdentifier)+ RightSquare
 
     TypeModifiers < TypeModifier TypeModifiers?
 
