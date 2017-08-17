@@ -48,8 +48,7 @@ Yatol:
 
     EnumMember    < Identifier (Equal Initializer)?
 
-    #The IdentifierChain in Type may represent a symbol
-    AkaDeclaration  < Is Type Aka Identifier
+    AkaDeclaration  < Is Type Aka Identifier Semicolon
 
 ################################################################################
 # Version
