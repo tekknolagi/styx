@@ -123,6 +123,7 @@ enum TokenType : ubyte
     minus,
     amp,
     pipe,
+    tidle,
     lShift,
     rShift,
     xor,
@@ -245,6 +246,7 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     "-",
     "&",
     "|",
+    "~",
     "<<",
     ">>",
     "^",
@@ -719,6 +721,9 @@ public:
     bool isTokWhile() const {return type == TokenType.while_;}
 
     /// Conveniance function used by the parser.
+    bool isTokTidle() const {return type == TokenType.tidle;}
+
+    /// Conveniance function used by the parser.
     bool isTokAmp() const {return type == TokenType.amp;}
 
     /// Conveniance function used by the parser.
@@ -833,7 +838,9 @@ public:
     bool isTokUnaryPrefix() const
     {
         return type == TokenType.plusPlus || type == TokenType.minusMinus ||
-            type == TokenType.mul || type == TokenType.amp || type == TokenType.bang;
+            type == TokenType.mul || type == TokenType.amp ||
+            type == TokenType.bang || type == TokenType.tidle ||
+            type == TokenType.plus || type == TokenType.minus;
     }
 
     /// Conveniance function used by the parser.

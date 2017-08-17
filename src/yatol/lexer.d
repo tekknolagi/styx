@@ -490,12 +490,7 @@ public:
             case '-':
                 if (canLookup())
                 {
-                    if ( '0' <= *lookup() && *lookup() <= '9')
-                    {
-                        anticipateToken(TokenType.intLiteral);
-                        lexIntegerLiteral();
-                    }
-                    else if (*lookup() == '-')
+                    if (*lookup() == '-')
                     {
                         anticipateToken(TokenType.minusMinus);
                         advance();
@@ -736,6 +731,11 @@ public:
                 advance();
                 validateToken();
                 continue;
+            case '~':
+                anticipateToken(TokenType.tidle);
+                advance();
+                validateToken();
+                continue;
             case '!':
                 if (canLookup() && *lookup() == '=')
                 {
@@ -795,7 +795,7 @@ public:
     Tokens tokens() {return _tokens;}
 
     /// Returns: The name of the life that's been lexed.
-    char[] filename() {return _filename;}
+    const(char)[] filename() {return _filename;}
 
     version(all)
     {
@@ -855,7 +855,7 @@ unittest
 unittest
 {
     int line = __LINE__ + 1;
-    enum source = `.:;,()/[]{}*+-!@=><&$^%?`;
+    enum source = `.:;,()/[]{}*+-!@=><&$^%?~`;
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
@@ -1111,9 +1111,10 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 2);
-    assert(lx.tokens[0].isTokFloatLiteral);
-    assert(lx.tokens[0].text == source);
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokMinus);
+    assert(lx.tokens[1].isTokFloatLiteral);
+    assert(lx.tokens[1].text == source[1..$]);
 }
 
 unittest

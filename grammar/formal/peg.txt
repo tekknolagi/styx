@@ -291,10 +291,10 @@ Yatol:
     HexLiteral  <~ HexPrefix HexDigits+ HexLiteralSuffix?
     HexLiteralSuffix <- Colon BasicType
 
-    FloatLiteral  <~ Minus? Num+ Dot Num+ FloatLiteralSuffix?
+    FloatLiteral  <~ Num+ Dot Num+ FloatLiteralSuffix?
     FloatLiteralSuffix <- Colon BasicFloatType
 
-    IntLiteral  <~ Minus? Num+ IntLiteralSuffix?
+    IntLiteral  <~ Num+ IntLiteralSuffix?
     IntLiteralSuffix <- Colon BasicIntegerType
 
     Eol <- "\r\n" / '\n'
@@ -317,7 +317,7 @@ Yatol:
                 / GreaterEqual
                 / LesserEqual
 
-    UnaryPrefix < Mul / PlusPlus / MinusMinus / Amp / Bang
+    UnaryPrefix < Mul / PlusPlus / MinusMinus / Amp / Bang / Plus / Minus / Tidle
 
     UnarySuffix < PlusPlus / MinusMinus
 
@@ -367,6 +367,7 @@ Yatol:
     RightCurly  <- '}'
     Minus       <- '-'
     Plus        <- '+'
+    Tidle       <- '~'
     At          <- '@'
     Bang        <- '!'
     Amp         <- '&'

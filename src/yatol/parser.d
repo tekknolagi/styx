@@ -4537,6 +4537,10 @@ unittest // misc. coverage for errors
             a = b % c;
         }
     });
+    assertParse(q{
+        unit a;
+        const auto a = ~1;
+    });
 }
 
 unittest // if else
