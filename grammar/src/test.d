@@ -136,6 +136,17 @@ enum source1 = `
     }
 
     class Foo: Bar.bar, Baz{}
+
+    is [Foo | Bar | Baz] aka MyUnion;
+
+    struct Fbb
+    {
+        var T t;
+        var ([Foo | Bar | Baz]) fbb1;
+        var [Foo | Bar | Baz] fbb2;
+    }
+
+    struct Last {}
 `;
 
 void main()

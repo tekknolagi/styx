@@ -333,9 +333,36 @@ private:
             if (!result.functionType)
                 parseError("invalid function type");
         }
+        else if (current.isTokLeftSquare)
+        {
+            advance();
+            while (true)
+            {
+                Token*[] idc = parseIdentifierChain();
+                if (idc.length)
+                    result.typeIdentifiersUnion ~= idc;
+                else
+                    return null;
+                if (current.isTokRightSquare)
+                {
+                    advance();
+                    break;
+                }
+                if (!current.isTokPipe)
+                {
+                    expected(TokenType.pipe);
+                    return null;
+                }
+                advance();
+            }
+        }
         else
         {
-            result.basicOrQualifiedType = parseIdentifierChain();
+            Token*[] idc = parseIdentifierChain();
+            if (idc.length)
+                result.basicOrQualifiedType = idc;
+            else
+                return null;
         }
         if (current.isTokRightParen)
         {
@@ -351,7 +378,7 @@ private:
             parseError("invalid type delimiter, missing right paren");
             return null;
         }
-        if (result.basicOrQualifiedType.length || result.functionType)
+        if (result.basicOrQualifiedType.length || result.functionType || result.typeIdentifiersUnion)
         {
             if (current.isTokMul || current.isTokLeftSquare)
             {
@@ -4100,8 +4127,32 @@ unittest // cover error cases for: enum
     });
 }
 
-unittest // cover error cases for: aka
+unittest // aka & type
 {
+    assertParse(q{
+        unit a;
+        is s64 aka long;
+    });
+    assertParse(q{
+        unit a;
+        is a.B.C aka Abc;
+    });
+    assertParse(q{
+        unit a;
+        is [a|b|c] aka AorBorC;
+    });
+    assertNotParse(q{
+        unit a;
+        is [a/b|c] aka AorBorC;
+    });
+    assertNotParse(q{
+        unit a;
+        is [a/b|c aka AorBorC;
+    });
+    assertNotParse(q{
+        unit a;
+        is [-a/b|c aka AorBorC;
+    });
     assertNotParse(q{
         unit a;
         is;

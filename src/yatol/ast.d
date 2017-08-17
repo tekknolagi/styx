@@ -1057,6 +1057,8 @@ final class TypeAstNode: AstNode
 {
     /// The basic type or a qualified custom type
     Token*[] basicOrQualifiedType;
+    /// Basic or qualified types that make an union.
+    Token*[][] typeIdentifiersUnion;
     /// If the type is a function, then assigned.
     FunctionTypeAstNode functionType;
     /// The first modifier.
