@@ -194,14 +194,15 @@ void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions,
     UnitContainerAstNode uc = lexAndParse(code, file, line);
 
     if (uc is null || !uc.mainUnit || !uc.mainUnit.declarations.length ||
-        !uc.mainUnit.declarations[0].versionBlockDeclaration)
+        !uc.mainUnit.declarations[0].declaration.versionBlockDeclaration)
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
     VersionEvaluatorVisitor vev = new VersionEvaluatorVisitor(userVersions);
 
     vev.visit(uc);
-    const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations[0].versionBlockDeclaration;
+    const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations[0]
+        .declaration.versionBlockDeclaration;
 
     if (!vb.isTrue)
     {
@@ -227,14 +228,15 @@ void assertFirstVersionIsFalse(const(char)[] code, string[] userVersions,
     UnitContainerAstNode uc = lexAndParse(code, file, line);
 
     if (uc is null || !uc.mainUnit || !uc.mainUnit.declarations.length ||
-        !uc.mainUnit.declarations[0].versionBlockDeclaration)
+        !uc.mainUnit.declarations[0].declaration.versionBlockDeclaration)
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
     VersionEvaluatorVisitor vev = new VersionEvaluatorVisitor(userVersions);
 
     vev.visit(uc);
-    const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations[0].versionBlockDeclaration;
+    const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations[0]
+        .declaration.versionBlockDeclaration;
 
     if (vb.isTrue)
     {

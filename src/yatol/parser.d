@@ -2489,8 +2489,9 @@ private:
         case semiColon:
         {
             StatementAstNode result = new StatementAstNode;
-            result.emptyStatement = new EmptyStatementAstNode;
-            result.emptyStatement.position = current.position;
+            result.statementKind = StatementKind.skEmpty;
+            result.statement.emptyStatement = new EmptyStatementAstNode;
+            result.statement.emptyStatement.position = current.position;
             advance();
             return result;
         }
@@ -2499,7 +2500,8 @@ private:
             if (ReturnStatementAstNode rs = parseReturnStatement())
             {
                 StatementAstNode result = new StatementAstNode;
-                result.returnStatement = rs;
+                result.statementKind = StatementKind.skReturn;
+                result.statement.returnStatement = rs;
                 return result;
             }
             else
@@ -2513,7 +2515,8 @@ private:
             if (BreakStatementAstNode bs = parseBreakStatement())
             {
                 StatementAstNode result = new StatementAstNode;
-                result.breakStatement = bs;
+                result.statementKind = StatementKind.skBreak;
+                result.statement.breakStatement = bs;
                 return result;
             }
             else
@@ -2527,7 +2530,8 @@ private:
             if (ContinueStatementAstNode cs = parseContinueStatement())
             {
                 StatementAstNode result = new StatementAstNode;
-                result.continueStatement = cs;
+                result.statementKind = StatementKind.skContinue;
+                result.statement.continueStatement = cs;
                 return result;
             }
             else
@@ -2541,7 +2545,8 @@ private:
             if (IfElseStatementAstNode ies = parseIfElseStatement())
             {
                 StatementAstNode result = new StatementAstNode;
-                result.ifElseStatement = ies;
+                result.statementKind = StatementKind.skIfElse;
+                result.statement.ifElseStatement = ies;
                 return result;
             }
             else
@@ -2555,7 +2560,8 @@ private:
             if (WhileStatementAstNode ws = parseWhileStatement())
             {
                 StatementAstNode result = new StatementAstNode;
-                result.whileStatement = ws;
+                result.statementKind = StatementKind.skWhile;
+                result.statement.whileStatement = ws;
                 return result;
             }
             else
@@ -2569,7 +2575,8 @@ private:
             if (ForeachStatementAstNode fs = parseForeachStatement())
             {
                 StatementAstNode result = new StatementAstNode;
-                result.foreachStatement = fs;
+                result.statementKind = StatementKind.skForeach;
+                result.statement.foreachStatement = fs;
                 return result;
             }
             else
@@ -2583,7 +2590,8 @@ private:
             if (SwitchStatementAstNode ss = parseSwitchStatement())
             {
                 StatementAstNode result = new StatementAstNode;
-                result.switchStatement = ss;
+                result.statementKind = StatementKind.skSwitch;
+                result.statement.switchStatement = ss;
                 return result;
             }
             else
@@ -2597,7 +2605,8 @@ private:
             if (TryOnFinallyStatementAstNode tofs = parseTryOnFinallyStatement())
             {
                 StatementAstNode result = new StatementAstNode;
-                result.tryOnFinallyStatement = tofs;
+                result.statementKind = StatementKind.skTryOnFinally;
+                result.statement.tryOnFinallyStatement = tofs;
                 return result;
             }
             else
@@ -2611,7 +2620,8 @@ private:
             if (ThrowStatementAstNode ts = parseThrowStatement())
             {
                 StatementAstNode result = new StatementAstNode;
-                result.throwStatement = ts;
+                result.statementKind = StatementKind.skThrow;
+                result.statement.throwStatement = ts;
                 return result;
             }
             else
@@ -2625,7 +2635,8 @@ private:
             if (VersionBlockStatementAstNode vbs = parseVersionBlockStatement())
             {
                 StatementAstNode result = new StatementAstNode;
-                result.versionBlockStatement = vbs;
+                result.statementKind = StatementKind.skVersion;
+                result.statement.versionBlockStatement = vbs;
                 return result;
             }
             else
@@ -2641,7 +2652,8 @@ private:
             if (parseDeclarationsOrStatements(b.declarationsOrStatements))
             {
                 StatementAstNode result = new StatementAstNode;
-                result.block = b;
+                result.statementKind = StatementKind.skBlock;
+                result.statement.block = b;
                 advance();
                 return result;
             }
@@ -2652,7 +2664,8 @@ private:
             if (ExpressionStatementAstNode es = parseExpressionStatement())
             {
                 StatementAstNode result = new StatementAstNode;
-                result.expression = es;
+                result.statementKind = StatementKind.skExpression;
+                result.statement.expression = es;
                 return result;
             }
             else
@@ -2677,7 +2690,8 @@ private:
             if (EnumDeclarationAstNode decl = parseEnumDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
-                result.enumDeclaration = decl;
+                result.declarationKind = DeclarationKind.dkEnum;
+                result.declaration.enumDeclaration = decl;
                 return result;
             }
             else return null;
@@ -2687,7 +2701,8 @@ private:
             if (InterfaceDeclarationAstNode decl = parseInterfaceDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
-                result.interfaceDeclaration = decl;
+                result.declarationKind = DeclarationKind.dkInterface;
+                result.declaration.interfaceDeclaration = decl;
                 return result;
             }
             else return null;
@@ -2697,7 +2712,8 @@ private:
             if (ClassDeclarationAstNode decl = parseClassDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
-                result.classDeclaration = decl;
+                result.declarationKind = DeclarationKind.dkClass;
+                result.declaration.classDeclaration = decl;
                 return result;
             }
             else return null;
@@ -2707,7 +2723,8 @@ private:
             if (StructDeclarationAstNode decl = parseStructDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
-                result.structDeclaration = decl;
+                result.declarationKind = DeclarationKind.dkStruct;
+                result.declaration.structDeclaration = decl;
                 return result;
             }
             else return null;
@@ -2717,7 +2734,8 @@ private:
             if (FunctionDeclarationAstNode decl = parseFunctionDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
-                result.functionDeclaration = decl;
+                result.declarationKind = DeclarationKind.dkFunction;
+                result.declaration.functionDeclaration = decl;
                 return result;
             }
             else return null;
@@ -2727,7 +2745,8 @@ private:
             if (ImportDeclarationAstNode decl = parseImportDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
-                result.importDeclaration = decl;
+                result.declarationKind = DeclarationKind.dkImport;
+                result.declaration.importDeclaration = decl;
                 return result;
             }
             else return null;
@@ -2737,7 +2756,8 @@ private:
             if (ProtectionDeclarationAstNode decl = parseProtectionDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
-                result.protectionOverwrite = decl;
+                result.declarationKind = DeclarationKind.dkProtection;
+                result.declaration.protectionOverwrite = decl;
                 return result;
             }
             else return null;
@@ -2747,7 +2767,8 @@ private:
             if (VariableDeclarationAstNode vd = parseVariableDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
-                result.variableDeclaration = vd;
+                result.declarationKind = DeclarationKind.dkVariable;
+                result.declaration.variableDeclaration = vd;
                 return result;
             }
             else return null;
@@ -2757,7 +2778,8 @@ private:
             if (AkaDeclarationAstNode ad = parseAkaDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
-                result.akaDeclaration = ad;
+                result.declarationKind = DeclarationKind.dkAka;
+                result.declaration.akaDeclaration = ad;
                 return result;
             }
             else return null;
@@ -2767,7 +2789,8 @@ private:
             if (VersionBlockDeclarationAstNode decl = parseVersionBlockDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
-                result.versionBlockDeclaration = decl;
+                result.declarationKind = DeclarationKind.dkVersion;
+                result.declaration.versionBlockDeclaration = decl;
                 return result;
             }
             else return null;
@@ -2798,7 +2821,7 @@ public:
     @disable this();
 
     /**
-     * Constructs the parse with the lexer that contains the tokens to parse.
+     * Constructs the parser with the lexer that contains the tokens to parse.
      */
     this(Lexer* lexer)
     {

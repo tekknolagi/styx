@@ -515,56 +515,73 @@ final class AtAttributeAstNode: AstNode
     Token* identifierOrKeyword;
 }
 
+/// Enumerates the possible declarations.
+enum DeclarationKind: ubyte
+{
+    dkNone,
+    dkFunction,
+    dkImport,
+    dkProtection,
+    dkInterface,
+    dkClass,
+    dkStruct,
+    dkEnum,
+    dkBlock,
+    dkVariable,
+    dkAka,
+    dkVersion
+}
+
 /// Declaration
 final class DeclarationAstNode: AstNode
 {
-    /// Assigned if this declaration is a FunctionDeclaration.
-    FunctionDeclarationAstNode functionDeclaration;
-    /// Assigned if this declaration is an ImportDeclarationAstNode.
-    ImportDeclarationAstNode importDeclaration;
-    /// Assigned if this declaration is a ProtectionDeclarationAstNode.
-    ProtectionDeclarationAstNode protectionOverwrite;
-    /// Assigned if this declaration is an InterfaceDeclarationAstNode.
-    InterfaceDeclarationAstNode interfaceDeclaration;
-    /// Assigned if this declaration is a ClassDeclarationAstNode.
-    ClassDeclarationAstNode classDeclaration;
-    /// Assigned if this declaration is a StructDeclarationAstNode.
-    StructDeclarationAstNode structDeclaration;
-    /// Assigned if this declaration is an EnumDeclarationAstNode.
-    EnumDeclarationAstNode enumDeclaration;
-    /// Assigned if this declaration is a Scope.
-    BlockStatementAstNode declarationBlock;
-    /// Assigned if this declaration is a VariableDeclaration.
-    VariableDeclarationAstNode variableDeclaration;
-    /// Assigned if this declaration is an AkaDeclaration.
-    AkaDeclarationAstNode akaDeclaration;
-    /// Assigned if this declaration is an VersionBlockDeclaration.
-    VersionBlockDeclarationAstNode versionBlockDeclaration;
+    union Declaration
+    {
+        /// Assigned if this declaration is a FunctionDeclaration.
+        FunctionDeclarationAstNode functionDeclaration;
+        /// Assigned if this declaration is an ImportDeclarationAstNode.
+        ImportDeclarationAstNode importDeclaration;
+        /// Assigned if this declaration is a ProtectionDeclarationAstNode.
+        ProtectionDeclarationAstNode protectionOverwrite;
+        /// Assigned if this declaration is an InterfaceDeclarationAstNode.
+        InterfaceDeclarationAstNode interfaceDeclaration;
+        /// Assigned if this declaration is a ClassDeclarationAstNode.
+        ClassDeclarationAstNode classDeclaration;
+        /// Assigned if this declaration is a StructDeclarationAstNode.
+        StructDeclarationAstNode structDeclaration;
+        /// Assigned if this declaration is an EnumDeclarationAstNode.
+        EnumDeclarationAstNode enumDeclaration;
+        /// Assigned if this declaration is a Scope.
+        BlockStatementAstNode declarationBlock;
+        /// Assigned if this declaration is a VariableDeclaration.
+        VariableDeclarationAstNode variableDeclaration;
+        /// Assigned if this declaration is an AkaDeclaration.
+        AkaDeclarationAstNode akaDeclaration;
+        /// Assigned if this declaration is an VersionBlockDeclaration.
+        VersionBlockDeclarationAstNode versionBlockDeclaration;
+    }
+    ///
+    Declaration declaration;
+    ///
+    DeclarationKind declarationKind;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (importDeclaration)
-            visitor.visit(importDeclaration);
-        else if (protectionOverwrite)
-            visitor.visit(protectionOverwrite);
-        else if (interfaceDeclaration)
-            visitor.visit(interfaceDeclaration);
-        else if (classDeclaration)
-            visitor.visit(classDeclaration);
-        else if (structDeclaration)
-            visitor.visit(structDeclaration);
-        else if (enumDeclaration)
-            visitor.visit(enumDeclaration);
-        else if (declarationBlock)
-            visitor.visit(declarationBlock);
-        else if (functionDeclaration)
-            visitor.visit(functionDeclaration);
-        else if (variableDeclaration)
-            visitor.visit(variableDeclaration);
-        else if (akaDeclaration)
-            visitor.visit(akaDeclaration);
-        else if (versionBlockDeclaration)
-            visitor.visit(versionBlockDeclaration);
+        with (DeclarationKind) final switch (declarationKind)
+        {
+        case dkFunction: visitor.visit(declaration.functionDeclaration); break;
+        case dkImport: visitor.visit(declaration.importDeclaration); break;
+        case dkProtection: visitor.visit(declaration.protectionOverwrite); break;
+        case dkInterface: visitor.visit(declaration.interfaceDeclaration); break;
+        case dkClass: visitor.visit(declaration.classDeclaration); break;
+        case dkStruct: visitor.visit(declaration.structDeclaration); break;
+        case dkEnum: visitor.visit(declaration.enumDeclaration); break;
+        case dkBlock: visitor.visit(declaration.declarationBlock); break;
+        case dkVariable: visitor.visit(declaration.variableDeclaration); break;
+        case dkAka: visitor.visit(declaration.akaDeclaration); break;
+        case dkVersion: visitor.visit(declaration.versionBlockDeclaration); break;
+        case dkNone: assert(false);
+        }
     }
 }
 
@@ -892,64 +909,82 @@ final class BreakStatementAstNode: FlowControlBaseNode
     Token* label;
 }
 
+/// Enumerates the possible statements
+enum StatementKind: ubyte
+{
+    skNone,
+    skEmpty,
+    skExpression,
+    skReturn,
+    skBreak,
+    skContinue,
+    skBlock,
+    skIfElse,
+    skWhile,
+    skForeach,
+    skSwitch,
+    skTryOnFinally,
+    skThrow,
+    skVersion,
+}
+
 /// Statement
 final class StatementAstNode: AstNode
 {
-    /// Assigned if this statement is an EmptyStatementAstNode.
-    EmptyStatementAstNode emptyStatement;
-    /// Assigned if this statement is an Expression.
-    ExpressionStatementAstNode expression;
-    /// Assigned if this statement is a ReturnStatement.
-    ReturnStatementAstNode returnStatement;
-    /// Assigned if this statement is a BreakStatement.
-    BreakStatementAstNode breakStatement;
-    /// Assigned if this statement is a ContinueStatement.
-    ContinueStatementAstNode continueStatement;
-    /// Assigned if this is a block statement.
-    BlockStatementAstNode block;
-    /// Assigned if this statement is an IfElseStatement.
-    IfElseStatementAstNode ifElseStatement;
-    /// Assigned if this statement is a WhileStatement.
-    WhileStatementAstNode whileStatement;
-    /// Assigned if this statement is a ForeachStatement.
-    ForeachStatementAstNode foreachStatement;
-    /// Assigned if this statement is a SwitchStatement.
-    SwitchStatementAstNode switchStatement;
-    /// Assigned if this statement is a TryStatement.
-    TryOnFinallyStatementAstNode tryOnFinallyStatement;
-    /// Assigned if this statement is a ThrowStatement.
-    ThrowStatementAstNode throwStatement;
-    /// Assigned if this statement is a VersionBlockStatement.
-    VersionBlockStatementAstNode versionBlockStatement;
+    ///
+    union Statement
+    {
+        /// Assigned if this statement is an EmptyStatementAstNode.
+        EmptyStatementAstNode emptyStatement;
+        /// Assigned if this statement is an Expression.
+        ExpressionStatementAstNode expression;
+        /// Assigned if this statement is a ReturnStatement.
+        ReturnStatementAstNode returnStatement;
+        /// Assigned if this statement is a BreakStatement.
+        BreakStatementAstNode breakStatement;
+        /// Assigned if this statement is a ContinueStatement.
+        ContinueStatementAstNode continueStatement;
+        /// Assigned if this is a block statement.
+        BlockStatementAstNode block;
+        /// Assigned if this statement is an IfElseStatement.
+        IfElseStatementAstNode ifElseStatement;
+        /// Assigned if this statement is a WhileStatement.
+        WhileStatementAstNode whileStatement;
+        /// Assigned if this statement is a ForeachStatement.
+        ForeachStatementAstNode foreachStatement;
+        /// Assigned if this statement is a SwitchStatement.
+        SwitchStatementAstNode switchStatement;
+        /// Assigned if this statement is a TryStatement.
+        TryOnFinallyStatementAstNode tryOnFinallyStatement;
+        /// Assigned if this statement is a ThrowStatement.
+        ThrowStatementAstNode throwStatement;
+        /// Assigned if this statement is a VersionBlockStatement.
+        VersionBlockStatementAstNode versionBlockStatement;
+    }
+    ///
+    Statement statement;
+    /// Indicates the statement kind.
+    StatementKind statementKind;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (emptyStatement)
-            visitor.visit(emptyStatement);
-        else if (expression)
-            visitor.visit(expression);
-        else if (returnStatement)
-            visitor.visit(returnStatement);
-        else if (breakStatement)
-            visitor.visit(breakStatement);
-        else if (continueStatement)
-            visitor.visit(continueStatement);
-        else if (block)
-            visitor.visit(block);
-        else if (ifElseStatement)
-            visitor.visit(ifElseStatement);
-        else if (whileStatement)
-            visitor.visit(whileStatement);
-        else if (foreachStatement)
-            visitor.visit(foreachStatement);
-        else if (switchStatement)
-            visitor.visit(switchStatement);
-        else if (tryOnFinallyStatement)
-            visitor.visit(tryOnFinallyStatement);
-        else if (throwStatement)
-            visitor.visit(throwStatement);
-        else if (versionBlockStatement)
-            visitor.visit(versionBlockStatement);
+        with(StatementKind) final switch(statementKind)
+        {
+        case skEmpty: visitor.visit(statement.emptyStatement); break;
+        case skExpression: visitor.visit(statement.expression); break;
+        case skReturn: visitor.visit(statement.returnStatement); break;
+        case skBreak: visitor.visit(statement.breakStatement); break;
+        case skContinue: visitor.visit(statement.continueStatement); break;
+        case skBlock: visitor.visit(statement.block); break;
+        case skIfElse: visitor.visit(statement.ifElseStatement); break;
+        case skWhile: visitor.visit(statement.whileStatement); break;
+        case skForeach: visitor.visit(statement.foreachStatement); break;
+        case skSwitch: visitor.visit(statement.switchStatement); break;
+        case skTryOnFinally: visitor.visit(statement.tryOnFinallyStatement); break;
+        case skThrow: visitor.visit(statement.throwStatement); break;
+        case skVersion: visitor.visit(statement.versionBlockStatement); break;
+        case skNone: assert(false);
+        }
     }
 }
 
