@@ -7,7 +7,7 @@ import
 import yatol;
 
 // sample source
-enum source1 = `
+enum source1 = "
     unit a.$function;
     import(0:s8) r.d, s.d,t;
     import(1) s1, s256yy;
@@ -125,7 +125,8 @@ enum source1 = `
         var s8[] b;
         b = [0:s8,1:s8];
 
-        throw Exception.create("oops");
+        throw Exception.create(\"oops\");
+        throw Exception.create(`oops`);
     }
 
     enum A
@@ -147,7 +148,7 @@ enum source1 = `
     }
 
     struct Last {}
-`;
+";
 
 void main()
 {

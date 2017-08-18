@@ -243,15 +243,15 @@ Yatol:
 # Type
 
     Type    < TypeIdentifier TypeModifiers?
-            / LeftParen TypeIdentifier RightParen TypeModifiers?
+            / LeftParen TypeIdentifier RightParen TypeModifiers? # the "unambiguous form"
             / Auto
 
     TypeIdentifier  < BasicType
                     / IdentifierChain
                     / FunctionPointerType
-                    / typeIdentifiersUnion
+                    / TypeIdentifiersUnion
 
-    typeIdentifiersUnion < LeftSquare TypeIdentifier (Pipe TypeIdentifier)+ RightSquare
+    TypeIdentifiersUnion < LeftSquare TypeIdentifier (Pipe TypeIdentifier)+ RightSquare
 
     TypeModifiers < TypeModifier TypeModifiers?
 
@@ -271,7 +271,7 @@ Yatol:
 ################################################################################
 # Comments and spacing
 
-    Spacing <- :(' ' / '\t' / '\r' / '\n' / '\r\n' / Comment)*
+    Spacing <- :(' ' / '\t' / '\r' / '\v' / '\f' / '\n' / '\r\n' / Comment)*
 
     Comment <~ LineComment / StarComment
 
@@ -287,6 +287,7 @@ Yatol:
 
     # also used as char literal, implicit or infered from cast
     StringLiteral   <- : "\"" (!"\"" .)* :"\""
+                    / : "`" (!"`" .)* :"`"
 
     HexLiteral  <~ HexPrefix HexDigits+ HexLiteralSuffix?
     HexLiteralSuffix <- Colon BasicType

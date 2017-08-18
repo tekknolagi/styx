@@ -161,6 +161,29 @@ private:
         }
     }
 
+    void lexRawStringLiteral()
+    {
+        advance();
+        anticipateToken(TokenType.stringLiteral);
+        while (true)
+        {
+            switch(*_front)
+            {
+            case 0:
+                error("null character encountered inside a raw string literal");
+                advance();
+                validateToken(TokenType.invalid);
+                return;
+            case '`':
+                validateToken();
+                advance();
+                return;
+            default:
+                advance();
+            }
+        }
+    }
+
     void lexLineComment()
     {
         anticipateToken(TokenType.lineComment);
@@ -441,7 +464,7 @@ public:
                 warning("null character encountered between two tokens");
                 advance();
                 continue;
-            case ' ', '\t':
+            case ' ', '\t', '\v', '\f':
                 advance();
                 continue;
             case '\r', '\n':
@@ -520,6 +543,9 @@ public:
                 continue;
             case '"':
                 lexStringLiteral();
+                continue;
+            case '`':
+                lexRawStringLiteral();
                 continue;
             case '&':
                 if (canLookup() && *lookup() == '&')
@@ -1481,6 +1507,40 @@ unittest
     assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokStringLiteral);
     assert(lx.tokens[0].rawText == source[1..$-1]);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "`rawString`";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].isTokStringLiteral);
+    assert(lx.tokens[0].rawText == source[1..$-1]);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "`rawString";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "`rawString\x00";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].isTokInvalid);
 }
 
 unittest

@@ -466,28 +466,49 @@ private:
         size_t i, j;
         while (i < _length)
         {
-            switch (_start[i])
+            if (_start[i] == '\\')
             {
-            case '\\':
                 ++i;
-                if (_start[i] == 'r')
+                switch(_start[i])
                 {
-                    result[j] = '\r';
+                case '0':
+                    result[j] = '\0';
                     ++i; ++ j;
                     continue;
-                }
-                else if (_start[i] == 'n')
-                {
+                case 'a':
+                    result[j] = '\a';
+                    ++i; ++ j;
+                    continue;
+                case 'b':
+                    result[j] = '\b';
+                    ++i; ++ j;
+                    continue;
+                case 'f':
+                    result[j] = '\f';
+                    ++i; ++ j;
+                    continue;
+                case 'n':
                     result[j] = '\n';
                     ++i; ++ j;
                     continue;
+                case 'r':
+                    result[j] = '\r';
+                    ++i; ++ j;
+                    continue;
+                case 't':
+                    result[j] = '\t';
+                    ++i; ++ j;
+                    continue;
+                case 'v':
+                    result[j] = '\v';
+                    ++i; ++ j;
+                    continue;
+                default:
                 }
-                else goto default;
-            default:
-                result[j] = _start[i];
-                ++i; ++j;
-                continue;
             }
+            result[j] = _start[i];
+            ++i; ++j;
+            continue;
         }
         return result[0..j];
     }
@@ -909,5 +930,12 @@ unittest
     char[] s = `\"1\r\n2\"`.dup;
     Token t = Token(s.ptr, s.ptr + s.length, 0, 0, TokenType.stringLiteral);
     assert(t.text == "\"1\r\n2\"");
+}
+
+unittest
+{
+    char[] s = `\r\n\t\v`.dup;
+    Token t = Token(s.ptr, s.ptr + s.length, 0, 0, TokenType.stringLiteral);
+    assert(t.text == "\r\n\t\v");
 }
 
