@@ -5,16 +5,15 @@ Yatol:
 
     UnitContainer < MainUnit VirtualUnits?
 
-    MainUnit < UnitDeclaration Declarations?
+    MainUnit < UnitDeclaration Declaration*
     VirtualUnits < VirtualUnit*
-    VirtualUnit < Virtual UnitDeclaration Declarations?
+    VirtualUnit < Virtual UnitDeclaration Declaration*
 
 ################################################################################
 # Declarations
 
     UnitDeclaration < Unit IdentifierChain Semicolon
 
-    Declarations    < Declaration+
     Declaration     < ImportDeclaration
                     / ProtectionDeclaration
                     / VariableDeclaration
@@ -28,12 +27,12 @@ Yatol:
                 #   / AtAttributeSectionDeclaration
 
     SingleOrDeclarationBlock    < Declaration
-                                / LeftCurly Declarations RightCurly
+                                / LeftCurly Declaration* RightCurly
 
     ProtectionDeclaration   < Prot LeftParen Identifier RightParen
-    StructDeclaration       < Struct Identifier LeftCurly Declarations? RightCurly
-    ClassDeclaration        < Class Identifier InheritanceList? LeftCurly Declarations? RightCurly
-    InterfaceDeclaration    < Interface Identifier InheritanceList? LeftCurly Declarations? RightCurly
+    StructDeclaration       < Struct Identifier LeftCurly Declaration* RightCurly
+    ClassDeclaration        < Class Identifier InheritanceList? LeftCurly Declaration* RightCurly
+    InterfaceDeclaration    < Interface Identifier InheritanceList? LeftCurly Declaration* RightCurly
 
     InheritanceList < Colon IdentifierChains
                   #  / Colon Super (Comma, IdentifierChains)? # nested class inherited the "super" type

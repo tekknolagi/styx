@@ -12,16 +12,30 @@
       "targetType" : "executable",
       "targetPath" : "bin",
       "excludedSourceFiles" : [
-        "src\/test.d",
         "src\/yatol.d"
+      ],
+      "versions" : [
+        "gen"
       ]
     },
     {
       "name" : "test",
       "targetPath" : "bin",
       "targetType" : "executable",
-      "excludedSourceFiles" : [
-        "src\/generate.d"
+      "versions" : [
+        "test"
+      ]
+    },
+    {
+      "name" : "generate_and_test",
+      "stringImportPaths" : [
+        "formal"
+      ],
+      "targetType" : "executable",
+      "targetPath" : "bin",
+      "versions" : [
+        "gen",
+        "test"
       ]
     }
   ],
