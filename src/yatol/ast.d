@@ -100,6 +100,7 @@ class AstVisitor
     void visit(TypeAstNode node){node.accept(this);}
     void visit(TypeModifierAstNode node){node.accept(this);}
     void visit(UnaryExpressionAstNode node){node.accept(this);}
+    void visit(UnionDeclarationAstNode node){node.accept(this);}
     void visit(UnitAstNode node){node.accept(this);}
     void visit(UnitContainerAstNode node){node.accept(this);}
     void visit(VariableDeclarationAstNode node){node.accept(this);}
@@ -167,6 +168,7 @@ class AstVisitorNone: AstVisitor
     override void visit(TypeAstNode node){}
     override void visit(TypeModifierAstNode node){}
     override void visit(UnaryExpressionAstNode node){}
+    override void visit(UnionDeclarationAstNode node){}
     override void visit(UnitAstNode node){node.accept(this);}
     override void visit(UnitContainerAstNode node){node.accept(this);}
     override void visit(VariableDeclarationAstNode node){}
@@ -300,6 +302,20 @@ final class StructDeclarationAstNode: AstNode
     /// The struct name.
     Token* name;
     /// The declarations located in the struct.
+    DeclarationAstNode[] declarations;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        declarations.each!(a => visitor.visit(a));
+    }
+}
+
+/// UnionDeclaration
+final class UnionDeclarationAstNode: AstNode
+{
+    /// The union name.
+    Token* name;
+    /// The declarations located in the union.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
@@ -529,7 +545,8 @@ enum DeclarationKind: ubyte
     dkBlock,
     dkVariable,
     dkAka,
-    dkVersion
+    dkVersion,
+    dkUnion
 }
 
 /// Declaration
@@ -559,6 +576,8 @@ final class DeclarationAstNode: AstNode
         AkaDeclarationAstNode akaDeclaration;
         /// Assigned if this declaration is an VersionBlockDeclaration.
         VersionBlockDeclarationAstNode versionBlockDeclaration;
+        /// Assigned if this declaration is an UnionDEclaration
+        UnionDeclarationAstNode unionDeclaration;
     }
     ///
     Declaration declaration;
@@ -580,6 +599,7 @@ final class DeclarationAstNode: AstNode
         case dkVariable: visitor.visit(declaration.variableDeclaration); break;
         case dkAka: visitor.visit(declaration.akaDeclaration); break;
         case dkVersion: visitor.visit(declaration.versionBlockDeclaration); break;
+        case dkUnion: visitor.visit(declaration.unionDeclaration); break;
         case dkNone: assert(false);
         }
     }

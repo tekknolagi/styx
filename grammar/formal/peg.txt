@@ -19,6 +19,7 @@ Yatol:
                     / VariableDeclaration
                     / ClassDeclaration
                     / StructDeclaration
+                    / UnionDeclaration
                     / EnumDeclaration
                     / FunctionDeclaration
                     / InterfaceDeclaration
@@ -31,6 +32,7 @@ Yatol:
 
     ProtectionDeclaration   < Prot LeftParen Identifier RightParen
     StructDeclaration       < Struct Identifier LeftCurly Declaration* RightCurly
+    UnionDeclaration        < Union Identifier LeftCurly Declaration* RightCurly
     ClassDeclaration        < Class Identifier InheritanceList? LeftCurly Declaration* RightCurly
     InterfaceDeclaration    < Interface Identifier InheritanceList? LeftCurly Declaration* RightCurly
 
@@ -248,9 +250,6 @@ Yatol:
     TypeIdentifier  < BasicType
                     / IdentifierChain
                     / FunctionPointerType
-                    / TypeIdentifiersUnion
-
-    TypeIdentifiersUnion < LeftSquare TypeIdentifier (Pipe TypeIdentifier)+ RightSquare
 
     TypeModifiers < TypeModifier TypeModifiers?
 
@@ -420,6 +419,7 @@ Yatol:
             / Try
             / Finally
             / Throw
+            / Union
 
     ValueKeyword    < Null
                     / False
@@ -473,6 +473,7 @@ Yatol:
     Try     <- "try"
     Finally <- "finally"
     Throw   <- "throw"
+    Union   <- "union"
 
     SREG    <- "sreg"
     UREG    <- "ureg"

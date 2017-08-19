@@ -155,13 +155,9 @@ enum source1 = "
 
     class Foo: Bar.bar, Baz{}
 
-    is [Foo | Bar | Baz] aka MyUnion;
-
-    struct Fbb
+    union U
     {
-        var T t;
-        var ([Foo | Bar | Baz]) fbb1;
-        var [Foo | Bar | Baz] fbb2;
+        var A a; var  B b; var  C c;
     }
 
     struct Last {}

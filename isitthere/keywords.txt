@@ -26,6 +26,7 @@ switch
 throw
 true
 try
+union
 unit
 var
 version

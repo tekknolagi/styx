@@ -587,6 +587,41 @@ private:
     }
 
     /**
+     * Parses an UnionDeclaration.
+     *
+     * Returns:
+     *      On success a $(D StructDeclarationAstNode) otherwise $(D null).
+     */
+    UnionDeclarationAstNode parseUnionDeclaration()
+    {
+        assert(current.isTokUnion);
+        UnionDeclarationAstNode result = new UnionDeclarationAstNode;
+        result.position = current.position;
+        advance();
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        result.name = current();
+        advance();
+        if (!current.isTokLeftCurly)
+        {
+            expected(TokenType.leftCurly);
+            return null;
+        }
+        advance();
+        parseDeclarations(result.declarations);
+        if (!current.isTokRightCurly)
+        {
+            expected(TokenType.rightCurly);
+            return null;
+        }
+        advance();
+        return result;
+    }
+
+    /**
      * Parses an OnMatchExpression.
      *
      * Returns:
@@ -2729,6 +2764,17 @@ private:
             }
             else return null;
         }
+        case union_:
+        {
+            if (UnionDeclarationAstNode decl = parseUnionDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.declarationKind = DeclarationKind.dkUnion;
+                result.declaration.unionDeclaration = decl;
+                return result;
+            }
+            else return null;
+        }
         case function_:
         {
             if (FunctionDeclarationAstNode decl = parseFunctionDeclaration())
@@ -4038,7 +4084,7 @@ unittest // cover error cases for: import declaration
     });
 }
 
-unittest // cover error cases for: interface, struct & class
+unittest // cover error cases for: interface, struct, class, union
 {
     assertNotParse(q{
         unit a;
@@ -4047,6 +4093,10 @@ unittest // cover error cases for: interface, struct & class
     assertNotParse(q{
         unit a;
         struct {}
+    });
+    assertNotParse(q{
+        unit a;
+        union {}
     });
     assertNotParse(q{
         unit a;
@@ -4112,6 +4162,18 @@ unittest // cover error cases for: interface, struct & class
         unit a;
         interface A{ var s8 a;
     ");
+    assertNotParse("
+        unit a;
+        union A{ var s8 a;
+    ");
+    assertNotParse(q{
+        unit a;
+        union A : {}
+    });
+    assertParse(q{
+        unit a;
+        union A {}
+    });
 }
 
 unittest // cover error cases for: enum
