@@ -110,7 +110,7 @@ private:
             {
                 UnitAstNode result = new UnitAstNode;
                 result.position = current.position;
-                result.unitDeclaration = toks;
+                result.identifiers = toks;
                 advance();
                 if (parseDeclarations(result.declarations))
                 {
@@ -333,29 +333,6 @@ private:
             if (!result.functionType)
                 parseError("invalid function type");
         }
-        else if (current.isTokLeftSquare)
-        {
-            advance();
-            while (true)
-            {
-                Token*[] idc = parseIdentifierChain();
-                if (idc.length)
-                    result.typeIdentifiersUnion ~= idc;
-                else
-                    return null;
-                if (current.isTokRightSquare)
-                {
-                    advance();
-                    break;
-                }
-                if (!current.isTokPipe)
-                {
-                    expected(TokenType.pipe);
-                    return null;
-                }
-                advance();
-            }
-        }
         else
         {
             Token*[] idc = parseIdentifierChain();
@@ -378,7 +355,7 @@ private:
             parseError("invalid type delimiter, missing right paren");
             return null;
         }
-        if (result.basicOrQualifiedType.length || result.functionType || result.typeIdentifiersUnion)
+        if (result.basicOrQualifiedType.length || result.functionType)
         {
             if (current.isTokMul || current.isTokLeftSquare)
             {
@@ -4221,22 +4198,6 @@ unittest // aka & type
     assertParse(q{
         unit a;
         is a.B.C aka Abc;
-    });
-    assertParse(q{
-        unit a;
-        is [a|b|c] aka AorBorC;
-    });
-    assertNotParse(q{
-        unit a;
-        is [a/b|c] aka AorBorC;
-    });
-    assertNotParse(q{
-        unit a;
-        is [a/b|c aka AorBorC;
-    });
-    assertNotParse(q{
-        unit a;
-        is [-a/b|c aka AorBorC;
     });
     assertNotParse(q{
         unit a;

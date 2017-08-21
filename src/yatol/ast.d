@@ -1112,8 +1112,6 @@ final class TypeAstNode: AstNode
 {
     /// The basic type or a qualified custom type
     Token*[] basicOrQualifiedType;
-    /// Basic or qualified types that make an union.
-    Token*[][] typeIdentifiersUnion;
     /// If the type is a function, then assigned.
     FunctionTypeAstNode functionType;
     /// The first modifier.
@@ -1163,7 +1161,7 @@ final class TypeModifierAstNode: AstNode
 final class UnitAstNode: AstNode
 {
     /// The chain of tokens used in the UnitDeclaration.
-    Token*[] unitDeclaration;
+    Token*[] identifiers;
     /// When the unit is virtual, this is a reference to the MainUnit.
     UnitAstNode mainUnit; //!\\ not to visit //!\\
     /// The declarations located in the unit.
