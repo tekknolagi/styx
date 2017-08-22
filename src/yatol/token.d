@@ -909,6 +909,37 @@ public:
     }
 }
 
+/**
+ * Formats an array of Token pointers as text.
+ *
+ * Params:
+ *      toks = The array to format.
+ *      reversed = Indicates wether the array has to be read from the front or from the back.
+ *      glue = The text put between each token.
+ */
+const(char)[] tokenChainText(Token*[] toks, bool reversed = false, string glue = ".")
+{
+    import std.array: join;
+    import std.range: retro;
+    import std.algorithm.iteration: map;
+
+    if (reversed)
+        return toks.retro.map!(a => a.text).join(glue);
+    else
+        return toks.map!(a => a.text).join(glue);
+}
+///
+unittest
+{
+    char[] s0 = "one".dup, s1 = "two".dup;
+    Token t0 = Token(s0.ptr, s0.ptr + s0.length, 0, 0, TokenType.identifier);
+    Token t1 = Token(s1.ptr, s1.ptr + s1.length, 0, 0, TokenType.identifier);
+    Token*[] toks = [&t0, &t1];
+    assert(toks.tokenChainText(false) == "one.two");
+    assert(toks.tokenChainText(true) == "two.one");
+    assert([&t0].tokenChainText(false) == "one");
+}
+
 unittest
 {
     char[] s = "test".dup;

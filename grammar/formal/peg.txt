@@ -36,8 +36,7 @@ Yatol:
     ClassDeclaration        < Class Identifier InheritanceList? LeftCurly Declaration* RightCurly
     InterfaceDeclaration    < Interface Identifier InheritanceList? LeftCurly Declaration* RightCurly
 
-    InheritanceList < Colon IdentifierChains
-                  #  / Colon Super (Comma, IdentifierChains)? # nested class inherited the "super" type
+    InheritanceList < Colon IdentifierChain (Comma, IdentifierChain)*
 
     VariableDeclaration < StorageClass Static? Type VariableDeclarationList Semicolon
 
@@ -258,9 +257,7 @@ Yatol:
     StaticArrayDim < LeftSquare Expression RightSquare
 
 ################################################################################
-# List, chain, etc
-
-    IdentifierChains < IdentifierChain (Comma IdentifierChain)*
+# List and chain
 
     IdentifierChain < Identifier (Dot Identifier)*
 

@@ -74,7 +74,7 @@ class AstVisitor
     void visit(FunctionHeaderAstNode node){node.accept(this);}
     void visit(FunctionParameterGroupAstNode node){node.accept(this);}
     void visit(FunctionTypeAstNode node){node.accept(this);}
-    void visit(IdentifierChainsAstNode node){node.accept(this);}
+    void visit(IdentifierChainAstNode node){node.accept(this);}
     void visit(IfConditionVariableAstNode node){node.accept(this);}
     void visit(IfElseStatementAstNode node){node.accept(this);}
     void visit(ImportDeclarationAstNode node){node.accept(this);}
@@ -143,7 +143,7 @@ class AstVisitorNone: AstVisitor
     override void visit(FunctionHeaderAstNode node){}
     override void visit(FunctionParameterGroupAstNode node){}
     override void visit(FunctionTypeAstNode node){}
-    override void visit(IdentifierChainsAstNode node){}
+    override void visit(IdentifierChainAstNode node){}
     override void visit(IfConditionVariableAstNode node){}
     override void visit(IfElseStatementAstNode  node){}
     override void visit(ImportDeclarationAstNode node){}
@@ -215,11 +215,11 @@ unittest
     static assert(!isGrammatic!FlowControlBaseNode);
 }
 
-/// IdentifierChains
-final class IdentifierChainsAstNode: AstNode
+/// IdentifierChain
+final class IdentifierChainAstNode: AstNode
 {
-    /// The chain of identifiers.
-    Token*[][] chains;
+    /// The identifiers.
+    Token*[] chain;
 }
 
 /// FunctionType
@@ -286,13 +286,14 @@ final class ImportDeclarationAstNode: AstNode
 {
     /// The imports priority.
     Token* priority;
-    /// An array of tokens chain, each represents a unit to import.
-    Token*[][] importList;
+    /// A list of fully qualified units.
+    IdentifierChainAstNode[] importList;
     ///
     override void accept(AstVisitor visitor)
     {
         if (priority)
             visitor.visit(priority);
+        importList.each!(a => visitor.visit(a));
     }
 }
 
@@ -416,14 +417,13 @@ final class ClassDeclarationAstNode: AstNode
     /// The class name.
     Token* name;
     /// The inheritance list.
-    IdentifierChainsAstNode inheritanceList;
+    IdentifierChainAstNode[] inheritanceList;
     /// The declarations located in the class.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (inheritanceList)
-            visitor.visit(inheritanceList);
+        inheritanceList.each!(a => visitor.visit(a));
         declarations.each!(a => visitor.visit(a));
     }
 }
@@ -434,14 +434,13 @@ final class InterfaceDeclarationAstNode: AstNode
     /// The interface name.
     Token* name;
     /// The inheritance list.
-    IdentifierChainsAstNode inheritanceList;
+    IdentifierChainAstNode[] inheritanceList;
     /// The declarations located in the class.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
     {
-        if (inheritanceList)
-            visitor.visit(inheritanceList);
+        inheritanceList.each!(a => visitor.visit(a));
         declarations.each!(a => visitor.visit(a));
     }
 }
@@ -1110,8 +1109,10 @@ final class OnExceptionStatementAstNode: AstNode
 /// Type
 final class TypeAstNode: AstNode
 {
-    /// The basic type or a qualified custom type
-    Token*[] basicOrQualifiedType;
+    /// A basic or auto type.
+    Token* autoOrBasicType;
+    /// A qualified custom type
+    IdentifierChainAstNode qualifiedType;
     /// If the type is a function, then assigned.
     FunctionTypeAstNode functionType;
     /// The first modifier.
@@ -1119,10 +1120,14 @@ final class TypeAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        if (autoOrBasicType)
+            visitor.visit(autoOrBasicType);
+        else if (qualifiedType)
+            visitor.visit(qualifiedType);
+        else if (functionType)
+            visitor.visit(functionType);
         if (modifier)
             visitor.visit(modifier);
-        if (functionType)
-            visitor.visit(functionType);
     }
 }
 

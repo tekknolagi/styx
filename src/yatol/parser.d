@@ -156,53 +156,26 @@ private:
      * Returns:
      *      On success an array of $(D Token*) otherwise $(D null).
      */
-    Token*[] parseIdentifierChain()
+    IdentifierChainAstNode parseIdentifierChain()
     {
-        Token*[] result;
+        assert(current.isTokIdentifier);
+        IdentifierChainAstNode result = new IdentifierChainAstNode;
         while (true)
         {
-            if (!current.isTokIdentifier)
-            {
-                expected(TokenType.identifier);
-                return null;
-            }
-            result ~= current();
+            result.chain ~= current();
             advance();
-            if (!current.isTokDot)
-                return result;
-            advance();
-        }
-    }
-
-    /**
-     * Parses an IdentifierChains.
-     *
-     * Returns:
-     *      On success an array of $(D Token*[]) otherwise $(D null).
-     */
-    IdentifierChainsAstNode parseIdentifierChains()
-    {
-        Token*[][] chains;
-        while (true)
-        {
-            if (!current.isTokIdentifier)
+            if (current.isTokDot)
             {
-                expected(TokenType.identifier);
-                return null;
-            }
-            Token*[] chain = parseIdentifierChain();
-            if (chain.length)
-                chains ~= chain;
-            else
-                return null;
-            if (current.isTokComma)
                 advance();
-            else
-                break;
+                if (!current.isTokIdentifier)
+                {
+                    expected(TokenType.identifier);
+                    return null;
+                }
+                continue;
+            }
+            else return result;
         }
-        IdentifierChainsAstNode result = new IdentifierChainsAstNode;
-        result.chains = chains;
-        return result;
     }
 
     InitializerAstNode parseInitializer()
@@ -313,7 +286,7 @@ private:
         bool isBetweenParens;
         if (current.isTokAuto)
         {
-            result.basicOrQualifiedType ~= current();
+            result.autoOrBasicType = current();
             advance();
             return result;
         }
@@ -324,22 +297,30 @@ private:
         }
         if (current.isTokBasicType)
         {
-            result.basicOrQualifiedType ~= current();
+            result.autoOrBasicType = current();
             advance();
         }
         else if (current.isTokFunction || current.isTokStatic)
         {
             result.functionType = parseFunctionType();
             if (!result.functionType)
+            {
                 parseError("invalid function type");
+                return null;
+            }
         }
         else
         {
-            Token*[] idc = parseIdentifierChain();
-            if (idc.length)
-                result.basicOrQualifiedType = idc;
-            else
+            if (!current.isTokIdentifier)
+            {
+                expected(TokenType.identifier);
                 return null;
+            }
+            else if (IdentifierChainAstNode ic = parseIdentifierChain())
+            {
+                result.qualifiedType = ic;
+            }
+            else return null;
         }
         if (current.isTokRightParen)
         {
@@ -355,18 +336,15 @@ private:
             parseError("invalid type delimiter, missing right paren");
             return null;
         }
-        if (result.basicOrQualifiedType.length || result.functionType)
+        if (current.isTokMul || current.isTokLeftSquare)
         {
-            if (current.isTokMul || current.isTokLeftSquare)
+            if (TypeModifierAstNode mod = parseTypeModifier())
             {
-                if (TypeModifierAstNode mod = parseTypeModifier())
-                    result.modifier = mod;
-                else
-                    return null;
+                result.modifier = mod;
             }
-            return result;
+            else return null;
         }
-        else return null;
+        return result;
     }
 
     /**
@@ -454,14 +432,29 @@ private:
         if (current.isTokColon)
         {
             advance();
-            if (IdentifierChainsAstNode ic = parseIdentifierChains())
+            if (!current.isTokIdentifier)
             {
-                result.inheritanceList = ic;
-            }
-            else
-            {
-                parseError("invalid inheritance list");
+                expected(TokenType.identifier);
                 return null;
+            }
+            while (true)
+            {
+                if (IdentifierChainAstNode ic = parseIdentifierChain())
+                {
+                    result.inheritanceList ~= ic;
+                }
+                else return null;
+                if (current.isTokComma)
+                {
+                    advance();
+                    if (!current.isTokIdentifier)
+                    {
+                        expected(TokenType.identifier);
+                        return null;
+                    }
+                    else continue;
+                }
+                else break;
             }
         }
         if (!current.isTokLeftCurly)
@@ -502,14 +495,29 @@ private:
         if (current.isTokColon)
         {
             advance();
-            if (IdentifierChainsAstNode ic = parseIdentifierChains())
+            if (!current.isTokIdentifier)
             {
-                result.inheritanceList = ic;
-            }
-            else
-            {
-                parseError("invalid inheritance list");
+                expected(TokenType.identifier);
                 return null;
+            }
+            while (true)
+            {
+                if (IdentifierChainAstNode ic = parseIdentifierChain())
+                {
+                    result.inheritanceList ~= ic;
+                }
+                else return null;
+                if (current.isTokComma)
+                {
+                    advance();
+                    if (!current.isTokIdentifier)
+                    {
+                        expected(TokenType.identifier);
+                        return null;
+                    }
+                    else continue;
+                }
+                else break;
             }
         }
         if (!current.isTokLeftCurly)
@@ -1076,13 +1084,11 @@ private:
         }
         while (true)
         {
-            Token*[] imp = parseIdentifierChain();
-            if (!imp.length)
+            if (IdentifierChainAstNode ic = parseIdentifierChain())
             {
-                parseError("expected an identifier chain to identify an import");
-                return null;
+                result.importList ~= ic;
             }
-            result.importList ~= imp;
+            else return null;
             if (current.isTokSemicolon)
             {
                 advance();
