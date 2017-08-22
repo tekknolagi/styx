@@ -36,7 +36,7 @@ Yatol:
     ClassDeclaration        < Class Identifier InheritanceList? LeftCurly Declaration* RightCurly
     InterfaceDeclaration    < Interface Identifier InheritanceList? LeftCurly Declaration* RightCurly
 
-    InheritanceList < Colon IdentifierChain (Comma, IdentifierChain)*
+    InheritanceList < Colon IdentifierChain (Comma IdentifierChain)*
 
     VariableDeclaration < StorageClass Static? Type VariableDeclarationList Semicolon
 
