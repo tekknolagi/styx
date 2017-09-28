@@ -388,6 +388,41 @@ private:
         }
     }
 
+    bool checkBOM()
+    {
+        if (!_front || _front > _back)
+            return true;
+
+        char c0 = *_front;
+        if (c0 < 0x80)
+        {
+            return true;
+        }
+        else if (c0 != 0xEF || !canLookup2())
+        {
+            error("invalid BOM");
+            return false;
+        }
+        else
+        {
+            advance();
+            char c1 = *_front;
+            advance();
+            char c2 = *_front;
+            advance();
+            if (c1 != 0xBB || c2 != 0xBF)
+            {
+                error("invalid BOM");
+                return false;
+            }
+            else
+            {
+                _frontColumn = 1;
+                return true;
+            }
+        }
+    }
+
     void skipSheBang()
     {
         if (canLookup && _front && _front + 2 <= _back && *_front == '#' && *lookup() == '!')
@@ -455,6 +490,10 @@ public:
      */
     void lex()
     {
+        if (!checkBOM())
+        {
+            _front = _back + 1;
+        }
         skipSheBang();
         if (_front) while (_front <= _back)
         {
@@ -1052,8 +1091,8 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 2);
-    assert(lx.tokens[0].isTokInvalid);
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].type == TokenType.eof);
 }
 
 unittest
@@ -1674,5 +1713,30 @@ unittest
     assert(lx.tokens[0].isTokIdentifier);
     assert(lx.tokens[1].isTokOptAccess);
     assert(lx.tokens[2].isTokDot);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "\xEF\xBB\xBF";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].type == TokenType.eof);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "\xEF\xBB\xBFunit a;";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 4);
+    assert(lx.tokens[0].isTokUnit && lx.tokens[0].column == 1);
+    assert(lx.tokens[1].isTokIdentifier);
+    assert(lx.tokens[2].isTokSemicolon);
+    assert(lx.tokens[3].type == TokenType.eof);
 }
 
