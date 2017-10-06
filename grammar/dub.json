@@ -25,18 +25,6 @@
       "versions" : [
         "test"
       ]
-    },
-    {
-      "name" : "generate_and_test",
-      "stringImportPaths" : [
-        "formal"
-      ],
-      "targetType" : "executable",
-      "targetPath" : "bin",
-      "versions" : [
-        "gen",
-        "test"
-      ]
     }
   ],
   "dependencies" : {
