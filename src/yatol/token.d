@@ -573,7 +573,11 @@ public:
     }
 
     /// Conveniance function used by the parser.
-    bool isTokOperator() const {return firstOperator <= type && type <= lastOperator;}
+    bool isTokOperator() const
+    {
+        return firstOperator <= type && type <= lastOperator ||
+            type == TokenType.in_;
+    }
 
     /// Conveniance function used by the parser.
     bool isTokBasicType() const {return firstBasicType <= type && type <= lastBasicType;}

@@ -302,7 +302,7 @@ Yatol:
 
     AssignOperator < Equal / DivEqual / MulEqual / ModEqual / MinusEqual / PlusEqual / AmpEqual / XorEqual / PipeEqual / LShiftEqual / RShiftEqual
 
-    Operator < RelOperator / Mul / Div / Mod / Plus / Minus / LShift / RShift / Amp / Pipe / Xor
+    Operator < RelOperator / Mul / Div / Mod / Plus / Minus / LShift / RShift / Amp / Pipe / Xor / In
 
     LeftRightSquares < LeftSquare RightSquare
 
@@ -417,6 +417,7 @@ Yatol:
             / Finally
             / Throw
             / Union
+            #/ In
 
     ValueKeyword    < Null
                     / False
@@ -471,6 +472,7 @@ Yatol:
     Finally <- "finally"
     Throw   <- "throw"
     Union   <- "union"
+    In      <- "in"
 
     SREG    <- "sreg"
     UREG    <- "ureg"

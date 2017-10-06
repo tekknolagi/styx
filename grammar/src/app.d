@@ -35,7 +35,7 @@ enum source1 = "
     protection(private)
     protection(public) struct Foo { var sreg a,b,c; }
     virtual unit d;
-    @const @inline function bar()
+    function bar()
     {
         a;
         a++;
@@ -70,7 +70,8 @@ enum source1 = "
         else
             callThat();
         instances[a].instances[b] = 8;
-        a = b[c].d[e].f[g];
+        a = instances[a].instances[b];
+        a = b[c].d[e];
         (a + b)++;
         a = (b[c](param0, param1 + stuff):u32):u64;
         a = b[c](param0).b[c](param0);
@@ -141,6 +142,8 @@ enum source1 = "
 
         var s8[] b;
         b = [0:s8,1:s8];
+
+        const bool b = elem in container;
 
         throw Exception.create(\"oops\");
         throw Exception.create(`oops`);

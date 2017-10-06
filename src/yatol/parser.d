@@ -1871,7 +1871,8 @@ private:
                 be.right = r;
                 result.binaryExpression = be;
 
-                if (r.binaryExpression && r.binaryExpression.operator.type > op.type)
+                if (r.binaryExpression && (r.binaryExpression.operator.type > op.type || op.isTokIn))
+                //if ((r.binaryExpression && r.binaryExpression.operator.type > op.type) && !op.isTokIn)
                 {
                     /*
                             a           e1L
@@ -3665,6 +3666,7 @@ unittest
         {
             a = b * c + d;
             a = b + c * d;
+            a = b in c + d;
         }
     }, true);
 }
