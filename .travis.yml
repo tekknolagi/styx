@@ -12,8 +12,11 @@ d:
  - ldc-beta 
  
 script:
- - dub --build=unittest --config=compiler --compiler=${DC}
+ - dub --build=unittest-cov --config=compiler --compiler=${DC}
  - dub --build=release --config=compiler --compiler=${DC}
  - dub build --build=release --config=library --compiler=${DC}
  - bin/yatol -p -a <<< "unit a;"
  - cd grammar && dub run --config=generate && dub run --config=test
+
+after_success:
+ - bash <(curl -s https://codecov.io/bash)
