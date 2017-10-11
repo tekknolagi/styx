@@ -12,10 +12,13 @@ d:
  - ldc-beta 
  
 script:
- - dub --build=unittest-cov --config=compiler --compiler=${DC}
+ # tests + coverage
+ - dub build --build=unittest-cov --config=compiler --compiler=${DC}
+ - echo "unit b;" > b.ya && bin/yatol -p -a b.ya <<< "unit a;"
+ # release build
  - dub --build=release --config=compiler --compiler=${DC}
  - dub build --build=release --config=library --compiler=${DC}
- - bin/yatol -p -a <<< "unit a;"
+ # grammar
  - cd grammar && dub run --config=generate && dub run --config=test
 
 after_success:
