@@ -84,7 +84,6 @@ class AstVisitor
     void visit(OnExceptionInstanceAstNode node){node.accept(this);}
     void visit(OnExceptionStatementAstNode node){node.accept(this);}
     void visit(OnMatchStatementAstNode node){node.accept(this);}
-    void visit(ParenExpressionAstNode node){node.accept(this);}
     void visit(PostfixExpressionAstNode node){node.accept(this);}
     void visit(PrimaryExpressionAstNode node){node.accept(this);}
     void visit(ProtectionDeclarationAstNode node){node.accept(this);}
@@ -153,7 +152,6 @@ class AstVisitorNone: AstVisitor
     override void visit(OnExceptionInstanceAstNode node){}
     override void visit(OnExceptionStatementAstNode node){}
     override void visit(OnMatchStatementAstNode node){}
-    override void visit(ParenExpressionAstNode node){}
     override void visit(PostfixExpressionAstNode node){}
     override void visit(PrimaryExpressionAstNode node){}
     override void visit(ProtectionDeclarationAstNode node){}
@@ -729,7 +727,7 @@ final class WhileStatementAstNode: AstNode
 /// IfConditionVariable
 final class IfConditionVariableAstNode: AstNode
 {
-    /// Indicates wether the variable is const.
+    /// Indicates wether the variable is const or var.
     bool isConst;
     /// The type of the variables in the list.
     TypeAstNode type;
@@ -869,21 +867,6 @@ final class SliceExpressionAstNode: AstNode
             visitor.visit(left);
         if (right)
             visitor.visit(right);
-    }
-}
-
-/// ParenExpression
-final class ParenExpressionAstNode: AstNode
-{
-    /// the expression prefix.
-    Token* prefix;
-    /// The surrounded expression
-    ExpressionAstNode expression;
-    ///
-    override void accept(AstVisitor visitor)
-    {
-        if (expression)
-            visitor.visit(expression);
     }
 }
 
