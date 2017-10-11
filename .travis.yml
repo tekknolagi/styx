@@ -14,7 +14,6 @@ d:
 script:
  - dub --build=unittest-cov --config=compiler --compiler=${DC}
  - dub --build=release --config=compiler --compiler=${DC}
- - dub --build=cov --config=compiler --compiler=${DC}
  - dub build --build=release --config=library --compiler=${DC}
  - bin/yatol -p -a <<< "unit a;"
  - cd grammar && dub run --config=generate && dub run --config=test
