@@ -1,4 +1,7 @@
-module yatol.ast_formater;
+/**
+ * Contains an AstVisitor that formats the AST of a UnitContainer.
+ */
+module yatol.ast_formatter;
 
 import
     std.array, std.algorithm.iteration, std.stdio;
@@ -7,11 +10,11 @@ import
 
 
 /**
- * An AST visitor that formats the nodes.
+ * An $(D AstVisitor) that formats the nodes.
  *
- * Comments, since already abscent from the AST, are not included.
+ * Comments, as already absent from the AST, are not included.
  */
-class AstFormater : AstVisitor
+class AstFormatter : AstVisitor
 {
     alias visit = AstVisitor.visit;
 
@@ -300,7 +303,7 @@ void test(const(char)[] code, const(char)[] expected,
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
-    AstFormater af = new AstFormater();
+    AstFormatter af = new AstFormatter();
 
     af.visit(uc);
 
