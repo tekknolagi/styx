@@ -1383,10 +1383,14 @@ private:
      */
     VariableDeclarationAstNode parseVariableDeclaration()
     {
-        bool isStatic;
-        bool isConst;
         VariableDeclarationAstNode result = new VariableDeclarationAstNode;
         result.position = current.position();
+        bool isStatic, isConst;
+        if (current.isTokStatic)
+        {
+            isStatic = true;
+            advance();
+        }
         if (current.isTokConst)
         {
             isConst = true;
@@ -1400,11 +1404,6 @@ private:
         {
             expected(TokenType.var);
             return null;
-        }
-        if (current.isTokStatic)
-        {
-            isStatic = true;
-            advance();
         }
         if (TypeAstNode t = parseType())
         {
@@ -2837,7 +2836,7 @@ private:
             }
             else
             {
-                return null;
+                goto case var;
             }
         }
         default:
@@ -3485,7 +3484,7 @@ unittest
         unit a;
         var s8 a = 8, b = 7, c;
         var SomeType[][] d, e, f;
-        var static s32 a;
+        static var s32 a;
     });
 }
 

@@ -38,7 +38,7 @@ Yatol:
 
     InheritanceList < Colon IdentifierChain (Comma IdentifierChain)*
 
-    VariableDeclaration < StorageClass Static? Type VariableDeclarationList Semicolon
+    VariableDeclaration < Static? StorageClass Type VariableDeclarationList Semicolon
 
     VariableDeclarationList < VariableDeclarationItem (Comma VariableDeclarationItem)*
 
