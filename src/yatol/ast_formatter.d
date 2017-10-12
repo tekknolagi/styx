@@ -608,7 +608,7 @@ public:
 }
 
 /**
- * Asserts that some code can be parsed and will be formatted in a secific way.
+ * Asserts that some code can be parsed and will be formatted in a specific way.
  *
  * Params:
  *      code = The source code.

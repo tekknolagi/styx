@@ -3026,7 +3026,7 @@ unittest
         {
             foo.bar.baz();
         }
-        var static s8 a = 8, b = 7;
+        static var s8 a = 8, b = 7;
         var s8[][] a;
         var MyInt mi = 8;
         var s8[2][4] b;
@@ -3064,7 +3064,9 @@ unittest
 
     Parser pr = Parser(&lx);
     AstPrinter ap = new AstPrinter();
-    if (UnitContainerAstNode uc = pr.parse())
+    UnitContainerAstNode uc = pr.parse();
+    assert(uc);
+    if (uc)
     {
         ap.visit(uc);
         //import std.process;
