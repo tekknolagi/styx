@@ -59,7 +59,7 @@ public:
         indent();
         _source ~= "is ";
         node.accept(this);
-        _source ~= "aka ";
+        _source ~= " aka ";
         _source ~= node.name.text;
         semicolonAndNewLine();
     }
@@ -108,6 +108,7 @@ public:
 
     override void visit(BreakStatementAstNode node)
     {
+        indent();
         _source ~= "break";
         if (node.label)
         {
@@ -120,7 +121,7 @@ public:
             space();
             visit(node.expression);
         }
-        _source ~= ";\n";
+        semicolonAndNewLine();
     }
 
     override void visit(CallParametersAstNode node)
@@ -130,7 +131,7 @@ public:
         {
             visit(p);
             if (i != node.parameters.length - 1)
-                _source ~= " ,";
+                _source ~= ", ";
         }
         _source ~= ")";
     }
@@ -147,7 +148,7 @@ public:
             {
                 visit(c);
                 if (i != node.inheritanceList.length - 1)
-                    _source ~= " ,";
+                    _source ~= ", ";
             }
         }
         _source ~= "\n";
@@ -162,13 +163,23 @@ public:
 
     override void visit(ContinueStatementAstNode node)
     {
+        indent();
         _source ~= "continue";
         if (node.expression)
         {
             space();
             visit(node.expression);
         }
-        _source ~= ";\n";
+        semicolonAndNewLine();
+    }
+
+    override void visit(DeclarationAstNode node)
+    {
+        if (node.declarationKind == DeclarationKind.dkVariable)
+            indent();
+        node.accept(this);
+        if (node.declarationKind == DeclarationKind.dkVariable)
+            semicolonAndNewLine();
     }
 
     override void visit(EnumDeclarationAstNode node)
@@ -253,6 +264,7 @@ public:
 
     override void visit(FunctionHeaderAstNode node)
     {
+        node.attributes.each!(a => visit(a));
         if (node.isStatic)
             _source ~= "static function ";
         else
@@ -264,7 +276,7 @@ public:
         {
             visit(p);
             if (i != node.parameters.length - 1)
-                _source ~= " ;";
+                _source ~= "; ";
         }
         _source ~= ")";
         if (node.returnType)
@@ -283,6 +295,7 @@ public:
             _source ~= "var ";
         if (node.type)
             visit(node.type);
+        space();
         _source ~= node.variableList.tokenChainText(false, ", ");
     }
 
@@ -312,13 +325,6 @@ public:
         _source ~= node.chain.tokenChainText;
     }
 
-    override void visit(IndexExpressionAstNode node)
-    {
-        _source ~= "[";
-        if (node.index)
-            visit(node.index);
-        _source ~= "]";
-    }
 
     override void visit(IfConditionVariableAstNode node)
     {
@@ -351,6 +357,56 @@ public:
         }
     }
 
+    override void visit(ImportDeclarationAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(IndexExpressionAstNode node)
+    {
+        _source ~= "[";
+        if (node.index)
+            visit(node.index);
+        _source ~= "]";
+    }
+
+    override void visit(InitializerAstNode node)
+    {
+        if (node.singleInitializer)
+            visit(node.singleInitializer);
+        else
+        {
+            _source ~= "[";
+            foreach(i, e; node.arrayInitializerElements)
+            {
+                visit(e);
+                if (i != node.arrayInitializerElements.length - 1)
+                    _source ~= ", ";
+            }
+            _source ~= "]";
+        }
+    }
+
+    override void visit(InterfaceDeclarationAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(OnExceptionInstanceAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(OnExceptionStatementAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(OnMatchStatementAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
     override void visit(PostfixExpressionAstNode node)
     {
         if (node.plusplusOrMinusMinus)
@@ -377,15 +433,93 @@ public:
         }
     }
 
+    override void visit(ProtectionDeclarationAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(ReturnStatementAstNode node)
+    {
+        indent();
+        _source ~= "return";
+        if (node.expression)
+        {
+            space();
+            visit(node.expression);
+        }
+        semicolonAndNewLine;
+    }
+
+    override void visit(SingleOrRangeExpressionAstNode node)
+    {
+        if (node.singleOrLeftExpression)
+            visit(node.singleOrLeftExpression);
+        if (node.rightExpression)
+        {
+            _source ~= " .. ";
+            visit(node.rightExpression);
+        }
+    }
+
     override void visit(SliceExpressionAstNode node)
     {
-            _source ~= "[";
-            if (node.left)
-                visit(node.left);
-            _source ~= " .. ";
-            if (node.right)
-                visit(node.right);
-            _source ~= "]";
+        _source ~= "[";
+        if (node.left)
+            visit(node.left);
+        _source ~= " .. ";
+        if (node.right)
+            visit(node.right);
+        _source ~= "]";
+    }
+
+    override void visit(StructDeclarationAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(SwitchStatementAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(ThrowStatementAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(TryOnFinallyStatementAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(TypeAstNode node)
+    {
+        if (node.autoOrBasicType)
+            _source ~= node.autoOrBasicType.text;
+        node.accept(this);
+    }
+
+    override void visit(TypeModifierAstNode node)
+    {
+        with(ModifierKind) final switch (node.kind)
+        {
+            case none:
+                break;
+            case arrayDynDim:
+                _source ~= "[]";
+                break;
+            case arrayStatDim:
+                _source ~= "[";
+                if (node.staticDimension)
+                    visit(node.staticDimension);
+                _source ~= "]";
+                break;
+            case pointer:
+                _source ~= "*";
+                break;
+        }
+        if (node.modifier)
+            visit(node.modifier);
     }
 
     override void visit(UnaryExpressionAstNode node)
@@ -396,11 +530,80 @@ public:
         node.accept(this);
     }
 
+    override void visit(UnionDeclarationAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
     override void visit(UnitAstNode node)
     {
         _source ~= "unit " ~ node.identifiers.tokenChainText;
         semicolonAndNewLine();
         node.accept(this);
+    }
+
+    override void visit(VariableDeclarationAstNode node)
+    {
+        if (node.isStatic)
+            _source ~= "static ";
+        if (node.isConst)
+            _source ~= "const ";
+        else _source ~= "var ";
+        if (node.type)
+            visit(node.type);
+        space();
+        foreach(i, v; node.list)
+        {
+            visit(v);
+            if (i != node.list.length - 1)
+                _source ~= ", ";
+        }
+    }
+
+    override void visit(VariableDeclarationItemAstNode node)
+    {
+        if (node.name)
+            _source ~= node.name.text;
+        if (node.initializer)
+        {
+            _source ~= " = ";
+            visit(node.initializer);
+        }
+    }
+
+    override void visit(VersionBlockDeclarationAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(VersionBlockStatementAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(VersionAndExpressionAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(VersionOrExpressionAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(VersionParenExpressionAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(VersionPrimaryExpressionAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+    }
+
+    override void visit(WhileStatementAstNode node)
+    {
+        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
     }
 }
 
@@ -428,9 +631,9 @@ void test(const(char)[] code, const(char)[] expected,
 
     af.visit(uc);
 
-    if (af._source.data.stripRight != expected.stripRight)
+    if (af.formattedAst.stripRight != expected.stripRight)
     {
-        writeln(af._source.data);
+        writeln(af.formattedAst);
         throw new AssertError("the code is not formatted as expected", file, line);
     }
 }
@@ -440,6 +643,13 @@ unittest
     string c = "unit      a   ;";
     string e = "unit a;";
     test(c, e);
+}
+
+unittest
+{
+    import std.exception, core.exception;
+    assertThrown!AssertError(test(" ?? bbzz", "woops"));
+    assertThrown!AssertError(test("unit a ;", "woops"));
 }
 
 unittest
@@ -459,6 +669,32 @@ class A
     class B
     {
     }
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; class A:B,c.D {}";
+    string e =
+"unit a;
+class A: B, c.D
+{
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; enum A:s8 {a=0,b=1}";
+    string e =
+"unit a;
+enum A: s8
+{
+    a = 0,
+    b = 1
 }
 ";
     test(c, e);
@@ -500,6 +736,30 @@ function foo()
 
 unittest
 {
+    string c = "unit a; function foo(){call(p0,p1 );}";
+    string e =
+"unit a;
+function foo()
+{
+    call(p0, p1);
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(): s8 {return 0: s8;}";
+    string e =
+"unit a;
+function foo():(s8)
+{
+    return 0:s8;
+}";
+    test(c, e);
+}
+
+unittest
+{
     string c = "unit a; function foo(){if (a) {a++;} else {a--;}}";
     string e =
 "unit a;
@@ -529,6 +789,118 @@ function foo()
     else
     a--;
 }";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){foreach(const auto i;I){if (0)
+    {break(here ) afterCall();}}}";
+    string e =
+"unit a;
+function foo()
+{
+    foreach(const auto i; I)
+    {
+        if (0)
+        {
+            break(here) afterCall();
+        }
+    }
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){foreach(const auto i;I){if (0)
+    {continue afterCall();} andDontDoThis();}}";
+    string e =
+"unit a;
+function foo()
+{
+    foreach(const auto i; I)
+    {
+        if (0)
+        {
+            continue afterCall();
+        }
+        andDontDoThis();
+    }
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; @A@B function foo(const s32 a, b):  s64;";
+    string e =
+"unit a;
+@A @B function foo(const s32 a, b):(s64);
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; static  function foo(const s32 a;  var  s32 b);";
+    string e =
+"unit a;
+static function foo(const s32 a; var s32 b);
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; is static function * (const s32 a, b):  s64[ ]   aka funcPtr;";
+    string e =
+"unit a;
+is static function*(const s32 a, b):(s64[]) aka funcPtr;
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; is function * (const s32 a, b):  s64[ ]   aka funcPtr;";
+    string e =
+"unit a;
+is function*(const s32 a, b):(s64[]) aka funcPtr;
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; const s8[2] a = [0:s8,1:s8], b=[2:s8,3:s8];";
+    string e =
+"unit a;
+const s8[2] a = [0:s8, 1:s8], b = [2:s8, 3:s8];
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; var s8* ** a  ,  b, c;";
+    string e =
+"unit a;
+var s8*** a, b, c;
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; class A {static const s8 a;}";
+    string e =
+"unit a;
+class A
+{
+    static const s8 a;
+}
+";
     test(c, e);
 }
 
