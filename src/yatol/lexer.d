@@ -288,10 +288,6 @@ private:
     void lexIntegerLiteral()
     {
         anticipateToken(TokenType.intLiteral);
-        if (*_front == '-')
-        {
-            advance();
-        }
         while (true)
         {
             switch(*_front)
@@ -495,7 +491,8 @@ public:
             _front = _back + 1;
         }
         skipSheBang();
-        if (_front) while (_front <= _back)
+
+        if (_front) L0: while (_front <= _back)
         {
             switch(*_front)
             {
@@ -850,6 +847,7 @@ public:
                 error("invalid input character");
                 advance();
                 validateToken();
+                break L0;
             }
         }
         anticipateToken(TokenType.eof);
@@ -973,6 +971,15 @@ string tokenPointerArrayText(Token*[] toks)
     import std.algorithm.iteration: map;
     import std.conv: to;
     return toks.map!(a => a.text()).to!string;
+}
+
+unittest
+{
+    char c1 = 'a';
+    char c2 = 'b';
+    Token t1 = Token(&c1, (&c1)+1, 0, 0, TokenType.identifier);
+    Token t2 = Token(&c2, (&c2)+1, 0, 0, TokenType.identifier);
+    assert([&t1, &t2].tokenPointerArrayText == "[\"a\", \"b\"]");
 }
 
 unittest
@@ -1738,5 +1745,29 @@ unittest
     assert(lx.tokens[1].isTokIdentifier);
     assert(lx.tokens[2].isTokSemicolon);
     assert(lx.tokens[3].type == TokenType.eof);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "\xEF\xBB\xBB";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 1);
+    assert(lx.tokens[0].type == TokenType.eof);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "unit £";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 3);
+    assert(lx.tokens[0].isTokUnit);
+    assert(lx.tokens[1].isTokInvalid);
+    assert(lx.tokens[2].type == TokenType.eof);
 }
 
