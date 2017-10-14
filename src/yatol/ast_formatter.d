@@ -309,7 +309,7 @@ public:
         {
             visit(p);
             if (i != node.parameters.length - 1)
-                _source ~= " ;";
+                _source ~= "; ";
         }
         _source ~= ")";
         if (node.returnType)
@@ -334,6 +334,7 @@ public:
             _source ~= "var ";
         if (node.type)
             visit(node.type);
+        space();
         if (node.variable)
             visit(node.variable);
     }
@@ -389,7 +390,27 @@ public:
 
     override void visit(InterfaceDeclarationAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "interface ";
+        _source ~= node.name.text;
+        if (node.inheritanceList.length)
+        {
+            _source ~= ": ";
+            foreach(i, c; node.inheritanceList)
+            {
+                visit(c);
+                if (i != node.inheritanceList.length - 1)
+                    _source ~= ", ";
+            }
+        }
+        _source ~= "\n";
+        indent();
+        _source ~= "{\n";
+        growIndentLevel();
+        node.declarations.each!(a => visit(a));
+        shrinkIndentLevel();
+        indent();
+        _source ~= "}\n";
     }
 
     override void visit(OnExceptionInstanceAstNode node)
@@ -474,7 +495,17 @@ public:
 
     override void visit(StructDeclarationAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "struct ";
+        _source ~= node.name.text;
+        _source ~= "\n";
+        indent();
+        _source ~= "{\n";
+        growIndentLevel();
+        node.declarations.each!(a => visit(a));
+        shrinkIndentLevel();
+        indent();
+        _source ~= "}\n";
     }
 
     override void visit(SwitchStatementAstNode node)
@@ -503,8 +534,7 @@ public:
     {
         with(ModifierKind) final switch (node.kind)
         {
-            case none:
-                break;
+            case none: break;
             case arrayDynDim:
                 _source ~= "[]";
                 break;
@@ -573,37 +603,111 @@ public:
 
     override void visit(VersionBlockDeclarationAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "version";
+        visit(node.versionExpression);
+        _source ~= "\n";
+        indent();
+        _source ~= "{\n";
+        growIndentLevel();
+        node.trueDeclarations.each!(a => visit(a));
+        shrinkIndentLevel();
+        indent();
+        _source ~= "}\n";
+        if (node.falseDeclarations.length)
+        {
+            indent();
+            _source ~= "else\n";
+            indent();
+            _source ~= "{\n";
+            growIndentLevel();
+            node.falseDeclarations.each!(a => visit(a));
+            shrinkIndentLevel();
+            indent();
+            _source ~= "}\n";
+        }
     }
 
     override void visit(VersionBlockStatementAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "version";
+        visit(node.versionExpression);
+        _source ~= "\n";
+        indent();
+        _source ~= "{\n";
+        growIndentLevel();
+        node.trueDeclarationsOrStatements.each!(a => visit(a));
+        shrinkIndentLevel();
+        indent();
+        _source ~= "}\n";
+        if (node.falseDeclarationsOrStatements.length)
+        {
+            indent();
+            _source ~= "else\n";
+            indent();
+            _source ~= "{\n";
+            growIndentLevel();
+            node.falseDeclarationsOrStatements.each!(a => visit(a));
+            shrinkIndentLevel();
+            indent();
+            _source ~= "}\n";
+        }
     }
 
     override void visit(VersionAndExpressionAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        if (node.rightExpression && node.leftExpression)
+        {
+            visit(node.leftExpression);
+            _source ~= " & ";
+            visit(node.rightExpression);
+        }
+        else if (node.leftExpression)
+        {
+            visit(node.leftExpression);
+        }
     }
 
     override void visit(VersionOrExpressionAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        if (node.rightExpression && node.leftExpression)
+        {
+            visit(node.leftExpression);
+            _source ~= " | ";
+            visit(node.rightExpression);
+        }
+        else if (node.leftExpression)
+        {
+            visit(node.leftExpression);
+        }
     }
 
     override void visit(VersionParenExpressionAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        _source ~= "(";
+        if (node.expression)
+            visit(node.expression);
+        _source ~= ")";
     }
 
     override void visit(VersionPrimaryExpressionAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        if (node.identifier)
+            _source ~= node.identifier.text;
+        else
+            node.accept(this);
     }
 
     override void visit(WhileStatementAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "while (";
+        if (node.condition)
+            visit(node.condition);
+        _source ~= ")\n";
+        if (node.declarationOrStatement)
+            visit(node.declarationOrStatement);
     }
 }
 
@@ -688,6 +792,30 @@ class A: B, c.D
 
 unittest
 {
+    string c = "unit a; interface A:B,c.D {}";
+    string e =
+"unit a;
+interface A: B, c.D
+{
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; struct A {}";
+    string e =
+"unit a;
+struct A
+{
+}
+";
+    test(c, e);
+}
+
+unittest
+{
     string c = "unit a; enum A:s8 {a=0,b=1}";
     string e =
 "unit a;
@@ -724,12 +852,24 @@ function foo()
 
 unittest
 {
-    string c = "unit a; function foo(){a += b*c+8+d[e]+f[0..2];}";
+    string c = "unit a; function foo(){a += b*c+8+d[e]+f[0..2]*g./* c */h;}";
     string e =
 "unit a;
 function foo()
 {
-    a += b * c + 8 + d[e] + f[0 .. 2];
+    a += b * c + 8 + d[e] + f[0 .. 2] * g.h;
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){a = [0,1] + (a[1]); }";
+    string e =
+"unit a;
+function foo()
+{
+    a = [0, 1] + (a[1]);
 }";
     test(c, e);
 }
@@ -794,6 +934,51 @@ function foo()
 
 unittest
 {
+    string c = "unit a; function foo(){if(const auto a = call()) {a++;}}";
+    string e =
+"unit a;
+function foo()
+{
+    if (const auto a = call())
+    {
+        a++;
+    }
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){if(var auto a = call()) {a++;}}";
+    string e =
+"unit a;
+function foo()
+{
+    if (var auto a = call())
+    {
+        a++;
+    }
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){while(true){a++;}}";
+    string e =
+"unit a;
+function foo()
+{
+    while (true)
+    {
+        a++;
+    }
+}";
+    test(c, e);
+}
+
+unittest
+{
     string c = "unit a; function foo(){foreach(const auto i;I){if (0)
     {break(here ) afterCall();}}}";
     string e =
@@ -806,6 +991,21 @@ function foo()
         {
             break(here) afterCall();
         }
+    }
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){foreach(const auto i; 0 .. 1){ callThat();}}";
+    string e =
+"unit a;
+function foo()
+{
+    foreach(const auto i; 0 .. 1)
+    {
+        callThat();
     }
 }";
     test(c, e);
@@ -863,6 +1063,16 @@ is static function*(const s32 a, b):(s64[]) aka funcPtr;
 
 unittest
 {
+    string c = "unit a; is static function * (const s32 a; var s8 b) aka funcPtr;";
+    string e =
+"unit a;
+is static function*(const s32 a; var s8 b) aka funcPtr;
+";
+    test(c, e);
+}
+
+unittest
+{
     string c = "unit a; is function * (const s32 a, b):  s64[ ]   aka funcPtr;";
     string e =
 "unit a;
@@ -899,6 +1109,108 @@ unittest
 class A
 {
     static const s8 a;
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; class A {static const s8 a;static const s8 b;}";
+    string e =
+"unit a;
+class A
+{
+    static const s8 a;
+    static const s8 b;
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; version(a){const s8 b;}else{const s8 c;}";
+    string e =
+"unit a;
+version(a)
+{
+    const s8 b;
+}
+else
+{
+    const s8 c;
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; version(a &   b){const s8 b;}else{const s8 c;}";
+    string e =
+"unit a;
+version(a & b)
+{
+    const s8 b;
+}
+else
+{
+    const s8 c;
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; version((a &   b)){const s8 b;}else{const s8 c;}";
+    string e =
+"unit a;
+version((a & b))
+{
+    const s8 b;
+}
+else
+{
+    const s8 c;
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; version(  a |   b){const s8 b;}else{const s8 c;}";
+    string e =
+"unit a;
+version(a | b)
+{
+    const s8 b;
+}
+else
+{
+    const s8 c;
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){version(a){const s8 b;}else{const s8 c;}}";
+    string e =
+"unit a;
+function foo()
+{
+    version(a)
+    {
+        const s8 b;
+    }
+    else
+    {
+        const s8 c;
+    }
 }
 ";
     test(c, e);
