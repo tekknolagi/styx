@@ -360,7 +360,24 @@ public:
 
     override void visit(ImportDeclarationAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        if (node.priority)
+        {
+            _source ~= "import(";
+            _source ~= node.priority.text;
+            _source ~= ") ";
+        }
+        else
+        {
+            _source ~= "import ";
+        }
+        foreach(i, p; node.importList)
+        {
+            visit(p);
+            if (i != node.importList.length - 1)
+                _source ~= ", ";
+        }
+        semicolonAndNewLine();
     }
 
     override void visit(IndexExpressionAstNode node)
@@ -456,7 +473,11 @@ public:
 
     override void visit(ProtectionDeclarationAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "protection(";
+        if (node.protection)
+            _source ~= node.protection.text;
+        _source ~= ")\n";
     }
 
     override void visit(ReturnStatementAstNode node)
@@ -510,12 +531,38 @@ public:
 
     override void visit(SwitchStatementAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "switch(";
+        if (node.expression)
+            visit(node.expression);
+        _source ~= ")\n";
+        indent();
+        _source ~= "{\n";
+        foreach(i, m; node.onMatchStatements)
+        {
+            indent();
+            _source ~= "on(";
+            m.onMatchExpressions.each!(a => visit(a));
+            _source ~= ")\n";
+            if (m.declarationOrStatement)
+                visit(m.declarationOrStatement);
+        }
+        if (node.elseStatement)
+        {
+            indent();
+            _source ~= "else\n";
+            visit(node.elseStatement);
+        }
+        indent();
+        _source ~= "}\n";
     }
 
     override void visit(ThrowStatementAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "throw ";
+        node.accept(this);
+        semicolonAndNewLine();
     }
 
     override void visit(TryOnFinallyStatementAstNode node)
@@ -532,21 +579,21 @@ public:
 
     override void visit(TypeModifierAstNode node)
     {
-        with(ModifierKind) final switch (node.kind)
+        with(ModifierKind) switch (node.kind)
         {
-            case none: break;
             case arrayDynDim:
                 _source ~= "[]";
-                break;
+                goto default;
             case arrayStatDim:
                 _source ~= "[";
                 if (node.staticDimension)
                     visit(node.staticDimension);
                 _source ~= "]";
-                break;
+                goto default;
             case pointer:
                 _source ~= "*";
-                break;
+                goto default;
+            default:
         }
         if (node.modifier)
             visit(node.modifier);
@@ -562,7 +609,17 @@ public:
 
     override void visit(UnionDeclarationAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "union ";
+        _source ~= node.name.text;
+        _source ~= "\n";
+        indent();
+        _source ~= "{\n";
+        growIndentLevel();
+        node.declarations.each!(a => visit(a));
+        shrinkIndentLevel();
+        indent();
+        _source ~= "}\n";
     }
 
     override void visit(UnitAstNode node)
@@ -808,6 +865,18 @@ unittest
     string e =
 "unit a;
 struct A
+{
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; union A {}";
+    string e =
+"unit a;
+union A
 {
 }
 ";
@@ -1213,6 +1282,74 @@ function foo()
     }
 }
 ";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; import(1) system,classes,io.streams; import other;";
+    string e =
+"unit a;
+import(1) system, classes, io.streams;
+import other;
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; protection(strict)";
+    string e =
+"unit a;
+protection(strict)";
+    test(c, e);
+}
+
+unittest
+{
+    string c ="unit a;function foo(){
+    switch(e)
+    {
+    on(0){doThat();}
+    on(1){doThis();}
+    else{doThisAndThat();}
+    }
+}";
+
+
+    string e =
+"unit a;
+function foo()
+{
+    switch(e)
+    {
+    on(0)
+    {
+        doThat();
+    }
+    on(1)
+    {
+        doThis();
+    }
+    else
+    {
+        doThisAndThat();
+    }
+    }
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){throw Error.construct(text);}";
+    string e =
+"unit a;
+function foo()
+{
+    throw Error.construct(text);
+}";
     test(c, e);
 }
 
