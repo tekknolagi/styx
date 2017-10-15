@@ -966,8 +966,8 @@ unittest
 
 unittest
 {
-    char[] s = `\r\n\t\v`.dup;
+    char[] s = `\0\a\b\f\r\n\t\v`.dup;
     Token t = Token(s.ptr, s.ptr + s.length, 0, 0, TokenType.stringLiteral);
-    assert(t.text == "\r\n\t\v");
+    assert(t.text == "\0\a\b\f\r\n\t\v");
 }
 
