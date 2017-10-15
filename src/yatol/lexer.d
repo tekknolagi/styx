@@ -1496,6 +1496,18 @@ unittest
 unittest
 {
     int line = __LINE__ + 1;
+    enum source = "0x1z";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].isTokInvalid);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
     enum source = "0/0";
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
@@ -1769,5 +1781,24 @@ unittest
     assert(lx.tokens[0].isTokUnit);
     assert(lx.tokens[1].isTokInvalid);
     assert(lx.tokens[2].type == TokenType.eof);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "^~...? null true false %";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 9);
+    assert(lx.tokens[0].isTokXor);
+    assert(lx.tokens[1].isTokTidle);
+    assert(lx.tokens[2].isTokEllipsis);
+    assert(lx.tokens[3].isTokQmark);
+    assert(lx.tokens[4].isTokNull);
+    assert(lx.tokens[5].isTokTrue);
+    assert(lx.tokens[6].isTokFalse);
+    assert(lx.tokens[7].isTokMod);
+    assert(lx.tokens[8].type == TokenType.eof);
 }
 

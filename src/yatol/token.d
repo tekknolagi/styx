@@ -283,11 +283,6 @@ static immutable TokenType firstBasicType = TokenType.bool_;
 /// The $(D TokenType) of the last keyword.
 static immutable TokenType lastBasicType = TokenType.ureg;
 
-/// The $(D TokenType) of the first symbol.
-static immutable TokenType firstSymbol = TokenType.bang;
-/// The $(D TokenType) of the last symbol.
-static immutable TokenType lastSymbol = TokenType.optAccess;
-
 /// The $(D TokenType) of the first operator.
 static immutable TokenType firstOperator = TokenType.equalEqual;
 /// The $(D TokenType) of the last operator.
@@ -584,9 +579,6 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokKeyword() const {return firstKeyword <= type && type <= lastKeyword;}
-
-    /// Conveniance function used by the parser.
-    bool isTokSymbol() const {return firstSymbol <= type && type <= lastSymbol;}
 
     /// Conveniance function used by the parser.
     bool isTokStorageClass() const {return isTokVar || isTokConst;}
