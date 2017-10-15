@@ -239,7 +239,18 @@ public:
             visit(node.singleOrRangeExpression);
         _source ~= ")\n";
         if (node.declarationOrStatement)
+        {
+            bool nested;
+            if (node.declarationOrStatement.declaration ||
+                node.declarationOrStatement.statement.statementKind != StatementKind.skBlock)
+            {
+                nested = true;
+                growIndentLevel();
+            }
             visit(node.declarationOrStatement);
+            if (nested)
+                shrinkIndentLevel();
+        }
     }
 
     override void visit(FunctionDeclarationAstNode node)
@@ -349,12 +360,32 @@ public:
             visit(node.ifVariable);
         _source ~= ")\n";
         if (node.trueDeclarationOrStatement)
+        {
+            bool nested;
+            if (node.trueDeclarationOrStatement.declaration ||
+                node.trueDeclarationOrStatement.statement.statementKind != StatementKind.skBlock)
+            {
+                nested = true;
+                growIndentLevel();
+            }
             visit(node.trueDeclarationOrStatement);
+            if (nested)
+                shrinkIndentLevel();
+        }
         if (node.falseDeclarationOrStatement)
         {
             indent();
             _source ~= "else\n";
+            bool nested;
+            if (node.falseDeclarationOrStatement.declaration ||
+                node.falseDeclarationOrStatement.statement.statementKind != StatementKind.skBlock)
+            {
+                nested = true;
+                growIndentLevel();
+            }
             visit(node.falseDeclarationOrStatement);
+            if (nested)
+                shrinkIndentLevel();
         }
     }
 
@@ -432,17 +463,58 @@ public:
 
     override void visit(OnExceptionInstanceAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        if (node.exceptionType)
+            visit(node.exceptionType);
+        space();
+        if (node.identifier)
+            _source ~= node.identifier.text;
     }
 
     override void visit(OnExceptionStatementAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "on(";
+        foreach(i, e; node.exceptionsInstances)
+        {
+            visit(e);
+            if (i != node.exceptionsInstances.length - 1)
+                _source ~= ", ";
+        }
+        _source ~= ")\n";
+        if (node.exceptionsDeclarationOrStatement)
+        {
+            bool nested;
+            if (node.exceptionsDeclarationOrStatement.declaration ||
+                node.exceptionsDeclarationOrStatement.statement.statementKind !=StatementKind.skBlock)
+            {
+                nested = true;
+                growIndentLevel();
+            }
+            visit(node.exceptionsDeclarationOrStatement);
+            if (nested)
+                shrinkIndentLevel();
+        }
     }
 
     override void visit(OnMatchStatementAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "on(";
+        node.onMatchExpressions.each!(a => visit(a));
+        _source ~= ")\n";
+        if (node.declarationOrStatement)
+        {
+            bool nested;
+            if (node.declarationOrStatement.declaration ||
+                node.declarationOrStatement.statement.statementKind != StatementKind.skBlock)
+            {
+                nested = true;
+                growIndentLevel();
+            }
+            visit(node.declarationOrStatement);
+            if (nested)
+                shrinkIndentLevel();
+        }
     }
 
     override void visit(PostfixExpressionAstNode node)
@@ -538,20 +610,21 @@ public:
         _source ~= ")\n";
         indent();
         _source ~= "{\n";
-        foreach(i, m; node.onMatchStatements)
-        {
-            indent();
-            _source ~= "on(";
-            m.onMatchExpressions.each!(a => visit(a));
-            _source ~= ")\n";
-            if (m.declarationOrStatement)
-                visit(m.declarationOrStatement);
-        }
+        node.onMatchStatements.each!(a => visit(a));
         if (node.elseStatement)
         {
             indent();
             _source ~= "else\n";
+            bool nested;
+            if (node.elseStatement.declaration ||
+                node.elseStatement.statement.statementKind != StatementKind.skBlock)
+            {
+                nested = true;
+                growIndentLevel();
+            }
             visit(node.elseStatement);
+            if (nested)
+                shrinkIndentLevel();
         }
         indent();
         _source ~= "}\n";
@@ -567,7 +640,37 @@ public:
 
     override void visit(TryOnFinallyStatementAstNode node)
     {
-        assert(0, "TODO" ~ __PRETTY_FUNCTION__);
+        indent();
+        _source ~= "try\n";
+        if (node.triedDeclarationOrStatement)
+        {
+            bool nested;
+            if (node.triedDeclarationOrStatement.declaration ||
+                node.triedDeclarationOrStatement.statement.statementKind != StatementKind.skBlock)
+            {
+                nested = true;
+                growIndentLevel();
+            }
+            visit(node.triedDeclarationOrStatement);
+            if (nested)
+                shrinkIndentLevel();
+        }
+        node.exceptionDeclarationsOrStatements.each!(a => visit(a));
+        if (node.finalDeclarationOrStatement)
+        {
+            indent();
+            _source ~= "finally\n";
+            bool nested;
+            if (node.finalDeclarationOrStatement.declaration ||
+                node.finalDeclarationOrStatement.statement.statementKind != StatementKind.skBlock)
+            {
+                nested = true;
+                growIndentLevel();
+            }
+            visit(node.finalDeclarationOrStatement);
+            if (nested)
+                shrinkIndentLevel();
+        }
     }
 
     override void visit(TypeAstNode node)
@@ -764,7 +867,18 @@ public:
             visit(node.condition);
         _source ~= ")\n";
         if (node.declarationOrStatement)
+        {
+            bool nested;
+            if (node.declarationOrStatement.declaration ||
+                node.declarationOrStatement.statement.statementKind != StatementKind.skBlock)
+            {
+                nested = true;
+                growIndentLevel();
+            }
             visit(node.declarationOrStatement);
+            if (nested)
+                shrinkIndentLevel();
+        }
     }
 }
 
@@ -986,7 +1100,7 @@ function foo()
     test(c, e);
 }
 
-unittest // TODO-cformatter: IfElseStatement without block
+unittest
 {
     string c = "unit a; function foo(){if (a) a++; else a--;}";
     string e =
@@ -994,9 +1108,9 @@ unittest // TODO-cformatter: IfElseStatement without block
 function foo()
 {
     if (a)
-    a++;
+        a++;
     else
-    a--;
+        a--;
 }";
     test(c, e);
 }
@@ -1048,6 +1162,19 @@ function foo()
 
 unittest
 {
+    string c = "unit a; function foo(){while(true)a++;}";
+    string e =
+"unit a;
+function foo()
+{
+    while (true)
+        a++;
+}";
+    test(c, e);
+}
+
+unittest
+{
     string c = "unit a; function foo(){foreach(const auto i;I){if (0)
     {break(here ) afterCall();}}}";
     string e =
@@ -1061,6 +1188,20 @@ function foo()
             break(here) afterCall();
         }
     }
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){foreach(const auto i;I)if (0)break(here) afterCall();}";
+    string e =
+"unit a;
+function foo()
+{
+    foreach(const auto i; I)
+        if (0)
+            break(here) afterCall();
 }";
     test(c, e);
 }
@@ -1310,13 +1451,11 @@ unittest
     string c ="unit a;function foo(){
     switch(e)
     {
-    on(0){doThat();}
-    on(1){doThis();}
-    else{doThisAndThat();}
+    on(0) doThat();
+    on(1) doThis();
+    else doThisAndThat();
     }
 }";
-
-
     string e =
 "unit a;
 function foo()
@@ -1324,17 +1463,11 @@ function foo()
     switch(e)
     {
     on(0)
-    {
         doThat();
-    }
     on(1)
-    {
         doThis();
-    }
     else
-    {
         doThisAndThat();
-    }
     }
 }
 ";
@@ -1349,6 +1482,24 @@ unittest
 function foo()
 {
     throw Error.construct(text);
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){try doThis();
+        on(Error1 e1, Error2 e2) doThat; finally cleanup();}";
+    string e =
+"unit a;
+function foo()
+{
+    try
+        doThis();
+    on(Error1 e1, Error2 e2)
+        doThat;
+    finally
+        cleanup();
 }";
     test(c, e);
 }
