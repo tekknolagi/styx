@@ -88,11 +88,13 @@ public:
 
     override void visit(BinaryExpressionAstNode node)
     {
+        _source ~= "(";
         visit(node.left);
         space();
         _source ~= node.operator.text;
         space();
         visit(node.right);
+        _source ~= ")";
     }
 
     override void visit(BlockStatementAstNode node)
@@ -1040,7 +1042,7 @@ unittest
 "unit a;
 function foo()
 {
-    a += b * c + 8 + d[e] + f[0 .. 2] * g.h;
+    a += ((b * c) + (8 + (d[e] + (f[0 .. 2] * g.h))));
 }";
     test(c, e);
 }
@@ -1052,7 +1054,31 @@ unittest
 "unit a;
 function foo()
 {
-    a = [0, 1] + (a[1]);
+    a = ([0, 1] + (a[1]));
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){a = b * c + d; }";
+    string e =
+"unit a;
+function foo()
+{
+    a = ((b * c) + d);
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){a = b + c * d - 8; }";
+    string e =
+"unit a;
+function foo()
+{
+    a = ((b + (c * d)) - 8);
 }";
     test(c, e);
 }
