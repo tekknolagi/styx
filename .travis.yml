@@ -7,9 +7,9 @@ os:
  #- osx
 d:
  - dmd
- - dmd-nightly
+ #- dmd-nightly
  - ldc
- - ldc-beta 
+ #- ldc-beta
  
 script:
  # tests + coverage
