@@ -81,6 +81,14 @@ public:
         semicolonAndNewLine();
     }
 
+    override void visit(AssertStatementAstNode node)
+    {
+        indent();
+        _source ~= "assert(";
+        node.accept(this);
+        _source ~= ");\n";
+    }
+
     override void visit(AssignExpressionAstNode node)
     {
         if (node.left)
@@ -1456,6 +1464,18 @@ function foo()
         doThat;
     finally
         cleanup();
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){assert(true & true);}";
+    string e =
+"unit a;
+function foo()
+{
+    assert((true & true));
 }";
     test(c, e);
 }

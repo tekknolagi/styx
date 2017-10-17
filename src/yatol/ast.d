@@ -53,6 +53,7 @@ string genVisitMethods(string statements)
 class AstVisitor
 {
     void visit(AkaDeclarationAstNode node){node.accept(this);}
+    void visit(AssertStatementAstNode node){node.accept(this);}
     void visit(AssignExpressionAstNode node){node.accept(this);}
     void visit(AstNode node){node.accept(this);}
     void visit(AtAttributeAstNode node){node.accept(this);}
@@ -121,6 +122,7 @@ class AstVisitor
 class AstVisitorNone: AstVisitor
 {
     override void visit(AkaDeclarationAstNode node){}
+    override void visit(AssertStatementAstNode node){}
     override void visit(AssignExpressionAstNode node){}
     override void visit(AstNode node){}
     override void visit(AtAttributeAstNode node){}
@@ -211,6 +213,18 @@ unittest
     static assert(hasUDA!(FunctionDeclarationAstNode.isPublic, Semantic));
     static assert(isGrammatic!AstNode);
     static assert(!isGrammatic!FlowControlBaseNode);
+}
+
+final class AssertStatementAstNode: AstNode
+{
+    /// The expression to verify.
+    ExpressionAstNode expression;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (expression)
+            visitor.visit(expression);
+    }
 }
 
 /// IdentifierChain
@@ -928,6 +942,7 @@ enum StatementKind: ubyte
     skTryOnFinally,
     skThrow,
     skVersion,
+    skAssert,
 }
 
 /// Statement
@@ -962,6 +977,8 @@ final class StatementAstNode: AstNode
         ThrowStatementAstNode throwStatement;
         /// Assigned if this statement is a VersionBlockStatement.
         VersionBlockStatementAstNode versionBlockStatement;
+        /// Assigned if this statement is an AssertStatement.
+        AssertStatementAstNode assertStatement;
     }
     ///
     Statement statement;
@@ -985,6 +1002,7 @@ final class StatementAstNode: AstNode
         case skTryOnFinally: visitor.visit(statement.tryOnFinallyStatement); break;
         case skThrow: visitor.visit(statement.throwStatement); break;
         case skVersion: visitor.visit(statement.versionBlockStatement); break;
+        case skAssert: visitor.visit(statement.assertStatement); break;
         case skNone: assert(false);
         }
     }

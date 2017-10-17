@@ -135,6 +135,7 @@ Yatol:
                 / TryOnFinallyStatement
                 / ThrowStatement
                 / VersionBlockStatement
+                / AssertStatement
 
     EmptyStatment < Semicolon
 
@@ -183,6 +184,8 @@ Yatol:
     ThrowStatement < Throw UnaryExpression Semicolon
 
     VersionBlockStatement < VersionConditions DeclarationOrStatement (Else DeclarationOrStatement)?
+
+    AssertStatement < Assert LeftParen Expression RightParen Semicolon
 
 ################################################################################
 # Composites expressions
@@ -417,6 +420,7 @@ Yatol:
             / Finally
             / Throw
             / Union
+            / Assert
             #/ In
 
     ValueKeyword    < Null
@@ -490,3 +494,4 @@ Yatol:
     True    <- "true"
     False   <- "false"
     Super   <- "super"
+    Assert  <- "assert"

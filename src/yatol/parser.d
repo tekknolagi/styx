@@ -81,10 +81,46 @@ private:
     }
 
     /**
+     * Parses an AssertStatement.
+     *
+     * Returns:
+     *      $(D AssertStatementAstNode) on success, $(D null) otherwise.
+     */
+    AssertStatementAstNode parseAssertStatement()
+    {
+        assert(current.isTokAssert);
+        AssertStatementAstNode result = new AssertStatementAstNode;
+        result.position = current.position;
+        advance();
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        advance();
+        if (ExpressionAstNode e = parseExpression(null))
+        {
+            result.expression = e;
+            if (!current.isTokRightParen)
+            {
+                expected(TokenType.rightParen);
+                return null;
+            }
+            advance();
+            if (!current.isTokSemicolon)
+            {
+                expected(TokenType.semiColon);
+                return null;
+            }
+            advance();
+            return result;
+        }
+        else return null;
+    }
+
+    /**
      * Parses a UnitDeclaration.
      *
-     * Params:
-     *      virtual = Indicates if the previous token is of type $(D TokenType.virtual).
      * Returns:
      *      $(D true) on success, $(D false) otherwise.
      */
@@ -2658,6 +2694,21 @@ private:
             else
             {
                 parseError("invalid version block statement");
+                return null;
+            }
+        }
+        case assert_:
+        {
+            if (AssertStatementAstNode as = parseAssertStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.statementKind = StatementKind.skAssert;
+                result.statement.assertStatement = as;
+                return result;
+            }
+            else
+            {
+                parseError("invalid assert statement");
                 return null;
             }
         }
@@ -5393,6 +5444,30 @@ unittest // issue #1 ambiguous type modifiers when return is a func
     assertParse(q{
         unit a;
     var function*():(function*():s8[])[] a;
+    });
+}
+
+unittest // assert
+{
+    assertParse(q{
+        unit a;
+        function foo() { assert(true == true); }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo() { assert true == true); }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo() { assert(true true); }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo() { assert(true; }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo() { assert(true) }
     });
 }
 

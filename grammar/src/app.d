@@ -147,6 +147,8 @@ enum source1 = "
 
         throw Exception.create(\"oops\");
         throw Exception.create(`oops`);
+
+        assert(true == true);
     }
 
     enum A
