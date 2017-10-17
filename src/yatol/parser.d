@@ -1871,7 +1871,6 @@ private:
                 result.binaryExpression = be;
 
                 if (r.binaryExpression && (r.binaryExpression.operator.type > op.type || op.isTokIn))
-                //if ((r.binaryExpression && r.binaryExpression.operator.type > op.type) && !op.isTokIn)
                 {
                     /*
                             a           e1L
@@ -1882,7 +1881,6 @@ private:
                                   +     e1O
                                     c   e1R
                     */
-                    writeln("swap: ", r.binaryExpression.operator.text, " ", op.text);
 
                     ExpressionAstNode old_L = be.left;
                     ExpressionAstNode old_R = be.right;

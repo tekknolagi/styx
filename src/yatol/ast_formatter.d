@@ -49,6 +49,23 @@ private:
         _source ~= " ";
     }
 
+    void visitPossiblyIndented(DeclarationOrStatementAstNode node)
+    {
+        if (node)
+        {
+            bool nested;
+            if (node.declaration ||
+                node.statement.statementKind != StatementKind.skBlock)
+            {
+                nested = true;
+                growIndentLevel();
+            }
+            visit(node);
+            if (nested)
+                shrinkIndentLevel();
+        }
+    }
+
 public:
 
     /// Returns: the formatted ast.
@@ -240,19 +257,7 @@ public:
         if (node.singleOrRangeExpression)
             visit(node.singleOrRangeExpression);
         _source ~= ")\n";
-        if (node.declarationOrStatement)
-        {
-            bool nested;
-            if (node.declarationOrStatement.declaration ||
-                node.declarationOrStatement.statement.statementKind != StatementKind.skBlock)
-            {
-                nested = true;
-                growIndentLevel();
-            }
-            visit(node.declarationOrStatement);
-            if (nested)
-                shrinkIndentLevel();
-        }
+        visitPossiblyIndented(node.declarationOrStatement);
     }
 
     override void visit(FunctionDeclarationAstNode node)
@@ -361,33 +366,12 @@ public:
         else if (node.ifVariable)
             visit(node.ifVariable);
         _source ~= ")\n";
-        if (node.trueDeclarationOrStatement)
-        {
-            bool nested;
-            if (node.trueDeclarationOrStatement.declaration ||
-                node.trueDeclarationOrStatement.statement.statementKind != StatementKind.skBlock)
-            {
-                nested = true;
-                growIndentLevel();
-            }
-            visit(node.trueDeclarationOrStatement);
-            if (nested)
-                shrinkIndentLevel();
-        }
+        visitPossiblyIndented(node.trueDeclarationOrStatement);
         if (node.falseDeclarationOrStatement)
         {
             indent();
             _source ~= "else\n";
-            bool nested;
-            if (node.falseDeclarationOrStatement.declaration ||
-                node.falseDeclarationOrStatement.statement.statementKind != StatementKind.skBlock)
-            {
-                nested = true;
-                growIndentLevel();
-            }
-            visit(node.falseDeclarationOrStatement);
-            if (nested)
-                shrinkIndentLevel();
+            visitPossiblyIndented(node.falseDeclarationOrStatement);
         }
     }
 
@@ -483,19 +467,7 @@ public:
                 _source ~= ", ";
         }
         _source ~= ")\n";
-        if (node.exceptionsDeclarationOrStatement)
-        {
-            bool nested;
-            if (node.exceptionsDeclarationOrStatement.declaration ||
-                node.exceptionsDeclarationOrStatement.statement.statementKind !=StatementKind.skBlock)
-            {
-                nested = true;
-                growIndentLevel();
-            }
-            visit(node.exceptionsDeclarationOrStatement);
-            if (nested)
-                shrinkIndentLevel();
-        }
+        visitPossiblyIndented(node.exceptionsDeclarationOrStatement);
     }
 
     override void visit(OnMatchStatementAstNode node)
@@ -504,19 +476,7 @@ public:
         _source ~= "on(";
         node.onMatchExpressions.each!(a => visit(a));
         _source ~= ")\n";
-        if (node.declarationOrStatement)
-        {
-            bool nested;
-            if (node.declarationOrStatement.declaration ||
-                node.declarationOrStatement.statement.statementKind != StatementKind.skBlock)
-            {
-                nested = true;
-                growIndentLevel();
-            }
-            visit(node.declarationOrStatement);
-            if (nested)
-                shrinkIndentLevel();
-        }
+        visitPossiblyIndented(node.declarationOrStatement);
     }
 
     override void visit(PostfixExpressionAstNode node)
@@ -617,16 +577,7 @@ public:
         {
             indent();
             _source ~= "else\n";
-            bool nested;
-            if (node.elseStatement.declaration ||
-                node.elseStatement.statement.statementKind != StatementKind.skBlock)
-            {
-                nested = true;
-                growIndentLevel();
-            }
-            visit(node.elseStatement);
-            if (nested)
-                shrinkIndentLevel();
+            visitPossiblyIndented(node.elseStatement);
         }
         indent();
         _source ~= "}\n";
@@ -644,34 +595,13 @@ public:
     {
         indent();
         _source ~= "try\n";
-        if (node.triedDeclarationOrStatement)
-        {
-            bool nested;
-            if (node.triedDeclarationOrStatement.declaration ||
-                node.triedDeclarationOrStatement.statement.statementKind != StatementKind.skBlock)
-            {
-                nested = true;
-                growIndentLevel();
-            }
-            visit(node.triedDeclarationOrStatement);
-            if (nested)
-                shrinkIndentLevel();
-        }
+        visitPossiblyIndented(node.triedDeclarationOrStatement);
         node.exceptionDeclarationsOrStatements.each!(a => visit(a));
         if (node.finalDeclarationOrStatement)
         {
             indent();
             _source ~= "finally\n";
-            bool nested;
-            if (node.finalDeclarationOrStatement.declaration ||
-                node.finalDeclarationOrStatement.statement.statementKind != StatementKind.skBlock)
-            {
-                nested = true;
-                growIndentLevel();
-            }
-            visit(node.finalDeclarationOrStatement);
-            if (nested)
-                shrinkIndentLevel();
+            visitPossiblyIndented(node.finalDeclarationOrStatement);
         }
     }
 
@@ -868,19 +798,7 @@ public:
         if (node.condition)
             visit(node.condition);
         _source ~= ")\n";
-        if (node.declarationOrStatement)
-        {
-            bool nested;
-            if (node.declarationOrStatement.declaration ||
-                node.declarationOrStatement.statement.statementKind != StatementKind.skBlock)
-            {
-                nested = true;
-                growIndentLevel();
-            }
-            visit(node.declarationOrStatement);
-            if (nested)
-                shrinkIndentLevel();
-        }
+        visitPossiblyIndented(node.declarationOrStatement);
     }
 }
 
@@ -1079,6 +997,18 @@ unittest
 function foo()
 {
     a = ((b + (c * d)) - 8);
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){a = b in c + 8; }";
+    string e =
+"unit a;
+function foo()
+{
+    a = ((b in c) + 8);
 }";
     test(c, e);
 }
