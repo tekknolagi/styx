@@ -236,7 +236,6 @@ unittest
     lx.lex();
     UnitContainerAstNode uc = Parser(&lx).parse();
     NodeProtectionVisitor np = new NodeProtectionVisitor(uc, &lx);
-    np.visit(uc);
     ProtectionChecker pc = new ProtectionChecker;
     pc.visit(uc);
     assert(!np.success);
