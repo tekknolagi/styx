@@ -1297,6 +1297,8 @@ final class VersionPrimaryExpressionAstNode: AstNode
 {
     /// Assigned when the primary expression is an identifier.
     Token* identifier;
+    /// Assigned when the primary is negated.
+    Token* not;
     /// Assigned when the primary expression is a paren expression.
     VersionParenExpressionAstNode parenExpression;
     ///

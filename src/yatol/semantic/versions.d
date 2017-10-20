@@ -24,14 +24,14 @@ final class VersionEvaluatorVisitor: AstVisitor
 private:
 
     string[] _userVersions;
-    bool[string] _predefinedVersions;
+    static immutable bool[string] _predefinedVersions;
 
-    bool isPredefinedVersion(const(char)[] value)
+    static bool isPredefinedVersion(const(char)[] value)
     {
         return (value in _predefinedVersions) !is null;
     }
 
-    bool isPredefinedVersionSet(const(char)[] value)
+    static bool isPredefinedVersionSet(const(char)[] value)
     {
         return *(value in _predefinedVersions);
     }
@@ -64,6 +64,15 @@ private:
     }
 
 public:
+
+    static this()
+    {
+        version(unittest)
+        {
+            _predefinedVersions["valid_OS"] = true;
+            _predefinedVersions["invalid_OS"] = false;
+        }
+    }
 
     /// Constructs an instance with a list of user defined version.
     this(string[] userVersions)
@@ -175,6 +184,10 @@ public:
                 _boolStack ~= node.isDefined;
             }
         }
+        if (node.not)
+        {
+            _boolStack[$-1] = !_boolStack[$-1];
+        }
     }
 }
 
@@ -185,7 +198,7 @@ public:
  *      code = The source code. The version must be declared right after the unit.
  *      userVersions = The custom versions, as set with "--versions" in the compiler.
  */
-void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions,
+void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions = [],
     string file = __FILE_FULL_PATH__, size_t line = __LINE__)
 {
     import core.exception: AssertError;
@@ -209,6 +222,7 @@ void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions,
         throw new AssertError("the version evaluates to false instead of true",
             file, vb.position.line);
     }
+    assert(vev.success);
 }
 
 /**
@@ -219,7 +233,7 @@ void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions,
  *      code = The source code. The version must be declared right after the unit.
  *      userVersions = The custom versions, as set with "--versions" in the compiler.
  */
-void assertFirstVersionIsFalse(const(char)[] code, string[] userVersions,
+void assertFirstVersionIsFalse(const(char)[] code, string[] userVersions = [],
     string file = __FILE_FULL_PATH__, size_t line = __LINE__)
 {
     import core.exception: AssertError;
@@ -232,9 +246,8 @@ void assertFirstVersionIsFalse(const(char)[] code, string[] userVersions,
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
-    VersionEvaluatorVisitor vev = new VersionEvaluatorVisitor(userVersions);
+    VersionEvaluatorVisitor vev = new VersionEvaluatorVisitor(uc, userVersions);
 
-    vev.visit(uc);
     const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations[0]
         .declaration.versionBlockDeclaration;
 
@@ -277,6 +290,55 @@ unittest // single versions
         unit a;
         version(a) const s32 b;
     }, ["b"]);
+}
+
+unittest // predefined versions
+{
+    assertFirstVersionIsTrue(q{
+        unit a;
+        version(valid_OS) const s32 b;
+    });
+    assertFirstVersionIsFalse(q{
+        unit a;
+        version(invalid_OS) const s32 b;
+    });
+}
+
+
+unittest // not
+{
+    assertFirstVersionIsTrue(q{
+        unit a;
+        version(!a) const s32 b;
+    }, ["b"]);
+    assertFirstVersionIsFalse(q{
+        unit a;
+        version(!a) const s32 b;
+    }, ["a"]);
+    assertFirstVersionIsTrue(q{
+        unit a;
+        version(!(a)) const s32 b;
+    }, ["b"]);
+    assertFirstVersionIsFalse(q{
+        unit a;
+        version(!(a)) const s32 b;
+    }, ["a"]);
+    assertFirstVersionIsTrue(q{
+        unit a;
+        version(!(a & b)) const s32 b;
+    }, ["a", "c"]);
+    assertFirstVersionIsFalse(q{
+        unit a;
+        version(a & !b) const s32 b;
+    }, ["a", "b"]);
+    assertFirstVersionIsFalse(q{
+        unit a;
+        version(!a & !b) const s32 b;
+    }, ["a", "b"]);
+    assertFirstVersionIsTrue(q{
+        unit a;
+        version(!a | b) const s32 b;
+    }, ["a", "b"]);
 }
 
 unittest // simple "and" versions

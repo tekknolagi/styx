@@ -65,7 +65,7 @@ Yatol:
     VersionAndExpression    < VersionPrimaryExpression Amp VersionAndExpression
                             / VersionPrimaryExpression
 
-    VersionPrimaryExpression < Identifier / VersionParenExpression
+    VersionPrimaryExpression < Bang? Identifier / Bang? VersionParenExpression
 
 ################################################################################
 # Imports declaration

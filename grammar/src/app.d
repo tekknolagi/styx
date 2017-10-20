@@ -105,6 +105,8 @@ enum source1 = "
         version(a) { const int v = 6; } else { const int v = 7; }
         version(a) const int v = 8; else const int v = 9;
 
+        version(!a) const int j = 8;
+
         version(a1 & a2 | a3) const int a1anda2_or3 = 8;
         version(a1 | a2 & a3) const int a1or_a2anda3 = 8;
         version(a1 | a2 & a3 | a4) const int a1or_a2anda3_ora4 = 8;

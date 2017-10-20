@@ -257,7 +257,7 @@ private:
     }
 
     /**
-     * Parses consecutives TypeModifier.
+     * Parses a TypeModifier.
      *
      * Returns:
      *      On success a $(D TypeModifierAstNode) otherwise $(D null).
@@ -2497,9 +2497,15 @@ private:
      */
     VersionPrimaryExpressionAstNode parseVersionPrimaryExpression()
     {
+        VersionPrimaryExpressionAstNode result = new VersionPrimaryExpressionAstNode;
+        result.position = current.position;
+        if (current.isTokBang)
+        {
+            result.not = current;
+            advance();
+        }
         if (current.isTokIdentifier)
         {
-            VersionPrimaryExpressionAstNode result = new VersionPrimaryExpressionAstNode;
             result.identifier = current;
             advance();
             if (current.isTokRightParen || current.isTokPipe || current.isTokAmp)
@@ -2516,7 +2522,6 @@ private:
         {
             if (VersionParenExpressionAstNode vpe = parseVersionParenExpression())
             {
-                VersionPrimaryExpressionAstNode result = new VersionPrimaryExpressionAstNode;
                 result.parenExpression = vpe;
                 return result;
             }
@@ -2524,7 +2529,7 @@ private:
         }
         else
         {
-            parseError("expected an identifier or `(`");
+            parseError("expected identifier or `(`");
             return null;
         }
     }
@@ -5163,6 +5168,14 @@ unittest // version block statement
     assertParse(q{
         unit a;
         function foo(){version(a) ++b;}
+    });
+    assertParse(q{
+        unit a;
+        function foo(){version(!a) ++b;}
+    });
+    assertParse(q{
+        unit a;
+        function foo(){version(a & !b) ++b;}
     });
     assertNotParse(q{
         unit a;
