@@ -1,7 +1,5 @@
 /**
- * Semantic processing for the VersionBlockDeclaration and VersionBlockStatement
- *
- * to maintain unittest coverage: 96%
+ * Semantic processing for the VersionBlockDeclaration and VersionBlockStatement.
  */
 module yatol.semantic.versions;
 
@@ -15,7 +13,7 @@ import
 /**
  * This $(D AstVisitor) is used to determine which branch of a
  * VersionBlockDeclaration or of a VersionBlockStatement is valid.
- * After the visit, the nodes of the unreachable branches are supressed.
+ * After the visit, the unreachable branches are supressed.
  */
 final class VersionEvaluatorVisitor: AstVisitor
 {

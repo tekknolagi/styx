@@ -793,6 +793,8 @@ public:
 
     override void visit(VersionPrimaryExpressionAstNode node)
     {
+        if (node.not)
+            _source ~= "!";
         if (node.identifier)
             _source ~= node.identifier.text;
         else
@@ -1314,6 +1316,30 @@ version(a)
 else
 {
     const s8 c;
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; version(!  a){}";
+    string e =
+"unit a;
+version(!a)
+{
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; version(!(a)){}";
+    string e =
+"unit a;
+version(!(a))
+{
 }
 ";
     test(c, e);

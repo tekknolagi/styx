@@ -1,10 +1,7 @@
-#!runnable: -g -gs
 /**
  * YATOL's parser.
  */
 module yatol.parser;
-
-// to maintain unittest coverage: 100% - 1LOC
 
 import
     core.stdc.stdlib;

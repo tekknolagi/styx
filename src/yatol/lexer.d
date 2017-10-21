@@ -10,8 +10,6 @@ import
 import
     yatol.token;
 
-// to maintain unittest coverage: 98%
-
 /**
  * Scans a yatol source file.
  */
