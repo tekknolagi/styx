@@ -2075,22 +2075,47 @@ private:
             return null;
         }
         advance();
-        if (VariableDeclarationAstNode vd = parseVariableDeclaration)
+
+        while (true)
         {
-            result.variable = vd;
+            if (current.isTokStorageClass)
+            {
+                if (ForeachVariableDeclarationAstNode fvd = parseForeachVariableDeclaration())
+                {
+                    result.variables ~= fvd;
+                }
+                else
+                {
+                    parseError("invalid foreach variable");
+                    return null;
+                }
+                if (current.isTokSemicolon)
+                {
+                    advance();
+                    break;
+                }
+                else if (current.isTokComma)
+                {
+                    advance();
+                    if (!current.isTokStorageClass)
+                    {
+                        unexpected();
+                        return null;
+                    }
+                    else continue;
+                }
+                else
+                {
+                    unexpected();
+                    return null;
+                }
+            }
+            else
+            {
+                unexpected();
+                return null;
+            }
         }
-        else
-        {
-            parseError("invalid foreach variable");
-            return null;
-        }
-        //note: parseVariableDeclaration should not eat the semicolon.
-        /*if (!current.isTokSemicolon)
-        {
-            expected(TokenType.semiColon);
-            return null;
-        }
-        advance();*/
         if (SingleOrRangeExpressionAstNode sre = parseSingleOrRangeExpression())
         {
             result.singleOrRangeExpression = sre;
@@ -2119,13 +2144,44 @@ private:
     }
 
     /**
+     * Parses a ForeachVariableDeclaration.
+     *
+     * Returns: a $(D ForeachVariableDeclarationAstNode) on success, $(D null) otherwise.
+     */
+    ForeachVariableDeclarationAstNode parseForeachVariableDeclaration()
+    {
+        assert(current.isTokStorageClass);
+        ForeachVariableDeclarationAstNode result = new ForeachVariableDeclarationAstNode;
+        result.position = current.position;
+        result.isConst = current.isTokConst;
+        advance();
+        if (TypeAstNode t = parseType())
+        {
+            result.type = t;
+        }
+        else
+        {
+            parseError("invalid variable type");
+            return null;
+        }
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        result.identifier = current;
+        advance();
+        return result;
+    }
+
+    /**
      * Parses an IfConditionVariableAstNode.
      *
      * Returns: an $(D IfConditionVariableAstNode) on success, $(D null) otherwise.
      */
     IfConditionVariableAstNode parseIfConditionVariableAstNode()
     {
-        assert(current.isTokConst || current.isTokVar);
+        assert(current.isTokStorageClass);
         IfConditionVariableAstNode result = new IfConditionVariableAstNode;
         result.position = current.position();
         result.isConst = current.isTokConst;
@@ -4483,6 +4539,13 @@ unittest // foreach
         unit a;
         function foo()
         {
+            foreach(const s8 a, var s32 i; b) {}
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
             foreach(const s8 a; 0..10) {}
         }
     });
@@ -4498,6 +4561,34 @@ unittest // foreach
         function foo()
         {
             foreach(const s8 a; ..) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(const a; b) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(const const a; b) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(const auto a ? b) {}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            foreach(const auto a,; b) {}
         }
     });
     assertParse(q{

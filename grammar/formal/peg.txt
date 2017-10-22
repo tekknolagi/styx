@@ -148,7 +148,9 @@ Yatol:
 
     WhileStatement < While LeftParen IfCondition RightParen DeclarationOrStatement
 
-    ForeachStatement < Foreach LeftParen VariableDeclaration Semicolon SingleOrRangeExpression RightParen DeclarationOrStatement
+    ForeachStatement < Foreach LeftParen ForeachVariableDeclaration (Comma ForeachVariableDeclaration)* Semicolon SingleOrRangeExpression RightParen DeclarationOrStatement
+
+    ForeachVariableDeclaration < StorageClass Type Identifier
 
     ReturnStatement < Return AssignExpression? Semicolon
 

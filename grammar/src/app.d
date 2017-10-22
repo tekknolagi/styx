@@ -154,6 +154,9 @@ enum source1 = "
 
         continue(L0) afterThat();
         label L0;
+
+        foreach(const auto a, const auto b; stuff)
+            call(a,b);
     }
 
     enum A

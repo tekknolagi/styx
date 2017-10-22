@@ -71,6 +71,7 @@ class AstVisitor
     void visit(ExpressionAstNode node){node.accept(this);}
     void visit(ExpressionStatementAstNode node){node.accept(this);}
     void visit(ForeachStatementAstNode node){node.accept(this);}
+    void visit(ForeachVariableDeclarationAstNode node){node.accept(this);}
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
     void visit(FunctionHeaderAstNode node){node.accept(this);}
     void visit(FunctionParameterGroupAstNode node){node.accept(this);}
@@ -141,6 +142,7 @@ class AstVisitorNone: AstVisitor
     override void visit(ExpressionAstNode node){}
     override void visit(ExpressionStatementAstNode node){}
     override void visit(ForeachStatementAstNode node){}
+    override void visit(ForeachVariableDeclarationAstNode node){}
     override void visit(FunctionDeclarationAstNode node){}
     override void visit(FunctionHeaderAstNode node){}
     override void visit(FunctionParameterGroupAstNode node){}
@@ -705,8 +707,8 @@ final class ExpressionStatementAstNode: AstNode
 /// ForeachStatement
 final class ForeachStatementAstNode: AstNode
 {
-    /// The variable.
-    VariableDeclarationAstNode variable;
+    /// The variables.
+    ForeachVariableDeclarationAstNode[] variables;
     /// The expression that give the enumerable.
     SingleOrRangeExpressionAstNode singleOrRangeExpression;
     /// The single statement or block.
@@ -714,12 +716,28 @@ final class ForeachStatementAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
-        if (variable)
-            visitor.visit(variable);
+        variables.each!(a => visitor.visit(a));
         if (singleOrRangeExpression)
             visitor.visit(singleOrRangeExpression);
         if (declarationOrStatement)
             visitor.visit(declarationOrStatement);
+    }
+}
+
+/// ForeachVariableDeclaration
+final class ForeachVariableDeclarationAstNode: AstNode
+{
+    /// Indicates if the variable is const or var.
+    bool isConst;
+    /// The variable type.
+    TypeAstNode type;
+    /// The variable name.
+    Token* identifier;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (type)
+            visitor.visit(type);
     }
 }
 

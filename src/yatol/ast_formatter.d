@@ -265,13 +265,29 @@ public:
     {
         indent();
         _source ~= "foreach(";
-        if (node.variable)
-            visit(node.variable);
+        foreach(i, v; node.variables)
+        {
+            visit(v);
+            if (i != node.variables.length - 1)
+                _source ~= ", ";
+        }
         _source ~= "; ";
         if (node.singleOrRangeExpression)
             visit(node.singleOrRangeExpression);
         _source ~= ")\n";
         visitPossiblyIndented(node.declarationOrStatement);
+    }
+
+    override void visit(ForeachVariableDeclarationAstNode node)
+    {
+        if (node.isConst)
+            _source ~= "const ";
+        else
+            _source ~= "var ";
+        node.accept(this);
+        space();
+        if (node.identifier)
+            _source ~= node.identifier.text;
     }
 
     override void visit(FunctionDeclarationAstNode node)
@@ -1163,6 +1179,25 @@ unittest
 function foo()
 {
     foreach(const auto i; I)
+    {
+        if (0)
+        {
+            break(here) afterCall();
+        }
+    }
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){foreach(const auto i, var auto b; I){if (0)
+    {break(here ) afterCall();}}}";
+    string e =
+"unit a;
+function foo()
+{
+    foreach(const auto i, var auto b; I)
     {
         if (0)
         {
