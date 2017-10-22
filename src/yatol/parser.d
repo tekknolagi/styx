@@ -959,6 +959,34 @@ private:
     }
 
     /**
+     * Parses a LabelStatement
+     *
+     * Returns:
+     *      On success a $(D parseLabelStatement) otherwise $(D null).
+     */
+    LabelStatementAstNode parseLabelStatement()
+    {
+        assert(current.isTokLabel);
+        LabelStatementAstNode result = new LabelStatementAstNode;
+        result.position = current.position;
+        advance();
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        result.identifier = current;
+        advance();
+        if (!current.isTokSemicolon)
+        {
+            expected(TokenType.semiColon);
+            return null;
+        }
+        advance();
+        return result;
+    }
+
+    /**
      * Parses an EnumMember.
      *
      * Returns:
@@ -2225,6 +2253,23 @@ private:
         ContinueStatementAstNode result = new ContinueStatementAstNode;
         result.position = current.position;
         advance();
+        if (current.isTokLeftParen)
+        {
+            advance();
+            if (!current.isTokIdentifier)
+            {
+                parseError("expected an identifier as continue label");
+                return null;
+            }
+            result.label = current();
+            advance();
+            if (!current.isTokRightParen)
+            {
+                expected(TokenType.rightParen);
+                return null;
+            }
+            advance();
+        }
         if (!current.isTokSemicolon)
             if (AssignExpressionAstNode ae = parseAssignExpression())
         {
@@ -2548,6 +2593,21 @@ private:
             result.statement.emptyStatement.position = current.position;
             advance();
             return result;
+        }
+        case label:
+        {
+            if (LabelStatementAstNode ls = parseLabelStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.statementKind = StatementKind.skLabel;
+                result.statement.labelStatement = ls;
+                return result;
+            }
+            else
+            {
+                parseError("invalid label");
+                return null;
+            }
         }
         case return_:
         {
@@ -4024,6 +4084,27 @@ unittest // cover error cases for: variable declaration
 
 unittest // cover error cases for: continue break return statements
 {
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            continue (L0);
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            continue (L0;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            continue ();
+        }
+    });
     assertNotParse(q{
         unit a;
         function foo()
@@ -5478,6 +5559,22 @@ unittest // assert
     assertNotParse(q{
         unit a;
         function foo() { assert(true) }
+    });
+}
+
+unittest // label
+{
+    assertParse(q{
+        unit a;
+        function foo() { label L0; }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo() { label; }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo() { label L0 }
     });
 }
 

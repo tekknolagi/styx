@@ -151,6 +151,9 @@ enum source1 = "
         throw Exception.create(`oops`);
 
         assert(true == true);
+
+        continue(L0) afterThat();
+        label L0;
     }
 
     enum A

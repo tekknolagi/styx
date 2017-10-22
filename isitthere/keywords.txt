@@ -16,6 +16,7 @@ import
 in
 interface
 is
+label
 null
 on
 protection

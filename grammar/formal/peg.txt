@@ -136,6 +136,7 @@ Yatol:
                 / ThrowStatement
                 / VersionBlockStatement
                 / AssertStatement
+                / LabelStatement
 
     EmptyStatment < Semicolon
 
@@ -151,7 +152,7 @@ Yatol:
 
     ReturnStatement < Return AssignExpression? Semicolon
 
-    ContinueStatement < Continue AssignExpression? Semicolon
+    ContinueStatement < Continue AtLabel? AssignExpression? Semicolon
 
     BreakStatement < Break AtLabel? AssignExpression? Semicolon
 
@@ -186,6 +187,8 @@ Yatol:
     VersionBlockStatement < VersionConditions DeclarationOrStatement (Else DeclarationOrStatement)?
 
     AssertStatement < Assert LeftParen Expression RightParen Semicolon
+
+    LabelStatement < Label Identifier Semicolon
 
 ################################################################################
 # Composites expressions
@@ -477,6 +480,7 @@ Yatol:
     Throw   <- "throw"
     Union   <- "union"
     In      <- "in"
+    Label   <- "label"
 
     SREG    <- "sreg"
     UREG    <- "ureg"

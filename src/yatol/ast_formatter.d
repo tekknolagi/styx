@@ -192,6 +192,12 @@ public:
     {
         indent();
         _source ~= "continue";
+        if (node.label)
+        {
+            _source ~= "(";
+            _source ~= node.label.text;
+            _source ~= ")";
+        }
         if (node.expression)
         {
             space();
@@ -453,6 +459,15 @@ public:
         shrinkIndentLevel();
         indent();
         _source ~= "}\n";
+    }
+
+    override void visit(LabelStatementAstNode node)
+    {
+        indent();
+        _source ~= "label ";
+        if (node.identifier)
+            _source ~= node.identifier.text;
+        semicolonAndNewLine();
     }
 
     override void visit(OnExceptionInstanceAstNode node)
@@ -1174,6 +1189,20 @@ function foo()
 
 unittest
 {
+    string c = "unit a; function foo(){foreach(const auto i;I)if (0)continue(here) afterCall();}";
+    string e =
+"unit a;
+function foo()
+{
+    foreach(const auto i; I)
+        if (0)
+            continue(here) afterCall();
+}";
+    test(c, e);
+}
+
+unittest
+{
     string c = "unit a; function foo(){foreach(const auto i; 0 .. 1){ callThat();}}";
     string e =
 "unit a;
@@ -1502,6 +1531,18 @@ unittest
 function foo()
 {
     assert((true & true));
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){label L0  ;  }";
+    string e =
+"unit a;
+function foo()
+{
+    label L0;
 }";
     test(c, e);
 }
