@@ -981,3 +981,8 @@ unittest
     assert(t.text == "\0\a\b\f\r\n\t\v");
 }
 
+unittest
+{
+    auto s = Keywords.generateFilledTable;
+}
+

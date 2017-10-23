@@ -23,6 +23,12 @@ private string astNodesClasses()
     return result ~ ");";
 }
 
+unittest
+{
+    string s = astNodesClasses();
+    string g = genVisitMethods("");
+}
+
 mixin(astNodesClasses);
 
 /// Sequence of alias that contains each AST node.
@@ -1122,7 +1128,8 @@ final class OnExceptionInstanceAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
-        visitor.visit(exceptionType);
+        if (exceptionType)
+            visitor.visit(exceptionType);
     }
 }
 
@@ -1344,5 +1351,17 @@ final class VersionPrimaryExpressionAstNode: AstNode
     }
     /// Returns: If $(D identifier) is set and defined $(D true), otherwise $(D false).
     @Semantic bool isDefined;
+}
+
+unittest
+{
+    import std.typecons;
+    AstVisitor av = new AstVisitor;
+    foreach (T; AstNodes)
+        static if (!is(T == DeclarationAstNode) && !is(T == StatementAstNode))
+    {
+        T node = new T;
+        av.visit(node);
+    }
 }
 
