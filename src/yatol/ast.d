@@ -1355,7 +1355,6 @@ final class VersionPrimaryExpressionAstNode: AstNode
 
 unittest
 {
-    import std.typecons;
     AstVisitor av = new AstVisitor;
     foreach (T; AstNodes)
         static if (!is(T == DeclarationAstNode) && !is(T == StatementAstNode))

@@ -31,7 +31,7 @@ private:
 
     void shrinkIndentLevel()
     {
-        _indentLevel -= (_indentLevel == 0) ? 0 : 4;
+        _indentLevel += _indentLevel ? -4 : 0;
     }
 
     void indent()

@@ -239,6 +239,7 @@ Yatol:
                         / Super
                         / ValueKeyword
                         / ArrayInitializer
+                        / BasicType
 
     ParenExpression < LeftParen Expression RightParen
 
@@ -426,6 +427,7 @@ Yatol:
             / Throw
             / Union
             / Assert
+            / Label
             #/ In
 
     ValueKeyword    < Null
@@ -482,6 +484,7 @@ Yatol:
     Throw   <- "throw"
     Union   <- "union"
     In      <- "in"
+    Assert  <- "assert"
     Label   <- "label"
 
     SREG    <- "sreg"
@@ -500,4 +503,4 @@ Yatol:
     True    <- "true"
     False   <- "false"
     Super   <- "super"
-    Assert  <- "assert"
+
