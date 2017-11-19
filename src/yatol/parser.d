@@ -3290,16 +3290,21 @@ void assertParse(const(char)[] code, bool printAST = false,
     lx.setSourceFromText(code, file, line, 1);
     lx.lex;
     Parser pr = Parser(&lx);
+    AstVisitor cov = new AstVisitor;
     if (pr.parse() is null)
     {
         throw new AssertError("code not parsed but should be", file, line);
     }
-    else if (printAST)
+    else
     {
-        import yatol.ast_printer;
-        AstPrinter ap = new AstPrinter;
-        ap.visit(pr.unitContainer);
-        ap.printText();
+        cov.visit(pr.unitContainer);
+        if (printAST)
+        {
+            import yatol.ast_printer;
+            AstPrinter ap = new AstPrinter;
+            ap.visit(pr.unitContainer);
+            ap.printText();
+        }
     }
 }
 ///
