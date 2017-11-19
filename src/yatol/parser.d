@@ -588,6 +588,34 @@ private:
         }
         result.name = current();
         advance();
+        if (current.isTokColon)
+        {
+            advance();
+            if (!current.isTokIdentifier)
+            {
+                expected(TokenType.identifier);
+                return null;
+            }
+            while (true)
+            {
+                if (IdentifierChainAstNode ic = parseIdentifierChain())
+                {
+                    result.duckTypeList ~= ic;
+                }
+                else return null;
+                if (current.isTokComma)
+                {
+                    advance();
+                    if (!current.isTokIdentifier)
+                    {
+                        expected(TokenType.identifier);
+                        return null;
+                    }
+                    else continue;
+                }
+                else break;
+            }
+        }
         if (!current.isTokLeftCurly)
         {
             expected(TokenType.leftCurly);
@@ -1522,24 +1550,22 @@ private:
         }
         result.name = current();
         advance();
-        if (!current.isTokEqual)
+        if (current.isTokEqual)
         {
-            expected(TokenType.equal);
+            advance();
+            if (TypeAstNode t = parseType())
+            {
+                result.type = t;
+            }
+            else return null;
+        }
+        if (!current.isTokSemicolon)
+        {
+            expected(TokenType.semiColon);
             return null;
         }
         advance();
-        if (TypeAstNode t = parseType())
-        {
-            result.type = t;
-            if (!current.isTokSemicolon)
-            {
-                expected(TokenType.semiColon);
-                return null;
-            }
-            advance();
-            return result;
-        }
-        else return null;
+        return result;
     }
 
     /**
@@ -4400,9 +4426,9 @@ unittest // aka & type
         unit a;
         aka;
     });
-    assertNotParse(q{
+    assertParse(q{
         unit a;
-        aka a;
+        aka a; // partial aka
     });
     assertNotParse(q{
         unit a;
@@ -5666,6 +5692,25 @@ unittest // label
     assertNotParse(q{
         unit a;
         function foo() { label L0 }
+    });
+}
+
+unittest // struct as duck type
+{
+    assertParse(q{
+        unit a;
+        struct Typed : A.B, C.D
+        {}
+    });
+    assertNotParse(q{
+        unit a;
+        struct Typed : A.B,
+        {}
+    });
+    assertNotParse(q{
+        unit a;
+        struct Typed : A.+,
+        {}
     });
 }
 

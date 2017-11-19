@@ -324,11 +324,14 @@ final class StructDeclarationAstNode: AstNode
 {
     /// The struct name.
     Token* name;
+    ///
+    IdentifierChainAstNode[] duckTypeList;
     /// The declarations located in the struct.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
     {
+        duckTypeList.each!(a => visitor.visit(a));
         declarations.each!(a => visitor.visit(a));
     }
 }
