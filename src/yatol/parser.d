@@ -1548,8 +1548,10 @@ private:
             expected(TokenType.identifier);
             return null;
         }
-        result.name = current();
-        advance();
+        if (IdentifierChainAstNode ic = parseIdentifierChain())
+        {
+            result.name = ic;
+        }
         if (current.isTokEqual)
         {
             advance();

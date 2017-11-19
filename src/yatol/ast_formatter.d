@@ -75,7 +75,8 @@ public:
     {
         indent();
         _source ~= "aka ";
-        _source ~= node.name.text;
+        if (node.name)
+            visit(node.name);
         if (node.type)
         {
             _source ~= " = ";
@@ -1306,6 +1307,16 @@ aka funcPtr = static function*(const s32 a, b):(s64[]);
 
 unittest
 {
+    string c = "unit a; aka OtherUnit . A = ThisUnit . B;";
+    string e =
+"unit a;
+aka OtherUnit.A = ThisUnit.B;
+";
+    test(c, e);
+}
+
+unittest
+{
     string c = "unit a; aka funcPtr =  static function * (const s32 a; var s8 b);";
     string e =
 "unit a;
@@ -1584,4 +1595,5 @@ function foo()
 }";
     test(c, e);
 }
+
 

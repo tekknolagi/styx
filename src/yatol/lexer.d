@@ -387,7 +387,7 @@ private:
         if (!_front || _front > _back)
             return true;
 
-        char c0 = *_front;
+        const char c0 = *_front;
         if (c0 < 0x80)
         {
             return true;
@@ -400,9 +400,9 @@ private:
         else
         {
             advance();
-            char c1 = *_front;
+            const char c1 = *_front;
             advance();
-            char c2 = *_front;
+            const char c2 = *_front;
             advance();
             if (c1 != 0xBB || c2 != 0xBF)
             {

@@ -220,7 +220,7 @@ void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions = [],
         throw new AssertError("the version evaluates to false instead of true",
             file, vb.position.line);
     }
-    assert(vev.success);
+    assert(vev.success());
 }
 
 /**
@@ -244,7 +244,7 @@ void assertFirstVersionIsFalse(const(char)[] code, string[] userVersions = [],
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
-    VersionEvaluatorVisitor vev = new VersionEvaluatorVisitor(uc, userVersions);
+    new VersionEvaluatorVisitor(uc, userVersions);
 
     const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations[0]
         .declaration.versionBlockDeclaration;

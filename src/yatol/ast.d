@@ -198,7 +198,7 @@ class AstNode
     /// Information about the position
     Position position;
     /// Gets visited by an AstVisitor.
-    void accept(AstVisitor visitor) {}
+    void accept(AstVisitor) {}
     /// Set to $(D true) if this node represents something public.
     @Semantic bool isPublic;
     /// Set to $(D true) if this node represents something private.
@@ -225,6 +225,7 @@ unittest
     static assert(!isGrammatic!FlowControlBaseNode);
 }
 
+/// AssertStatement
 final class AssertStatementAstNode: AstNode
 {
     /// The expression to verify.
@@ -537,12 +538,14 @@ final class VariableDeclarationAstNode: AstNode
 final class AkaDeclarationAstNode: AstNode
 {
     /// The target name.
-    Token* name;
+    IdentifierChainAstNode name;
     /// The source type or the source symbol.
     TypeAstNode type;
     ///
     override void accept(AstVisitor visitor)
     {
+        if (name)
+            visitor.visit(name);
         if (type)
             visitor.visit(type);
     }
