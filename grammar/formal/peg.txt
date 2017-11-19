@@ -46,9 +46,9 @@ Yatol:
 
     EnumDeclaration < Enum Identifier Cast? LeftCurly EnumMember (Comma EnumMember)* RightCurly
 
-    EnumMember    < Identifier (Equal Initializer)?
+    EnumMember      < Identifier (Equal Initializer)?
 
-    AkaDeclaration  < Is Type Aka Identifier Semicolon
+    AkaDeclaration  < Aka Identifier Equal Type Semicolon
 
 ################################################################################
 # Version

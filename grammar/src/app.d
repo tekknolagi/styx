@@ -76,7 +76,7 @@ enum source1 = "
         a = (b[c](param0, param1 + stuff):u32):u64;
         a = b[c](param0).b[c](param0);
         var auto a = 8;
-        is function*() aka FuncPtr;
+        aka FuncPtr = function*();
         const auto a = (b[0].b[1].b[2])(8);
         if (const s8 a = call())
             do();

@@ -1511,26 +1511,26 @@ private:
      */
     AkaDeclarationAstNode parseAkaDeclaration()
     {
-        assert(current.isTokIs);
+        assert(current.isTokAka);
         AkaDeclarationAstNode result = new AkaDeclarationAstNode;
         result.position = current.position;
         advance();
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        result.name = current();
+        advance();
+        if (!current.isTokEqual)
+        {
+            expected(TokenType.equal);
+            return null;
+        }
+        advance();
         if (TypeAstNode t = parseType())
         {
-            if (!current.isTokAka)
-            {
-                expected(TokenType.aka);
-                return null;
-            }
-            advance();
-            if (!current.isTokIdentifier)
-            {
-                expected(TokenType.identifier);
-                return null;
-            }
             result.type = t;
-            result.name = current();
-            advance();
             if (!current.isTokSemicolon)
             {
                 expected(TokenType.semiColon);
@@ -2969,7 +2969,7 @@ private:
             }
             else return null;
         }
-        case is_:
+        case aka:
         {
             if (AkaDeclarationAstNode ad = parseAkaDeclaration())
             {
@@ -3202,7 +3202,7 @@ unittest
         function a(s64 param): auto
         {}
 
-        is function*(s64 p): s64 aka Prototype;
+        aka Prototype = function*(s64 p): s64;
 
         const auto a = (b[0].b[1].b[2])(8);
 
@@ -4390,27 +4390,27 @@ unittest // aka & type
 {
     assertParse(q{
         unit a;
-        is s64 aka long;
+        aka MyU64 = u64;
     });
     assertParse(q{
         unit a;
-        is a.B.C aka Abc;
+        aka Abc = a.B.C;
     });
     assertNotParse(q{
         unit a;
-        is;
+        aka;
     });
     assertNotParse(q{
         unit a;
-        is a;
+        aka a;
     });
     assertNotParse(q{
         unit a;
-        is a aka
+        aka a =
     });
     assertNotParse(q{
         unit a;
-        is a aka other
+        aka a = other
     });
 }
 
