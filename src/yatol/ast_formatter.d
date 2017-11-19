@@ -74,10 +74,13 @@ public:
     override void visit(AkaDeclarationAstNode node)
     {
         indent();
-        _source ~= "is ";
-        node.accept(this);
-        _source ~= " aka ";
+        _source ~= "aka ";
         _source ~= node.name.text;
+        if (node.type)
+        {
+            _source ~= " = ";
+            visit(node.type);
+        }
         semicolonAndNewLine();
     }
 
@@ -1293,30 +1296,30 @@ static function foo(const s32 a; var s32 b);
 
 unittest
 {
-    string c = "unit a; is static function * (const s32 a, b):  s64[ ]   aka funcPtr;";
+    string c = "unit a; aka funcPtr = static function * (const s32 a, b):  s64[ ]   ;";
     string e =
 "unit a;
-is static function*(const s32 a, b):(s64[]) aka funcPtr;
+aka funcPtr = static function*(const s32 a, b):(s64[]);
 ";
     test(c, e);
 }
 
 unittest
 {
-    string c = "unit a; is static function * (const s32 a; var s8 b) aka funcPtr;";
+    string c = "unit a; aka funcPtr =  static function * (const s32 a; var s8 b);";
     string e =
 "unit a;
-is static function*(const s32 a; var s8 b) aka funcPtr;
+aka funcPtr = static function*(const s32 a; var s8 b);
 ";
     test(c, e);
 }
 
 unittest
 {
-    string c = "unit a; is function * (const s32 a, b):  s64[ ]   aka funcPtr;";
+    string c = "unit a; aka funcPtr = function * (const s32 a, b):  s64[ ] ;";
     string e =
 "unit a;
-is function*(const s32 a, b):(s64[]) aka funcPtr;
+aka funcPtr = function*(const s32 a, b):(s64[]);
 ";
     test(c, e);
 }
