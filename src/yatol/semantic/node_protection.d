@@ -194,7 +194,7 @@ unittest
         protection(private)
 
             var s8 private_member_1, private_member_2;
-            is b aka a;
+            aka a = b;
 
             interface Bar{}
 
