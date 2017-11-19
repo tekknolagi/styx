@@ -173,6 +173,16 @@ enum source1 = "
         var A a; var  B b; var  C c;
     }
 
+    @foo struct Foo
+    {
+        @bar class Bar
+        {
+            @baz interface Baz
+            {
+            }
+        }
+    }
+
     struct Last {}
 ";
 

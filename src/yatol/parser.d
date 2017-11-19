@@ -1294,22 +1294,12 @@ private:
     {
         FunctionHeaderAstNode result = new FunctionHeaderAstNode;
         result.position = current.position();
-        while (current.isTokAt)
-        {
-            if (AtAttributeAstNode aa = parseAtAttribute())
-                result.attributes ~= aa;
-            else return null;
-        }
         const bool isStatic = current.isTokStatic;
         if (isStatic)
         {
             advance();
         }
-        if (!current.isTokFunction)
-        {
-            expected(TokenType.function_);
-            return null;
-        }
+        assert(current.isTokFunction);
         advance();
         if (!current.isTokIdentifier)
         {
@@ -2896,6 +2886,14 @@ private:
      */
     DeclarationAstNode parseDeclaration()
     {
+        AtAttributeAstNode[] attribs;
+        while (current.isTokAt)
+        {
+            if (AtAttributeAstNode a = parseAtAttribute())
+                attribs ~= a;
+            else return null;
+        }
+
         with(TokenType) switch(current.type)
         {
         case enum_:
@@ -2905,6 +2903,7 @@ private:
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.declarationKind = DeclarationKind.dkEnum;
                 result.declaration.enumDeclaration = decl;
+                result.declaration.enumDeclaration.atAttributes = attribs;
                 return result;
             }
             else return null;
@@ -2916,6 +2915,7 @@ private:
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.declarationKind = DeclarationKind.dkInterface;
                 result.declaration.interfaceDeclaration = decl;
+                result.declaration.interfaceDeclaration.atAttributes = attribs;
                 return result;
             }
             else return null;
@@ -2927,6 +2927,7 @@ private:
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.declarationKind = DeclarationKind.dkClass;
                 result.declaration.classDeclaration = decl;
+                result.declaration.classDeclaration.atAttributes = attribs;
                 return result;
             }
             else return null;
@@ -2938,6 +2939,7 @@ private:
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.declarationKind = DeclarationKind.dkStruct;
                 result.declaration.structDeclaration = decl;
+                result.declaration.structDeclaration.atAttributes = attribs;
                 return result;
             }
             else return null;
@@ -2949,6 +2951,7 @@ private:
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.declarationKind = DeclarationKind.dkUnion;
                 result.declaration.unionDeclaration = decl;
+                result.declaration.unionDeclaration.atAttributes = attribs;
                 return result;
             }
             else return null;
@@ -2960,6 +2963,7 @@ private:
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.declarationKind = DeclarationKind.dkFunction;
                 result.declaration.functionDeclaration = decl;
+                result.declaration.functionDeclaration.atAttributes = attribs;
                 return result;
             }
             else return null;
@@ -2971,6 +2975,7 @@ private:
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.declarationKind = DeclarationKind.dkImport;
                 result.declaration.importDeclaration = decl;
+                result.declaration.importDeclaration.atAttributes = attribs;
                 return result;
             }
             else return null;
@@ -2993,6 +2998,7 @@ private:
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.declarationKind = DeclarationKind.dkVariable;
                 result.declaration.variableDeclaration = vd;
+                result.declaration.variableDeclaration.atAttributes = attribs;
                 return result;
             }
             else return null;
@@ -3004,6 +3010,7 @@ private:
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.declarationKind = DeclarationKind.dkAka;
                 result.declaration.akaDeclaration = ad;
+                result.declaration.akaDeclaration.atAttributes = attribs;
                 return result;
             }
             else return null;
@@ -3018,10 +3025,6 @@ private:
                 return result;
             }
             else return null;
-        }
-        case at:
-        {
-            goto case function_;
         }
         case static_:
         {

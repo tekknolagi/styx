@@ -74,6 +74,7 @@ public:
     override void visit(AkaDeclarationAstNode node)
     {
         indent();
+        node.visitAtAttributes(this);
         _source ~= "aka ";
         if (node.name)
             visit(node.name);
@@ -109,7 +110,6 @@ public:
 
     override void visit(AtAttributeAstNode node)
     {
-        indent();
         _source ~= "@";
         _source ~= node.identifierOrKeyword.text;
         space();
@@ -170,6 +170,7 @@ public:
     override void visit(ClassDeclarationAstNode node)
     {
         indent();
+        node.visitAtAttributes(this);
         _source ~= "class ";
         _source ~= node.name.text;
         if (node.inheritanceList.length)
@@ -222,6 +223,7 @@ public:
     override void visit(EnumDeclarationAstNode node)
     {
         indent();
+        node.visitAtAttributes(this);
         _source ~= "enum ";
         _source ~= node.name.text;
         if (node.type)
@@ -297,6 +299,7 @@ public:
     override void visit(FunctionDeclarationAstNode node)
     {
         indent();
+        node.visitAtAttributes(this);
         if (node.header)
             visit(node.header);
         if (node.firstBodyToken.text == ";")
@@ -412,6 +415,7 @@ public:
     override void visit(ImportDeclarationAstNode node)
     {
         indent();
+        node.visitAtAttributes(this);
         if (node.priority)
         {
             _source ~= "import(";
@@ -459,6 +463,7 @@ public:
     override void visit(InterfaceDeclarationAstNode node)
     {
         indent();
+        node.visitAtAttributes(this);
         _source ~= "interface ";
         _source ~= node.name.text;
         if (node.inheritanceList.length)
@@ -594,6 +599,7 @@ public:
     override void visit(StructDeclarationAstNode node)
     {
         indent();
+        node.visitAtAttributes(this);
         _source ~= "struct ";
         _source ~= node.name.text;
         _source ~= "\n";
@@ -688,6 +694,7 @@ public:
     override void visit(UnionDeclarationAstNode node)
     {
         indent();
+        node.visitAtAttributes(this);
         _source ~= "union ";
         _source ~= node.name.text;
         _source ~= "\n";
@@ -709,6 +716,7 @@ public:
 
     override void visit(VariableDeclarationAstNode node)
     {
+        node.visitAtAttributes(this);
         if (node.isStatic)
             _source ~= "static ";
         if (node.isConst)
@@ -1596,4 +1604,32 @@ function foo()
     test(c, e);
 }
 
+unittest
+{
+    string c = "unit a; @a function foo() {@b@c const auto d = 0;}";
+    string e =
+"unit a;
+@a function foo()
+{
+    @b @c const auto d = 0;
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; @foo struct Foo{@bar class Bar{@baz interface Baz{}}}";
+    string e =
+"unit a;
+@foo struct Foo
+{
+    @bar class Bar
+    {
+        @baz interface Baz
+        {
+        }
+    }
+}";
+    test(c, e);
+}
 

@@ -14,16 +14,16 @@ Yatol:
 
     UnitDeclaration < Unit IdentifierChain Semicolon
 
-    Declaration     < ImportDeclaration
-                    / ProtectionDeclaration
-                    / VariableDeclaration
-                    / ClassDeclaration
-                    / StructDeclaration
-                    / UnionDeclaration
-                    / EnumDeclaration
-                    / FunctionDeclaration
-                    / InterfaceDeclaration
-                    / AkaDeclaration
+    Declaration     < AtAttributes? ImportDeclaration
+                    / AtAttributes? ProtectionDeclaration
+                    / AtAttributes? VariableDeclaration
+                    / AtAttributes? ClassDeclaration
+                    / AtAttributes? StructDeclaration
+                    / AtAttributes? UnionDeclaration
+                    / AtAttributes? EnumDeclaration
+                    / AtAttributes? FunctionDeclaration
+                    / AtAttributes? InterfaceDeclaration
+                    / AtAttributes? AkaDeclaration
                     / VersionBlockDeclaration
                 #   / AtAttributeSectionDeclaration
 
@@ -79,12 +79,12 @@ Yatol:
 
     FunctionDeclaration < FunctionHeader FunctionBody
 
-    FunctionHeader < AtAttributes? Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
+    FunctionHeader < Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
 
     FunctionBody < LeftCurly DeclarationOrStatement* RightCurly
                  / Semicolon
 
-    FunctionPointerType < AtAttributes? Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
+    FunctionPointerType < Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
 
     FunctionParameters < FunctionParameterGroup (Semicolon FunctionParameterGroup)*
 

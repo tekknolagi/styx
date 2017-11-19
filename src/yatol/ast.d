@@ -287,7 +287,7 @@ final class FunctionHeaderAstNode: AstNode
 }
 
 /// FunctionDeclaration
-final class FunctionDeclarationAstNode: AstNode
+final class FunctionDeclarationAstNode: AttributedDeclaration
 {
     /// The function header.
     FunctionHeaderAstNode header;
@@ -298,6 +298,7 @@ final class FunctionDeclarationAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        visitAtAttributes(visitor);
         if (header)
             visitor.visit(header);
         declarationsOrStatements.each!(a => visitor.visit(a));
@@ -305,7 +306,7 @@ final class FunctionDeclarationAstNode: AstNode
 }
 
 /// ImportDeclaration, list of prioritized imports.
-final class ImportDeclarationAstNode: AstNode
+final class ImportDeclarationAstNode: AttributedDeclaration
 {
     /// The imports priority.
     Token* priority;
@@ -314,6 +315,7 @@ final class ImportDeclarationAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        visitAtAttributes(visitor);
         if (priority)
             visitor.visit(priority);
         importList.each!(a => visitor.visit(a));
@@ -321,7 +323,7 @@ final class ImportDeclarationAstNode: AstNode
 }
 
 /// StructDeclaration
-final class StructDeclarationAstNode: AstNode
+final class StructDeclarationAstNode: AttributedDeclaration
 {
     /// The struct name.
     Token* name;
@@ -332,13 +334,14 @@ final class StructDeclarationAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        visitAtAttributes(visitor);
         duckTypeList.each!(a => visitor.visit(a));
         declarations.each!(a => visitor.visit(a));
     }
 }
 
 /// UnionDeclaration
-final class UnionDeclarationAstNode: AstNode
+final class UnionDeclarationAstNode: AttributedDeclaration
 {
     /// The union name.
     Token* name;
@@ -347,6 +350,7 @@ final class UnionDeclarationAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        visitAtAttributes(visitor);
         declarations.each!(a => visitor.visit(a));
     }
 }
@@ -420,7 +424,7 @@ final class EnumMemberAstNode: AstNode
 }
 
 /// EnumDeclaration
-final class EnumDeclarationAstNode: AstNode
+final class EnumDeclarationAstNode: AttributedDeclaration
 {
     /// The enum name.
     Token* name;
@@ -431,6 +435,7 @@ final class EnumDeclarationAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        visitAtAttributes(visitor);
         if (type)
             visitor.visit(type);
         members.each!(a => visitor.visit(a));
@@ -438,7 +443,7 @@ final class EnumDeclarationAstNode: AstNode
 }
 
 /// ClassDeclaration
-final class ClassDeclarationAstNode: AstNode
+final class ClassDeclarationAstNode: AttributedDeclaration
 {
     /// The class name.
     Token* name;
@@ -449,13 +454,14 @@ final class ClassDeclarationAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        visitAtAttributes(visitor);
         inheritanceList.each!(a => visitor.visit(a));
         declarations.each!(a => visitor.visit(a));
     }
 }
 
 /// InterfaceDeclaration
-final class InterfaceDeclarationAstNode: AstNode
+final class InterfaceDeclarationAstNode: AttributedDeclaration
 {
     /// The interface name.
     Token* name;
@@ -466,6 +472,7 @@ final class InterfaceDeclarationAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        visitAtAttributes(visitor);
         inheritanceList.each!(a => visitor.visit(a));
         declarations.each!(a => visitor.visit(a));
     }
@@ -515,7 +522,7 @@ final class VariableDeclarationItemAstNode: AstNode
 }
 
 /// VariableDeclaration
-final class VariableDeclarationAstNode: AstNode
+final class VariableDeclarationAstNode: AttributedDeclaration
 {
     /// Indicates if the variables in the list are static.
     bool isStatic;
@@ -528,6 +535,7 @@ final class VariableDeclarationAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        visitAtAttributes(visitor);
         if (type)
             visitor.visit(type);
         list.each!(a => visitor.visit(a));
@@ -535,7 +543,7 @@ final class VariableDeclarationAstNode: AstNode
 }
 
 /// AkaDeclaration
-final class AkaDeclarationAstNode: AstNode
+final class AkaDeclarationAstNode: AttributedDeclaration
 {
     /// The target name.
     IdentifierChainAstNode name;
@@ -544,6 +552,7 @@ final class AkaDeclarationAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
+        visitAtAttributes(visitor);
         if (name)
             visitor.visit(name);
         if (type)
@@ -556,6 +565,18 @@ final class AtAttributeAstNode: AstNode
 {
     /// Either an identifier or a keyword
     Token* identifierOrKeyword;
+}
+
+///
+class AttributedDeclaration: AstNode
+{
+    /// The attributes attached to the final declaration type.
+    AtAttributeAstNode[] atAttributes;
+    ///
+    void visitAtAttributes(AstVisitor visitor)
+    {
+        atAttributes.each!(a => visitor.visit(a));
+    }
 }
 
 /// Enumerates the possible declarations.
@@ -579,6 +600,7 @@ enum DeclarationKind: ubyte
 /// Declaration
 final class DeclarationAstNode: AstNode
 {
+    ///
     union Declaration
     {
         /// Assigned if this declaration is a FunctionDeclaration.
