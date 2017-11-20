@@ -590,11 +590,10 @@ enum DeclarationKind: ubyte
     dkClass,
     dkStruct,
     dkEnum,
-    dkBlock,
     dkVariable,
     dkAka,
     dkVersion,
-    dkUnion
+    dkUnion,
 }
 
 /// Declaration
@@ -617,8 +616,6 @@ final class DeclarationAstNode: AstNode
         StructDeclarationAstNode structDeclaration;
         /// Assigned if this declaration is an EnumDeclarationAstNode.
         EnumDeclarationAstNode enumDeclaration;
-        /// Assigned if this declaration is a Scope.
-        BlockStatementAstNode declarationBlock;
         /// Assigned if this declaration is a VariableDeclaration.
         VariableDeclarationAstNode variableDeclaration;
         /// Assigned if this declaration is an AkaDeclaration.
@@ -644,7 +641,6 @@ final class DeclarationAstNode: AstNode
         case dkClass: visitor.visit(declaration.classDeclaration); break;
         case dkStruct: visitor.visit(declaration.structDeclaration); break;
         case dkEnum: visitor.visit(declaration.enumDeclaration); break;
-        case dkBlock: visitor.visit(declaration.declarationBlock); break;
         case dkVariable: visitor.visit(declaration.variableDeclaration); break;
         case dkAka: visitor.visit(declaration.akaDeclaration); break;
         case dkVersion: visitor.visit(declaration.versionBlockDeclaration); break;
@@ -1383,12 +1379,14 @@ final class VersionPrimaryExpressionAstNode: AstNode
 
 unittest
 {
-    AstVisitor av = new AstVisitor;
+    AstVisitor av1 = new AstVisitor;
+    AstVisitorNone av2 = new AstVisitorNone;
     foreach (T; AstNodes)
         static if (!is(T == DeclarationAstNode) && !is(T == StatementAstNode))
     {
         T node = new T;
-        av.visit(node);
+        av1.visit(node);
+        av2.visit(node);
     }
 }
 

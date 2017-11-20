@@ -47,11 +47,11 @@ private:
         writeln(loc, " ", line);
         ++_errorCount;
         static immutable string specifierDiff = "expected `%s` instead of `%s`";
-        static immutable string specifierSame = "expected supplemental `%s`";
-        if (current.type != expected)
-            parseError(specifierDiff.format(tokenString(expected), _current.text));
-        else
-            parseError(specifierSame.format(tokenString(expected)));
+        //static immutable string specifierSame = "expected supplemental `%s`";
+        assert(current.type != expected);
+        parseError(specifierDiff.format(tokenString(expected), _current.text));
+        //else
+        //    parseError(specifierSame.format(tokenString(expected)));
     }
 
     void unexpected(string loc = __FUNCTION__, int line = __LINE__)

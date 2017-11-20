@@ -98,8 +98,7 @@ private:
     void outdent()
     {
         --_indentLevel;
-        if (_indentLevel < 0)
-            _indentLevel = 0;
+        assert(_indentLevel >= 0);
         _indentText.length = _indentLevel * 4;
     }
 
