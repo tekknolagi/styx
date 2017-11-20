@@ -3264,6 +3264,8 @@ unittest
     AstPrinter ap = new AstPrinter();
     UnitContainerAstNode uc = pr.parse();
     assert(uc);
+    assert(uc.mainUnit.isMain);
+    assert(!uc.mainUnit.isVirtual);
     if (uc)
     {
         ap.visit(uc);
