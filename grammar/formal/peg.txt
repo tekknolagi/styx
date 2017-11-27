@@ -160,7 +160,7 @@ Yatol:
 
     BlockStatement < LeftCurly DeclarationOrStatement* RightCurly
 
-    AtLabel < LeftParen Identifier RightParen
+    AtLabel < LeftParen At Identifier RightParen
 
     IfCondition < LeftParen Expression RightParen
                 / LeftParen IfConditionVariable RightParen

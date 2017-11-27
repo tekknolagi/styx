@@ -152,7 +152,7 @@ enum source1 = "
 
         assert(true == true);
 
-        continue(L0) afterThat();
+        continue(@L0) afterThat();
         label L0;
 
         foreach(const auto a, const auto b; stuff)

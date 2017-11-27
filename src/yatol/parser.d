@@ -2327,8 +2327,9 @@ private:
         ContinueStatementAstNode result = new ContinueStatementAstNode;
         result.position = current.position;
         advance();
-        if (current.isTokLeftParen)
+        if (current.isTokLeftParen && lookupNext.isTokAt)
         {
+            advance();
             advance();
             if (!current.isTokIdentifier)
             {
@@ -2372,8 +2373,9 @@ private:
         BreakStatementAstNode result = new BreakStatementAstNode;
         result.position = current.position;
         advance();
-        if (current.isTokLeftParen)
+        if (current.isTokLeftParen && lookupNext.isTokAt)
         {
+            advance();
             advance();
             if (!current.isTokIdentifier)
             {
@@ -3215,7 +3217,7 @@ unittest
         a = a * u;
         return;
         return b + c;
-        break (Label1) a.call();
+        break (@Label1) a.call();
         break a.call();
         break;
         continue a.call();
@@ -4182,7 +4184,7 @@ unittest // cover error cases for: continue break return statements
         unit a;
         function foo()
         {
-            continue (L0);
+            continue (@L0);
         }
     });
     assertNotParse(q{
@@ -4225,6 +4227,55 @@ unittest // cover error cases for: continue break return statements
         function foo()
         {
             break( a
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            break(a
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            break(@)
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            continue(@)
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            continue(@lbl
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            break(@lbl
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            break(@lbl) (afterParenExpression);
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            break (afterParenExpression);
         }
     });
     assertNotParse(q{

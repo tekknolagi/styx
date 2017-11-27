@@ -143,7 +143,7 @@ public:
         _source ~= "break";
         if (node.label)
         {
-            _source ~= "(";
+            _source ~= "(@";
             _source ~= node.label.text;
             _source ~= ")";
         }
@@ -199,7 +199,7 @@ public:
         _source ~= "continue";
         if (node.label)
         {
-            _source ~= "(";
+            _source ~= "(@";
             _source ~= node.label.text;
             _source ~= ")";
         }
@@ -1185,7 +1185,7 @@ function foo()
 unittest
 {
     string c = "unit a; function foo(){foreach(const auto i;I){if (0)
-    {break(here ) afterCall();}}}";
+    {break(@ here ) afterCall();}}}";
     string e =
 "unit a;
 function foo()
@@ -1194,7 +1194,7 @@ function foo()
     {
         if (0)
         {
-            break(here) afterCall();
+            break(@here) afterCall();
         }
     }
 }";
@@ -1204,7 +1204,7 @@ function foo()
 unittest
 {
     string c = "unit a; function foo(){foreach(const auto i, var auto b; I){if (0)
-    {break(here ) afterCall();}}}";
+    {break(@ here ) afterCall();}}}";
     string e =
 "unit a;
 function foo()
@@ -1213,7 +1213,7 @@ function foo()
     {
         if (0)
         {
-            break(here) afterCall();
+            break(@here) afterCall();
         }
     }
 }";
@@ -1222,28 +1222,28 @@ function foo()
 
 unittest
 {
-    string c = "unit a; function foo(){foreach(const auto i;I)if (0)break(here) afterCall();}";
+    string c = "unit a; function foo(){foreach(const auto i;I)if (0)break(@ here) afterCall();}";
     string e =
 "unit a;
 function foo()
 {
     foreach(const auto i; I)
         if (0)
-            break(here) afterCall();
+            break(@here) afterCall();
 }";
     test(c, e);
 }
 
 unittest
 {
-    string c = "unit a; function foo(){foreach(const auto i;I)if (0)continue(here) afterCall();}";
+    string c = "unit a; function foo(){foreach(const auto i;I)if (0)continue(@here) afterCall();}";
     string e =
 "unit a;
 function foo()
 {
     foreach(const auto i; I)
         if (0)
-            continue(here) afterCall();
+            continue(@here) afterCall();
 }";
     test(c, e);
 }
