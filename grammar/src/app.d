@@ -24,7 +24,7 @@ void main()
 }
 
 // sample source
-enum source1 = "
+enum source1 = "#!yatol --ast
     unit a.$function;
     import(0:s8) r.d, s.d,t;
     import(1) s1, s256yy;
