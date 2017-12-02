@@ -31,16 +31,22 @@ struct Session
 {
 __gshared: private:
 
-    Message[] messages;
+    Message[] _messages;
+    size_t _errorsCount;
 
 public:
 
     /// Indicates if verbose output is expected.
     bool verbose;
-    /// Indicates if errors happened.
-    bool hasErrors;
+    /// Indicates the count of errors.
+
     /// Contains the users version identifiers.
     string[] userVersions;
+
+    /// Indicates if errors happened.
+    static bool hasErrors(){return _errorsCount != 0;}
+
+    static size_t errorsCount(){return _errorsCount;}
 
     /**
      * Adds an error message.
@@ -51,10 +57,10 @@ public:
      */
     static void error(A...)(const(char)[] text, A args)
     {
-        messages.length += 1;
-        messages[$-1].type = MessageType.error;
-        messages[$-1].text = format(text, args);
-        hasErrors = true;
+        _messages.length += 1;
+        _messages[$-1].type = MessageType.error;
+        _messages[$-1].text = format(text, args);
+        ++_errorsCount;
     }
 
     /**
@@ -66,9 +72,9 @@ public:
      */
     static void info(A...)(const(char)[] text, A args)
     {
-        messages.length += 1;
-        messages[$-1].type = MessageType.info;
-        messages[$-1].text = format(text, args);
+        _messages.length += 1;
+        _messages[$-1].type = MessageType.info;
+        _messages[$-1].text = format(text, args);
     }
 
     /**
@@ -80,17 +86,17 @@ public:
      */
     static void warn(A...)(const(char)[] text, A args)
     {
-        messages.length += 1;
-        messages[$-1].type = MessageType.warn;
-        messages[$-1].text = format(text, args);
+        _messages.length += 1;
+        _messages[$-1].type = MessageType.warn;
+        _messages[$-1].text = format(text, args);
     }
 
     /// Writes the messages to the standard output.
     static void printMessages()
     {
-        foreach(m; messages)
+        foreach(m; _messages)
             writeln(m.text);
-        messages.length = 0;
+        _messages.length = 0;
     }
 }
 

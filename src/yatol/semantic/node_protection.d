@@ -230,9 +230,10 @@ unittest
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line);
     lx.lex();
     UnitContainerAstNode uc = Parser(&lx).parse();
+    const old = session.errorsCount;
     NodeProtectionVisitor np = new NodeProtectionVisitor(uc, &lx);
     ProtectionChecker pc = new ProtectionChecker;
     pc.visit(uc);
-    assert(!np.success);
+    assert(session.errorsCount == old + 1);
 }
 
