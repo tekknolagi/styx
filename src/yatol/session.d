@@ -97,6 +97,7 @@ public:
         foreach(m; _messages)
             writeln(m.text);
         _messages.length = 0;
+        _errorsCount = 0;
     }
 }
 

@@ -92,9 +92,6 @@ int main(string[] args)
     Lexer*[] lexers;
     Parser*[] parsers;
 
-    scope(exit)
-        session.printMessages();
-
     foreach (arg; args[1..$])
     {
         if (arg.exists)
