@@ -13,7 +13,7 @@ d:
  
 script:
  # tests + coverage
- - dub build --build=unittest-cov --config=compiler --compiler=${DC}
+ - dub run --build=unittest-cov --config=compiler --compiler=${DC}
  - dub build --build=cov --config=compiler --compiler=${DC}
  - echo "unit b;" > b.ya && bin/yatol -v -p -a -t b.ya <<< "unit a;"
  # release build
