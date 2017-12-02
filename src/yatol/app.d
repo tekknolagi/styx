@@ -87,6 +87,9 @@ Options:
 
 int main(string[] args)
 {
+    version(unittest)
+        session.clearMessages();
+
     GetoptResult gr;
     string[] sources;
     Lexer*[] lexers;

@@ -96,6 +96,12 @@ public:
     {
         foreach(m; _messages)
             writeln(m.text);
+        clearMessages();
+    }
+
+    /// Clear the messages and reset the error count.
+    static void clearMessages()
+    {
         _messages.length = 0;
         _errorsCount = 0;
     }
