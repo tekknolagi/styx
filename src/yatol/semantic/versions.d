@@ -72,8 +72,9 @@ private:
             if (p != -1)
             {
                 VersionBlockStatementAstNode v = doss.items[p].statement.statement.versionBlockStatement;
-                DeclarationOrStatementAstNode[] m = v.trueDeclarationsOrStatements.items ?
-                    v.trueDeclarationsOrStatements.items : v.falseDeclarationsOrStatements.items;
+                DeclarationOrStatementAstNode[] m = v.trueDeclarationsOrStatements
+                    ? v.trueDeclarationsOrStatements.items : v.falseDeclarationsOrStatements
+                    ? v.falseDeclarationsOrStatements.items : null;
                 DeclarationOrStatementAstNode[] r;
                 if (p + 1 < doss.items.length)
                     r = doss.items[p + 1 .. $].dup;
@@ -92,8 +93,9 @@ private:
             if (p != -1)
             {
                 VersionBlockDeclarationAstNode v = ds.items[p].declaration.versionBlockDeclaration;
-                DeclarationAstNode[] m = v.trueDeclarations.items ?
-                    v.trueDeclarations.items : v.falseDeclarations.items;
+                DeclarationAstNode[] m = v.trueDeclarations
+                    ? v.trueDeclarations.items : v.falseDeclarations
+                    ? v.falseDeclarations.items : null;
                 DeclarationAstNode[] r;
                 if (p + 1 < ds.items.length)
                     r = ds.items[p + 1 .. $].dup;
@@ -112,6 +114,8 @@ public:
             _predefinedVersions["valid_OS"] = true;
             _predefinedVersions["invalid_OS"] = false;
         }
+        _predefinedVersions["all"] = true;
+        _predefinedVersions["none"] = false;
     }
 
     /// Constructs an instance with a list of user defined version.
@@ -518,6 +522,13 @@ unittest // more complex cases involving precedence
         unit a;
         version((a | b) & (c | d)) const s32 b;
     }, ["a", "e"]);
+    assertFirstVersionIsFalse(q{
+        unit a;
+        version(none)
+        {
+            import importable.x;
+        }
+    }, []);
 }
 
 unittest // version statements

@@ -1638,6 +1638,19 @@ else
 
 unittest
 {
+    string c = "unit importer;version(none){import importable.x;}";
+    string e =
+"unit importer;
+version(none)
+{
+    import importable.x;
+}
+";
+    test(c, e);
+}
+
+unittest
+{
     string c = "unit a; version(!  a){}";
     string e =
 "unit a;

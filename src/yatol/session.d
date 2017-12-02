@@ -27,16 +27,13 @@ __gshared: private:
 
 public:
 
+    byte regSize = 64;
     /// Indicates if verbose output is expected.
     bool verbose;
-    /// Indicates the count of errors.
-
     /// Contains the users version identifiers.
     string[] userVersions;
-
     /// Indicates if errors happened.
     static bool hasErrors(){return _errorsCount != 0;}
-
     /// A callback for the messages. When not set, message are written to the standard output.
     static void function(const(char)[] filename, size_t line, size_t column,
         MessageType type, const(char)[] text) messageFunc;

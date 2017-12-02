@@ -143,8 +143,13 @@ class AstNode
     @Semantic bool isPrivate;
     ///  Set to $(D true) if this node represents something strictly private.
     @Semantic bool isStrict;
-    // Set to a non null value if this node has a matching type.
-    //@Semantic TypeAstNode type;
+
+    /// Set for the nodes that represent a type.
+    @Semantic Object symbol;
+    /// The scope.
+    @Semantic Object scope_;
+    /// The unit where the node is declared.
+    @Semantic Object unit;
 }
 
 /**
@@ -1160,6 +1165,7 @@ final class TryOnFinallyStatementAstNode: AstNode
         exceptionDeclarationsOrStatements.each!(a => visitor.visit(a));
         if (finalDeclarationOrStatement)
             visitor.visit(finalDeclarationOrStatement);
+
     }
 }
 

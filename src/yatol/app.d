@@ -131,6 +131,7 @@ int main(string[] args)
         stderr.writefln("options error, %s", ge.msg);
         return 1;
     }
+
     if (gr.helpWanted)
     {
         showHelp();
@@ -234,6 +235,13 @@ int main(string[] args)
             ap.visit(parser.unitContainer);
             writeln(ap.text);
         }
+    }
+    foreach (i, ref parser; parsers)
+    {
+        if (session.verbose)
+            writefln("crossed-unit semantic for %s...", lexers[i].filename);
+        if (!crossUnitSemantic(parser.unitContainer, lexers[i]))
+            return 1;
     }
     if (options.mtime)
     {
