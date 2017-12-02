@@ -20,9 +20,12 @@ import
  */
 bool unitSemantic(UnitContainerAstNode uc, Lexer* lexer)
 {
-    if (!(new VersionEvaluatorVisitor(uc, session.userVersions)).success())
+    new VersionEvaluatorVisitor(uc, session.userVersions);
+    if (session.hasErrors)
         return false;
-    if (!(new NodeProtectionVisitor(uc, lexer)).success())
+
+    new NodeProtectionVisitor(uc, lexer);
+    if (session.hasErrors)
         return false;
 
     return true;

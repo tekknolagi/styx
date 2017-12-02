@@ -4,7 +4,8 @@
 module app;
 
 import
-    std.getopt, std.file, std.stdio, std.path, std.datetime, std.array;
+    std.getopt, std.file, std.stdio, std.path, std.datetime, std.array,
+    std.format;
 import
     yatol.token, yatol.lexer, yatol.parser, yatol.ast,
     yatol.session, yatol.semantic, yatol.ast_printer;
@@ -50,12 +51,12 @@ public:
 
     static void print()
     {
-        writeln("duration:");
-        writeln("lexing  : ", dur!"hnsecs"(_times[0].hnsecs));
-        writeln("parsing : ", dur!"hnsecs"((_times[1] - _times[0]).hnsecs));
-        writeln("semantic: ", dur!"hnsecs"((_times[2] - _times[1]).hnsecs));
-        writeln("codegen : ", dur!"hnsecs"((_times[3] - _times[2]).hnsecs));
-        writeln("total   : ", dur!"hnsecs"(_times[3].hnsecs));
+        session.info("duration:");
+        session.info("lexing  :%s ", dur!"hnsecs"(_times[0].hnsecs));
+        session.info("parsing :%s ", dur!"hnsecs"((_times[1] - _times[0]).hnsecs));
+        session.info("semantic:%s ", dur!"hnsecs"((_times[2] - _times[1]).hnsecs));
+        session.info("codegen :%s ", dur!"hnsecs"((_times[3] - _times[2]).hnsecs));
+        session.info("total   :%s ", dur!"hnsecs"(_times[3].hnsecs));
     }
 }
 
@@ -63,7 +64,7 @@ alias timer = Timer;
 
 void showHelp()
 {
-    write(
+    session.info(
 `
 ==============
 Yatol compiler
@@ -91,6 +92,9 @@ int main(string[] args)
     Lexer*[] lexers;
     Parser*[] parsers;
 
+    scope(exit)
+        session.printMessages();
+
     foreach (arg; args[1..$])
     {
         if (arg.exists)
@@ -101,13 +105,13 @@ int main(string[] args)
             }
             else
             {
-                writefln(`error, unrecognized file extension for "%s"`, arg);
+                session.error(`error, unrecognized file extension for "%s"`, arg);
                 return 1;
             }
         }
         else if (arg[0] != '-')
         {
-            writefln(`error, the file "%s" does not seem to exist`, arg);
+            session.error(`error, the file "%s" does not seem to exist`, arg);
             return 1;
         }
     }
@@ -135,7 +139,7 @@ int main(string[] args)
     if (!sources.length && !options.pipe)
     {
         showHelp();
-        writeln("\nnothing to compile, exited !");
+        session.info("\nnothing to compile, exited !");
         return 0;
     }
 
@@ -157,7 +161,7 @@ int main(string[] args)
     foreach (source; sources)
     {
         if (session.verbose)
-            writeln("lexing ", source, "...");
+            session.info("lexing %s...", source);
         try
         {
             lexers ~= new Lexer(source);
@@ -165,7 +169,7 @@ int main(string[] args)
         }
         catch (FileException fe)
         {
-            stderr.writeln("Exception raised when lexing ", source);
+            stderr.writeln("File exception raised when lexing ", source);
             stderr.writeln(fe.msg);
             return 1;
         }
@@ -178,7 +182,7 @@ int main(string[] args)
     {
         if (options.mtime)
             timer.print();
-        writeln("lexing phase finished, exited.");
+        session.info("lexing phase finished, exited.");
         return 0;
     }
 
@@ -186,22 +190,21 @@ int main(string[] args)
     foreach (ref lexer; lexers)
     {
         if (session.verbose)
-            writeln("parsing ", lexer.filename, "...");
+            session.info("parsing %s...", lexer.filename);
         parsers ~= new Parser(lexer);
         if (UnitContainerAstNode uc = parsers[$-1].parse())
         {
             if (options.ast && options.until == Until.parsing)
             {
-                writeln("AST for ", lexer.filename);
+                session.info("AST for %s", lexer.filename);
                 AstPrinter ap = new AstPrinter();
                 ap.visit(uc);
-                ap.printText;
-                writeln;
+                session.info(ap.text);
             }
         }
         else
         {
-            writeln("error, failed to parse `",  lexer.filename, "`");
+            session.error("error, failed to parse `%s`", lexer.filename);
             return 1;
         }
     }
@@ -213,23 +216,22 @@ int main(string[] args)
     {
         if (options.mtime)
             timer.print();
-        writeln("parsing phase finished, exited.");
+        session.info("parsing phase finished, exited.");
         return 0;
     }
 
     foreach (i, ref parser; parsers)
     {
         if (session.verbose)
-            writeln("unit semantic for ", lexers[i].filename, "...");
+            session.info("unit semantic for %s...", lexers[i].filename);
         if (!unitSemantic(parser.unitContainer, lexers[i]))
             return 1;
         if (options.ast)
         {
-            writeln("AST for ", lexers[i].filename);
+            session.info("AST for %s", lexers[i].filename);
             AstPrinter ap = new AstPrinter();
             ap.visit(parser.unitContainer);
-            ap.printText;
-            writeln;
+            session.info(ap.text);
         }
     }
     if (options.mtime)
@@ -240,7 +242,7 @@ int main(string[] args)
     {
         if (options.mtime)
             timer.print();
-        writeln("semantic phase finished, exited.");
+        session.info("semantic phase finished, exited.");
         return 0;
     }
 

@@ -3,7 +3,7 @@ module yatol.semantic.node_protection;
 import
     std.stdio;
 import
-    yatol.token, yatol.lexer, yatol.ast;
+    yatol.token, yatol.lexer, yatol.ast, yatol.session;
 
 /**
  * An AST visitor that sets the protection of each node.
@@ -16,7 +16,6 @@ final class NodeProtectionVisitor: AstVisitor
 private:
 
     Lexer* _lx;
-    bool _success = true;
 
     enum Protection
     {
@@ -70,9 +69,6 @@ public:
         visit(node);
     }
 
-    /// Returns: $(D true) if the protections have been set correctly.
-    bool success() {return _success;}
-
     override void visit(ProtectionDeclarationAstNode node)
     {
         with (Protection) switch (node.protection.text())
@@ -87,11 +83,10 @@ public:
                 overwriteProtection(protected_);
                 break;
             default:
-                writefln("%s(%d,%d): error, `%s` is not a valid protection, " ~
+                session.error("%s(%d,%d): error, `%s` is not a valid protection, " ~
                     "expected `public, `private` or `protected`",
                     _lx.filename, node.protection.line, node.protection.column,
                     node.protection.text);
-                _success = false;
         }
     }
 

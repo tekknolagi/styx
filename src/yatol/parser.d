@@ -8,7 +8,7 @@ import
 import
     std.stdio, std.format, std.algorithm;
 import
-    yatol.token, yatol.lexer, yatol.ast;
+    yatol.token, yatol.lexer, yatol.ast, yatol.session;
 
 /// The parser
 struct Parser
@@ -28,7 +28,7 @@ private:
     void warning(const(char[]) message)
     {
         assert(_current);
-        writefln("%s(%d,%d): warning, %s", _lexer.filename, _current.line,
+        session.warn("%s(%d,%d): warning, %s", _lexer.filename, _current.line,
             _current.column, message);
         stdout.flush;
     }
@@ -37,14 +37,15 @@ private:
     {
         assert(_current);
         ++_errorCount;
-        writefln("%s(%d,%d): error, %s", _lexer.filename, _current.line,
+        session.error("%s(%d,%d): error, %s", _lexer.filename, _current.line,
             _current.column, message);
         stdout.flush;
     }
 
     void expected(TokenType expected, string loc = __FUNCTION__, int line = __LINE__)
     {
-        writeln(loc, " ", line);
+        version(show_error_origin)
+            session.info("error originated from %s at line %d", loc, line);
         ++_errorCount;
         static immutable string specifierDiff = "expected `%s` instead of `%s`";
         //static immutable string specifierSame = "expected supplemental `%s`";
@@ -56,7 +57,8 @@ private:
 
     void unexpected(string loc = __FUNCTION__, int line = __LINE__)
     {
-        writeln(loc, " ", line);
+        version(show_error_origin)
+            session.info("error originated from %s at line %d", loc, line);
         ++_errorCount;
         static immutable string specifier = "unexpected `%s`";
         parseError(specifier.format(_current.text));
@@ -3271,9 +3273,9 @@ unittest
     if (uc)
     {
         ap.visit(uc);
-        //import std.process;
-        //if ("CI" !in environment)
-            ap.printText();
+        import std.process;
+        if ("CI" !in environment)
+            session.info(ap.text);
     }
 }
 
@@ -3307,7 +3309,7 @@ void assertParse(const(char)[] code, bool printAST = false,
             import yatol.ast_printer;
             AstPrinter ap = new AstPrinter;
             ap.visit(pr.unitContainer);
-            ap.printText();
+            session.info(ap.text);
         }
     }
 }

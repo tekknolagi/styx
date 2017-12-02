@@ -107,9 +107,10 @@ private:
 
 public:
 
-    void printText()
+    /// Returns the AST as text.
+    const(char)[] text()
     {
-        writeln(_text);
+        return _text;
     }
 
     mixin(genVisitMethods("visitImpl(node);"));

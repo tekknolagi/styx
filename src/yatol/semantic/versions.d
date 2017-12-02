@@ -6,7 +6,7 @@ module yatol.semantic.versions;
 import
     std.algorithm.iteration : each;
 import
-    yatol.ast;
+    yatol.ast, yatol.lexer, yatol.session;
 
 // TODO: create the list of predefined versions + check for conflicts in the driver.
 

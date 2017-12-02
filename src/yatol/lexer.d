@@ -8,7 +8,7 @@ import
 import
     std.stdio, std.file;
 import
-    yatol.token;
+    yatol.token, yatol.session;
 
 /**
  * Scans a yatol source file.
@@ -33,13 +33,13 @@ private:
 
     void warning(const(char[]) message)
     {
-        writefln("%s(%d,%d): warning, %s", _filename, _frontLine,
+        session.warn("%s(%d,%d): warning, %s", _filename, _frontLine,
             _frontColumn, message);
     }
 
     void error(const(char[]) message)
     {
-        writefln("%s(%d,%d): error, %s", _filename, _frontLine,
+        session.error("%s(%d,%d): warning, %s", _filename, _frontLine,
             _frontColumn, message);
     }
 
@@ -56,8 +56,7 @@ private:
     // Puts  a new token, as anticipated.
     void validateToken()
     {
-        if (!_anticipated)
-            error("INTERNAL, attempt to validate an unanticipated token");
+        assert(_anticipated);
         if (_tokens.length && _tokens[$-1].isTokDollar &&
             _anticipatedType == TokenType.identifier &&
             Keywords.isKeyword(_tokStart[0.._front-_tokStart]))
@@ -74,8 +73,7 @@ private:
     pragma(inline, true)
     void validateToken(TokenType type)
     {
-        if (!_anticipated)
-            error("INTERNAL, attempt to validate an unanticipated token");
+        assert(_anticipated);
         _tokens.length += 1;
         _tokens[$-1] = Token(_tokStart, _front, _tokStartLine, _tokStartColumn, type);
         _anticipated = false;
