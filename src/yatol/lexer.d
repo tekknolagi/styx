@@ -417,14 +417,12 @@ private:
 
     void skipSheBang()
     {
-        if (canLookup && _front && _front + 2 <= _back && *_front == '#' && *lookup() == '!')
+        if (canLookup && _front && _front + 1 <= _back && *_front == '#' && *lookup() == '!')
         {
             while (true)
             {
                 if (_front > _back)
-                {
-                    return;
-                }
+                    break;
                 switch(*_front)
                 {
                 case '\r', '\n':
@@ -1519,6 +1517,19 @@ unittest
 unittest
 {
     int line = __LINE__ + 1;
+    enum source = "1_000.000_000";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].isTokFloatLiteral);
+    assert(lx.tokens[1].type == TokenType.eof);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
     enum source = "#!bin/yatol -until=parsing \r\n unit a;";
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
@@ -1527,6 +1538,18 @@ unittest
     assert(lx.tokens.length == 4);
     assert(lx.tokens[0].isTokUnit);
     assert(lx.tokens[0].line == line + 1);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    enum source = "#!";
+    Lexer lx;
+    lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    lx.printTokens;
+    assert(lx.tokens.length == 1, lx.tokens[0].text);
+    assert(lx.tokens[0].type == TokenType.eof);
 }
 
 unittest
