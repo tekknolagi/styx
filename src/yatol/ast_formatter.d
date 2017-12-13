@@ -354,7 +354,7 @@ public:
         _source ~= node.variableList.tokenChainText(false, ", ");
     }
 
-    override void visit(FunctionTypeAstNode node)
+    override void visit(FunctionPointerTypeAstNode node)
     {
         if (node.isStatic)
             _source ~= "static function*(";

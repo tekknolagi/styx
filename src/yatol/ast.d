@@ -81,7 +81,7 @@ class AstVisitor
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
     void visit(FunctionHeaderAstNode node){node.accept(this);}
     void visit(FunctionParameterGroupAstNode node){node.accept(this);}
-    void visit(FunctionTypeAstNode node){node.accept(this);}
+    void visit(FunctionPointerTypeAstNode node){node.accept(this);}
     void visit(IdentifierChainAstNode node){node.accept(this);}
     void visit(IfConditionVariableAstNode node){node.accept(this);}
     void visit(IfElseStatementAstNode node){node.accept(this);}
@@ -152,7 +152,7 @@ class AstVisitorNone: AstVisitor
     override void visit(FunctionDeclarationAstNode node){}
     override void visit(FunctionHeaderAstNode node){}
     override void visit(FunctionParameterGroupAstNode node){}
-    override void visit(FunctionTypeAstNode node){}
+    override void visit(FunctionPointerTypeAstNode node){}
     override void visit(IdentifierChainAstNode node){}
     override void visit(IfConditionVariableAstNode node){}
     override void visit(IfElseStatementAstNode  node){}
@@ -246,7 +246,7 @@ final class IdentifierChainAstNode: AstNode
 }
 
 /// FunctionType
-final class FunctionTypeAstNode: AstNode
+final class FunctionPointerTypeAstNode: AstNode
 {
     /// Indicates wether the function type needs a context.
     bool isStatic;
@@ -1181,7 +1181,7 @@ final class TypeAstNode: AstNode
     /// A qualified custom type
     IdentifierChainAstNode qualifiedType;
     /// If the type is a function, then assigned.
-    FunctionTypeAstNode functionType;
+    FunctionPointerTypeAstNode functionType;
     /// The first modifier.
     TypeModifierAstNode modifier;
     ///

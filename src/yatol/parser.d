@@ -1201,7 +1201,7 @@ private:
      * Returns:
      *      On success a $(D FunctionTypeAstNode) otherwise $(D null).
      */
-    FunctionTypeAstNode parseFunctionType()
+    FunctionPointerTypeAstNode parseFunctionType()
     {
         const bool isStatic = current.isTokStatic;
         if (isStatic)
@@ -1226,7 +1226,7 @@ private:
             return null;
         }
         advance();
-        FunctionTypeAstNode result = new FunctionTypeAstNode;
+        FunctionPointerTypeAstNode result = new FunctionPointerTypeAstNode;
         result.position = current.position;
         result.isStatic = isStatic;
         if (!current.isTokRightParen) while (true)
