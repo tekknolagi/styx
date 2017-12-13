@@ -36,10 +36,10 @@ Yatol:
                                 / LeftCurly Declaration* RightCurly
 
     ProtectionDeclaration   < Prot LeftParen Identifier RightParen
-    StructDeclaration       < Struct Identifier InheritanceList? LeftCurly Declaration* RightCurly
-    UnionDeclaration        < Union Identifier LeftCurly Declaration* RightCurly
-    ClassDeclaration        < Class Identifier InheritanceList? LeftCurly Declaration* RightCurly
-    InterfaceDeclaration    < Interface Identifier InheritanceList? LeftCurly Declaration* RightCurly
+    StructDeclaration       < Struct Identifier TemplateParameters? InheritanceList? LeftCurly Declaration* RightCurly
+    UnionDeclaration        < Union Identifier TemplateParameters? LeftCurly Declaration* RightCurly
+    ClassDeclaration        < Class Identifier TemplateParameters? InheritanceList? LeftCurly Declaration* RightCurly
+    InterfaceDeclaration    < Interface Identifier TemplateParameters? InheritanceList? LeftCurly Declaration* RightCurly
 
     InheritanceList < Colon IdentifierChain (Comma IdentifierChain)*
 
@@ -54,6 +54,12 @@ Yatol:
     EnumMember      < Identifier (Equal Initializer)?
 
     AkaDeclaration  < Aka IdentifierChain (Equal Type)? Semicolon
+
+################################################################################
+# Template parameters
+
+    TemplateParameters  < Lesser Identifier? (Comma Identifier)* Greater
+    TemplateInstance    < Lesser Type (Comma Type)* Greater
 
 ################################################################################
 # Version
@@ -84,7 +90,7 @@ Yatol:
 
     FunctionDeclaration < FunctionHeader FunctionBody
 
-    FunctionHeader < Static? Function Identifier LeftParen FunctionParameters? RightParen Cast?
+    FunctionHeader < Static? Function Identifier TemplateParameters? LeftParen FunctionParameters? RightParen Cast?
 
     FunctionBody < LeftCurly DeclarationOrStatement* RightCurly
                  / Semicolon
@@ -237,7 +243,7 @@ Yatol:
 ################################################################################
 # Primary Expression
 
-    PrimaryExpression   < Identifier
+    PrimaryExpression   < Identifier TemplateInstance?
                         / NumberLiteral
                         / StringLiteral
                         / ParenExpression
@@ -261,7 +267,7 @@ Yatol:
             / Auto
 
     TypeIdentifier  < BasicType
-                    / IdentifierChain
+                    / IdentifierChain TemplateInstance?
                     / FunctionPointerType
 
     TypeModifiers < TypeModifier TypeModifiers?

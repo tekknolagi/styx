@@ -309,6 +309,78 @@ private:
     }
 
     /**
+     * Parses a TemplateParameters.
+     *
+     * Returns:
+     *      On success a $(D TemplateParametersAstNode) otherwise $(D null).
+     */
+    TemplateParametersAstNode parseTemplateParameters()
+    {
+        assert(current.isTokLesser);
+        TemplateParametersAstNode result = new TemplateParametersAstNode;
+        result.position = current.position;
+        advance();
+        while (current.isTokIdentifier)
+        {
+            result.parameters ~= current;
+            advance();
+            if (current.isTokComma)
+            {
+                advance();
+                continue;
+            }
+            else break;
+        }
+        if (!current.isTokGreater)
+        {
+            expected(TokenType.greater);
+            return null;
+        }
+        else
+        {
+            advance();
+            return result;
+        }
+    }
+
+    /**
+     * Parses a TemplateInstance.
+     *
+     * Returns:
+     *      On success a $(D TemplateInstanceAstNode) otherwise $(D null).
+     */
+    TemplateInstanceAstNode parseTemplateInstance()
+    {
+        assert(current.isTokLesser);
+        TemplateInstanceAstNode result = new TemplateInstanceAstNode;
+        result.position = current.position;
+        advance();
+        while (true)
+        {
+            if (TypeAstNode t = parseType())
+                result.types ~= t;
+            else
+                parseError("invalid template parameter specialization");
+            if (current.isTokComma)
+            {
+                advance();
+                continue;
+            }
+            else break;
+        }
+        if (!current.isTokGreater)
+        {
+            expected(TokenType.greater);
+            return null;
+        }
+        else
+        {
+            advance();
+            return result;
+        }
+    }
+
+    /**
      * Parses a Type.
      *
      * Returns:
@@ -356,6 +428,18 @@ private:
                 result.qualifiedType = ic;
             }
             else return null;
+            if (current.isTokLesser)
+            {
+                if (TemplateInstanceAstNode ti = parseTemplateInstance())
+                {
+                    result.templateInstance = ti;
+                }
+                else
+                {
+                    parseError("invalid template specialization");
+                    return null;
+                }
+            }
         }
         if (current.isTokRightParen)
         {
@@ -464,6 +548,18 @@ private:
         }
         result.name = current();
         advance();
+        if (current.isTokLesser)
+        {
+            if (TemplateParametersAstNode tp = parseTemplateParameters())
+            {
+                result.templateParameters = tp;
+            }
+            else
+            {
+                parseError("invalid template parameters");
+                return null;
+            }
+        }
         if (current.isTokColon)
         {
             advance();
@@ -527,6 +623,18 @@ private:
         }
         result.name = current();
         advance();
+        if (current.isTokLesser)
+        {
+            if (TemplateParametersAstNode tp = parseTemplateParameters())
+            {
+                result.templateParameters = tp;
+            }
+            else
+            {
+                parseError("invalid template parameters");
+                return null;
+            }
+        }
         if (current.isTokColon)
         {
             advance();
@@ -590,6 +698,18 @@ private:
         }
         result.name = current();
         advance();
+        if (current.isTokLesser)
+        {
+            if (TemplateParametersAstNode tp = parseTemplateParameters())
+            {
+                result.templateParameters = tp;
+            }
+            else
+            {
+                parseError("invalid template parameters");
+                return null;
+            }
+        }
         if (current.isTokColon)
         {
             advance();
@@ -653,6 +773,18 @@ private:
         }
         result.name = current();
         advance();
+        if (current.isTokLesser)
+        {
+            if (TemplateParametersAstNode tp = parseTemplateParameters())
+            {
+                result.templateParameters = tp;
+            }
+            else
+            {
+                parseError("invalid template parameters");
+                return null;
+            }
+        }
         if (!current.isTokLeftCurly)
         {
             expected(TokenType.leftCurly);
@@ -1312,6 +1444,18 @@ private:
         result.isStatic = isStatic;
         result.name = current();
         advance();
+        if (current.isTokLesser)
+        {
+            if (TemplateParametersAstNode tp = parseTemplateParameters())
+            {
+                result.templateParameters = tp;
+            }
+            else
+            {
+                parseError("invalid template parameters");
+                return null;
+            }
+        }
         if (!current.isTokLeftParen)
         {
             expected(TokenType.leftParen);
@@ -1734,6 +1878,18 @@ private:
         {
             result.identifierOrKeywordOrLiteral = current;
             advance();
+            if (current.isTokLesser)
+            {
+                if (TemplateInstanceAstNode ti = parseTemplateInstance())
+                {
+                    result.templateInstance = ti;
+                }
+                else
+                {
+                    parseError("invalid template specialization");
+                    return null;
+                }
+            }
             return result;
         }
         else
@@ -5776,6 +5932,88 @@ unittest // struct as duck type
         unit a;
         struct Typed : A.+,
         {}
+    });
+}
+
+unittest // template params / specialization
+{
+    assertParse(q{
+        unit a;
+        struct Foo<>{}
+    });
+    assertParse(q{
+        unit a;
+        struct Foo<T0>{}
+    });
+    assertParse(q{
+        unit a;
+        struct Foo<T0, T1>{}
+    });
+    assertParse(q{
+        unit a;
+        class Foo<T0, T1>{}
+    });
+    assertParse(q{
+        unit a;
+        interface Foo<T0, T1>{}
+    });
+    assertParse(q{
+        unit a;
+        union Foo<T0, T1>{}
+    });
+    assertNotParse(q{
+        unit a;
+        union Foo<T0, T1{}
+    });
+    assertNotParse(q{
+        unit a;
+        struct Foo<T0, T1{}
+    });
+    assertNotParse(q{
+        unit a;
+        class Foo<T0, T1{}
+    });
+    assertNotParse(q{
+        unit a;
+        interface Foo<T0, T1{}
+    });
+    assertNotParse(q{
+        unit a;
+        union Foo<, T1{}
+    });
+    assertParse(q{
+        unit a;
+        function foo<T>(var T t){}
+    });
+    assertNotParse(q{
+        unit a;
+        function foo<T(var T t){}
+    });
+    assertParse(q{
+        unit a;
+        function foo<T>(var T t)
+        {
+            foo<s8>(0);
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo<T>(var T t)
+        {
+            foo<s8(0);
+        }
+    });
+    assertParse(q{
+        unit a;
+        var Foo<s8> a;
+    });
+    assertNotParse(q{
+        unit a;
+        var Foo<:> a;
+    });
+    assertParse(q{
+        unit a;
+        var Foo<s8, s32> a;
     });
 }
 

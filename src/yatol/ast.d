@@ -102,6 +102,8 @@ class AstVisitor
     void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
     void visit(SwitchStatementAstNode node){node.accept(this);}
+    void visit(TemplateInstanceAstNode node){node.accept(this);}
+    void visit(TemplateParametersAstNode node){node.accept(this);}
     void visit(ThrowStatementAstNode node){node.accept(this);}
     void visit(Token* token){}
     void visit(TryOnFinallyStatementAstNode node){node.accept(this);}
@@ -173,6 +175,8 @@ class AstVisitorNone: AstVisitor
     override void visit(StatementAstNode node){}
     override void visit(StructDeclarationAstNode node){}
     override void visit(SwitchStatementAstNode node){}
+    override void visit(TemplateInstanceAstNode node){}
+    override void visit(TemplateParametersAstNode node){}
     override void visit(ThrowStatementAstNode node){}
     override void visit(TryOnFinallyStatementAstNode node){}
     override void visit(TypeAstNode node){}
@@ -270,6 +274,8 @@ final class FunctionHeaderAstNode: AstNode
     AtAttributeAstNode[] attributes;
     /// The function name.
     Token* name;
+    /// The template parameters.
+    TemplateParametersAstNode templateParameters;
     /// The function parameters
     FunctionParameterGroupAstNode[] parameters;
     /// The function return
@@ -327,6 +333,8 @@ final class StructDeclarationAstNode: AttributedDeclaration
 {
     /// The struct name.
     Token* name;
+    /// The template parameters.
+    TemplateParametersAstNode templateParameters;
     ///
     IdentifierChainAstNode[] duckTypeList;
     /// The declarations located in the struct.
@@ -345,6 +353,8 @@ final class UnionDeclarationAstNode: AttributedDeclaration
 {
     /// The union name.
     Token* name;
+    /// The template parameters.
+    TemplateParametersAstNode templateParameters;
     /// The declarations located in the union.
     DeclarationAstNode[] declarations;
     ///
@@ -447,6 +457,8 @@ final class ClassDeclarationAstNode: AttributedDeclaration
 {
     /// The class name.
     Token* name;
+    /// The template parameters.
+    TemplateParametersAstNode templateParameters;
     /// The inheritance list.
     IdentifierChainAstNode[] inheritanceList;
     /// The declarations located in the class.
@@ -465,6 +477,8 @@ final class InterfaceDeclarationAstNode: AttributedDeclaration
 {
     /// The interface name.
     Token* name;
+    /// The template parameters.
+    TemplateParametersAstNode templateParameters;
     /// The inheritance list.
     IdentifierChainAstNode[] inheritanceList;
     /// The declarations located in the class.
@@ -483,6 +497,8 @@ final class PrimaryExpressionAstNode: AstNode
 {
     /// Either an identifier, "super", a value keyword or a literal.
     Token* identifierOrKeywordOrLiteral;
+    /// Specialization of the function called.
+    TemplateInstanceAstNode templateInstance;
     /// Assigned when the primary is an array literal.
     InitializerAstNode arrayLiteral;
     /// Assigned when no identifierOrKeywordOrLiteral.
@@ -492,6 +508,8 @@ final class PrimaryExpressionAstNode: AstNode
     {
         if (arrayLiteral)
             visitor.visit(arrayLiteral);
+        if (templateInstance)
+            visitor.visit(templateInstance);
         else if (parenExpression)
             visitor.visit(parenExpression);
     }
@@ -1180,6 +1198,8 @@ final class TypeAstNode: AstNode
     Token* autoOrBasicType;
     /// A qualified custom type
     IdentifierChainAstNode qualifiedType;
+    /// The template specialization
+    TemplateInstanceAstNode templateInstance;
     /// If the type is a function, then assigned.
     FunctionPointerTypeAstNode functionType;
     /// The first modifier.
@@ -1193,6 +1213,8 @@ final class TypeAstNode: AstNode
             visitor.visit(qualifiedType);
         else if (functionType)
             visitor.visit(functionType);
+        if (templateInstance)
+            visitor.visit(templateInstance);
         if (modifier)
             visitor.visit(modifier);
     }
@@ -1262,6 +1284,30 @@ final class UnitContainerAstNode: AstNode
         if (mainUnit)
             visitor.visit(mainUnit);
         virtualUnits.each!(a => visitor.visit(a));
+    }
+}
+
+/// TemplateParameters
+final class TemplateParametersAstNode: AstNode
+{
+    /// The parameters identifers.
+    Token*[] parameters;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        parameters.each!(a => visitor.visit(a));
+    }
+}
+
+/// TemplateSpecialization
+final class TemplateInstanceAstNode: AstNode
+{
+    /// The parameters identifers.
+    TypeAstNode[] types;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        types.each!(a => visitor.visit(a));
     }
 }
 

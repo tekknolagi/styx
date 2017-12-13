@@ -183,6 +183,15 @@ enum source1 = "#!yatol --ast
         }
     }
 
+    class A<T0, T1> {}
+
+    var A<int, Bar> a;
+
+    function foo<T>(var T t)
+    {
+        foo<int>(0);
+    }
+
     struct Last {}
 ";
 

@@ -173,6 +173,8 @@ public:
         node.visitAtAttributes(this);
         _source ~= "class ";
         _source ~= node.name.text;
+        if (node.templateParameters)
+            visit(node.templateParameters);
         if (node.inheritanceList.length)
         {
             _source ~= ": ";
@@ -326,6 +328,8 @@ public:
             _source ~= "function ";
         if (node.name)
             _source ~= node.name.text;
+        if (node.templateParameters)
+            visit(node.templateParameters);
         _source ~= "(";
         foreach(i, p; node.parameters)
         {
@@ -466,6 +470,8 @@ public:
         node.visitAtAttributes(this);
         _source ~= "interface ";
         _source ~= node.name.text;
+        if (node.templateParameters)
+            visit(node.templateParameters);
         if (node.inheritanceList.length)
         {
             _source ~= ": ";
@@ -543,6 +549,8 @@ public:
     {
         if (node.identifierOrKeywordOrLiteral)
             _source ~= node.identifierOrKeywordOrLiteral.text;
+        if (node.templateInstance)
+            visit(node.templateInstance);
         else if (node.arrayLiteral)
             visit(node.arrayLiteral);
         else if (node.parenExpression)
@@ -602,6 +610,8 @@ public:
         node.visitAtAttributes(this);
         _source ~= "struct ";
         _source ~= node.name.text;
+        if (node.templateParameters)
+            visit(node.templateParameters);
         _source ~= "\n";
         indent();
         _source ~= "{\n";
@@ -630,6 +640,30 @@ public:
         }
         indent();
         _source ~= "}\n";
+    }
+
+    override void visit(TemplateParametersAstNode node)
+    {
+        _source ~= "<";
+        foreach(i, p; node.parameters)
+        {
+            _source ~= p.text;
+            if (i != node.parameters.length - 1)
+                _source ~= ", ";
+        }
+        _source ~= ">";
+    }
+
+    override void visit(TemplateInstanceAstNode node)
+    {
+        _source ~= "<";
+        foreach(i, t; node.types)
+        {
+            visit(t);
+            if (i != node.types.length - 1)
+                _source ~= ", ";
+        }
+        _source ~= ">";
     }
 
     override void visit(ThrowStatementAstNode node)
@@ -697,6 +731,8 @@ public:
         node.visitAtAttributes(this);
         _source ~= "union ";
         _source ~= node.name.text;
+        if (node.templateParameters)
+            visit(node.templateParameters);
         _source ~= "\n";
         indent();
         _source ~= "{\n";
@@ -972,6 +1008,66 @@ union A
 
 unittest
 {
+    string c = "unit a; union A < T > {}";
+    string e =
+"unit a;
+union A<T>
+{
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; union A < T0 , T1 > {}";
+    string e =
+"unit a;
+union A<T0, T1>
+{
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; struct A < T > {}";
+    string e =
+"unit a;
+struct A<T>
+{
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; class A < T > {}";
+    string e =
+"unit a;
+class A<T>
+{
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; interface A < T > {}";
+    string e =
+"unit a;
+interface A<T>
+{
+}
+";
+    test(c, e);
+}
+
+unittest
+{
     string c = "unit a; enum A:s8 {a=0,b=1}";
     string e =
 "unit a;
@@ -990,6 +1086,39 @@ unittest
     string e =
 "unit a;
 function foo();
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo<  >();";
+    string e =
+"unit a;
+function foo<>();
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo<T>(var T t){foo< s8 >(0);}";
+    string e =
+"unit a;
+function foo<T>(var T t)
+{
+    foo<s8>(0);
+}
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; var Foo<T0,T1> foo;";
+    string e =
+"unit a;
+var Foo<T0, T1> foo;
 ";
     test(c, e);
 }
