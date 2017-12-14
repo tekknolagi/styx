@@ -303,27 +303,6 @@ public:
     {
         indent();
         node.visitAtAttributes(this);
-        if (node.header)
-            visit(node.header);
-        if (node.firstBodyToken.text == ";")
-            _source ~= ";\n";
-        else
-        {
-            _source ~= "\n";
-            indent();
-            _source ~= "{\n";
-            growIndentLevel();
-            if (node.declarationsOrStatements)
-                visit(node.declarationsOrStatements);
-            shrinkIndentLevel();
-            indent();
-            _source ~= "}\n";
-        }
-    }
-
-    override void visit(FunctionHeaderAstNode node)
-    {
-        node.attributes.each!(a => visit(a));
         if (node.isStatic)
             _source ~= "static function ";
         else
@@ -345,6 +324,20 @@ public:
             _source ~= ":(";
             visit(node.returnType);
             _source ~= ")";
+        }
+        if (node.firstBodyToken.text == ";")
+            _source ~= ";\n";
+        else
+        {
+            _source ~= "\n";
+            indent();
+            _source ~= "{\n";
+            growIndentLevel();
+            if (node.declarationsOrStatements)
+                visit(node.declarationsOrStatements);
+            shrinkIndentLevel();
+            indent();
+            _source ~= "}\n";
         }
     }
 
@@ -1794,6 +1787,17 @@ unittest
     string e =
 "unit a;
 @a template Foo<>
+{
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; @a template Foo<T0 , T1> {}";
+    string e =
+"unit a;
+@a template Foo<T0, T1>
 {
 }";
     test(c, e);

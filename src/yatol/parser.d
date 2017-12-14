@@ -1488,18 +1488,18 @@ private:
     }
 
     /**
-     * Parses a FunctionHeader.
+     * Parses a FunctionDeclaration.
      *
      * Returns:
-     *      On success a $(D FunctionHeaderAstNode) otherwise $(D null).
+     *      On success a $(D FunctionDeclarationAstNode) otherwise $(D null).
      */
-    FunctionHeaderAstNode parseFunctionHeader()
+    FunctionDeclarationAstNode parseFunctionDeclaration()
     {
-        FunctionHeaderAstNode result = new FunctionHeaderAstNode;
-        result.position = current.position();
-        const bool isStatic = current.isTokStatic;
-        if (isStatic)
+        FunctionDeclarationAstNode result = new FunctionDeclarationAstNode;
+        result.position = current.position;
+        if (current.isTokStatic)
         {
+            result.isStatic = true;
             advance();
         }
         assert(current.isTokFunction);
@@ -1509,8 +1509,6 @@ private:
             expected(TokenType.identifier);
             return null;
         }
-        result.position = current.position;
-        result.isStatic = isStatic;
         result.name = current();
         advance();
         if (current.isTokLesser)
@@ -1559,23 +1557,8 @@ private:
                 return null;
             }
         }
-        return result;
-    }
 
-    /**
-     * Parses a FunctionDeclaration.
-     *
-     * Returns:
-     *      On success a $(D FunctionDeclarationAstNode) otherwise $(D null).
-     */
-    FunctionDeclarationAstNode parseFunctionDeclaration()
-    {
-        FunctionHeaderAstNode header = parseFunctionHeader();
-        if (!header)
-            return null;
-        FunctionDeclarationAstNode result = new FunctionDeclarationAstNode;
-        result.position = header.position;
-        result.header = header;
+
         if (!current.isTokLeftCurly && !current.isTokSemicolon)
         {
             parseError("expected `;` or `{` to skip or start the function body");

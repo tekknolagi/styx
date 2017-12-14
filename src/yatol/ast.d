@@ -81,7 +81,6 @@ class AstVisitor
     void visit(ForeachStatementAstNode node){node.accept(this);}
     void visit(ForeachVariableDeclarationAstNode node){node.accept(this);}
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
-    void visit(FunctionHeaderAstNode node){node.accept(this);}
     void visit(FunctionParameterGroupAstNode node){node.accept(this);}
     void visit(FunctionPointerTypeAstNode node){node.accept(this);}
     void visit(IdentifierChainAstNode node){node.accept(this);}
@@ -199,7 +198,7 @@ final class FunctionPointerTypeAstNode: AstNode
 }
 
 /// FunctionDeclaration
-final class FunctionHeaderAstNode: AstNode
+final class FunctionDeclarationAstNode: AttributedDeclaration
 {
     /// The function attributes.
     AtAttributeAstNode[] attributes;
@@ -213,21 +212,6 @@ final class FunctionHeaderAstNode: AstNode
     TypeAstNode returnType;
     ///
     bool isStatic;
-    ///
-    override void accept(AstVisitor visitor)
-    {
-        attributes.each!(a => visitor.visit(a));
-        parameters.each!(a => visitor.visit(a));
-        if (returnType)
-            visitor.visit(returnType);
-    }
-}
-
-/// FunctionDeclaration
-final class FunctionDeclarationAstNode: AttributedDeclaration
-{
-    /// The function header.
-    FunctionHeaderAstNode header;
     /// Used to indicates the body kind.
     Token* firstBodyToken;
     /// The body.
@@ -236,8 +220,11 @@ final class FunctionDeclarationAstNode: AttributedDeclaration
     override void accept(AstVisitor visitor)
     {
         visitAtAttributes(visitor);
-        if (header)
-            visitor.visit(header);
+        if (templateParameters)
+            visitor.visit(templateParameters);
+        parameters.each!(a => visitor.visit(a));
+        if (returnType)
+            visitor.visit(returnType);
         if (declarationsOrStatements)
             visitor.visit(declarationsOrStatements);
     }
@@ -312,6 +299,8 @@ final class TemplateDeclarationAstNode: AttributedDeclaration
     override void accept(AstVisitor visitor)
     {
         visitAtAttributes(visitor);
+        if (templateParameters)
+            visitor.visit(templateParameters);
         if (declarations)
             visitor.visit(declarations);
     }
@@ -573,7 +562,7 @@ enum DeclarationKind: ubyte
 final class DeclarationAstNode: AstNode
 {
     ///
-    union Declaration
+    static union Declaration
     {
         /// Assigned if this declaration is a FunctionDeclaration.
         FunctionDeclarationAstNode functionDeclaration;
@@ -1012,7 +1001,7 @@ enum StatementKind: ubyte
 final class StatementAstNode: AstNode
 {
     ///
-    union Statement
+    static union Statement
     {
         /// Assigned if this statement is an EmptyStatementAstNode.
         EmptyStatementAstNode emptyStatement;

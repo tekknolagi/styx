@@ -90,9 +90,7 @@ Yatol:
 ################################################################################
 # Function declaration
 
-    FunctionDeclaration < FunctionHeader FunctionBody
-
-    FunctionHeader < Static? Function Identifier TemplateParameters? LeftParen FunctionParameters? RightParen Cast?
+    FunctionDeclaration < Static? Function Identifier TemplateParameters? LeftParen FunctionParameters? RightParen Cast? FunctionBody
 
     FunctionBody < LeftCurly DeclarationOrStatement* RightCurly
                  / Semicolon
