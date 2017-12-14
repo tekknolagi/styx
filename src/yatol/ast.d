@@ -124,78 +124,6 @@ class AstVisitor
     void visit(WhileStatementAstNode node){node.accept(this);}
 }
 
-/**
- * Base for any AST visitor that visit few nodes.
- * Only the unit container and the units are visisted by default so
- * that only the interesting $(D visit()) have to be overridden.
- */
-class AstVisitorNone: AstVisitor
-{
-    override void visit(AkaDeclarationAstNode node){}
-    override void visit(AssertStatementAstNode node){}
-    override void visit(AssignExpressionAstNode node){}
-    override void visit(AstNode node){}
-    override void visit(AtAttributeAstNode node){}
-    override void visit(BinaryExpressionAstNode node){}
-    override void visit(BlockStatementAstNode node){}
-    override void visit(BreakStatementAstNode node){}
-    override void visit(CallParametersAstNode node){}
-    override void visit(ClassDeclarationAstNode node){}
-    override void visit(ContinueStatementAstNode node){}
-    override void visit(DeclarationAstNode node){}
-    override void visit(DeclarationOrStatementAstNode node){}
-    override void visit(EmptyStatementAstNode node){}
-    override void visit(EnumDeclarationAstNode node){}
-    override void visit(EnumMemberAstNode node){}
-    override void visit(ExpressionAstNode node){}
-    override void visit(ExpressionStatementAstNode node){}
-    override void visit(ForeachStatementAstNode node){}
-    override void visit(ForeachVariableDeclarationAstNode node){}
-    override void visit(FunctionDeclarationAstNode node){}
-    override void visit(FunctionHeaderAstNode node){}
-    override void visit(FunctionParameterGroupAstNode node){}
-    override void visit(FunctionPointerTypeAstNode node){}
-    override void visit(IdentifierChainAstNode node){}
-    override void visit(IfConditionVariableAstNode node){}
-    override void visit(IfElseStatementAstNode  node){}
-    override void visit(ImportDeclarationAstNode node){}
-    override void visit(IndexExpressionAstNode node){}
-    override void visit(InitializerAstNode node){}
-    override void visit(InterfaceDeclarationAstNode node){}
-    override void visit(LabelStatementAstNode node){}
-    override void visit(OnExceptionInstanceAstNode node){}
-    override void visit(OnExceptionStatementAstNode node){}
-    override void visit(OnMatchStatementAstNode node){}
-    override void visit(PostfixExpressionAstNode node){}
-    override void visit(PrimaryExpressionAstNode node){}
-    override void visit(ProtectionDeclarationAstNode node){}
-    override void visit(ReturnStatementAstNode node){}
-    override void visit(SingleOrRangeExpressionAstNode node){}
-    override void visit(SliceExpressionAstNode node){}
-    override void visit(StatementAstNode node){}
-    override void visit(StructDeclarationAstNode node){}
-    override void visit(SwitchStatementAstNode node){}
-    override void visit(TemplateInstanceAstNode node){}
-    override void visit(TemplateParametersAstNode node){}
-    override void visit(ThrowStatementAstNode node){}
-    override void visit(TryOnFinallyStatementAstNode node){}
-    override void visit(TypeAstNode node){}
-    override void visit(TypeModifierAstNode node){}
-    override void visit(UnaryExpressionAstNode node){}
-    override void visit(UnionDeclarationAstNode node){}
-    override void visit(UnitAstNode node){node.accept(this);}
-    override void visit(UnitContainerAstNode node){node.accept(this);}
-    override void visit(VariableDeclarationAstNode node){}
-    override void visit(VariableDeclarationItemAstNode node){}
-    override void visit(VersionBlockDeclarationAstNode node){}
-    override void visit(VersionBlockStatementAstNode node){}
-    override void visit(VersionAndExpressionAstNode node){}
-    override void visit(VersionOrExpressionAstNode node){}
-    override void visit(VersionParenExpressionAstNode node){}
-    override void visit(VersionPrimaryExpressionAstNode node){}
-    override void visit(WhileStatementAstNode node){}
-}
-
 /// The base AST node.
 class AstNode
 {
@@ -1426,13 +1354,11 @@ final class VersionPrimaryExpressionAstNode: AstNode
 unittest
 {
     AstVisitor av1 = new AstVisitor;
-    AstVisitorNone av2 = new AstVisitorNone;
     foreach (T; AstNodes)
         static if (!is(T == DeclarationAstNode) && !is(T == StatementAstNode))
     {
         T node = new T;
         av1.visit(node);
-        av2.visit(node);
     }
 }
 
