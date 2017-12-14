@@ -102,6 +102,7 @@ class AstVisitor
     void visit(StatementAstNode node){node.accept(this);}
     void visit(StructDeclarationAstNode node){node.accept(this);}
     void visit(SwitchStatementAstNode node){node.accept(this);}
+    void visit(TemplateDeclarationAstNode node){node.accept(this);}
     void visit(TemplateInstanceAstNode node){node.accept(this);}
     void visit(TemplateParametersAstNode node){node.accept(this);}
     void visit(ThrowStatementAstNode node){node.accept(this);}
@@ -284,6 +285,23 @@ final class UnionDeclarationAstNode: AttributedDeclaration
     /// The template parameters.
     TemplateParametersAstNode templateParameters;
     /// The declarations located in the union.
+    DeclarationAstNode[] declarations;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        visitAtAttributes(visitor);
+        declarations.each!(a => visitor.visit(a));
+    }
+}
+
+/// TemplateDeclaration.
+final class TemplateDeclarationAstNode: AttributedDeclaration
+{
+    /// The template name.
+    Token* name;
+    /// The template parameters.
+    TemplateParametersAstNode templateParameters;
+    /// The templatized declarations.
     DeclarationAstNode[] declarations;
     ///
     override void accept(AstVisitor visitor)
@@ -540,6 +558,7 @@ enum DeclarationKind: ubyte
     dkAka,
     dkVersion,
     dkUnion,
+    dkTemplate,
 }
 
 /// Declaration
@@ -568,8 +587,10 @@ final class DeclarationAstNode: AstNode
         AkaDeclarationAstNode akaDeclaration;
         /// Assigned if this declaration is an VersionBlockDeclaration.
         VersionBlockDeclarationAstNode versionBlockDeclaration;
-        /// Assigned if this declaration is an UnionDEclaration
+        /// Assigned if this declaration is an UnionDeclaration
         UnionDeclarationAstNode unionDeclaration;
+        /// Assigned if this declaration is a TemplateDeclaration
+        TemplateDeclarationAstNode templateDeclaration;
     }
     ///
     Declaration declaration;
@@ -591,6 +612,7 @@ final class DeclarationAstNode: AstNode
         case dkAka: visitor.visit(declaration.akaDeclaration); break;
         case dkVersion: visitor.visit(declaration.versionBlockDeclaration); break;
         case dkUnion: visitor.visit(declaration.unionDeclaration); break;
+        case dkTemplate: visitor.visit(declaration.templateDeclaration); break;
         case dkNone: assert(false);
         }
     }

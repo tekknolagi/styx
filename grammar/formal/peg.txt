@@ -29,6 +29,7 @@ Yatol:
                     / AtAttributes? FunctionDeclaration
                     / AtAttributes? InterfaceDeclaration
                     / AtAttributes? AkaDeclaration
+                    / AtAttributes? TemplateDeclaration
                     / VersionBlockDeclaration
                 #   / AtAttributeSectionDeclaration
 
@@ -40,6 +41,7 @@ Yatol:
     UnionDeclaration        < Union Identifier TemplateParameters? LeftCurly Declaration* RightCurly
     ClassDeclaration        < Class Identifier TemplateParameters? InheritanceList? LeftCurly Declaration* RightCurly
     InterfaceDeclaration    < Interface Identifier TemplateParameters? InheritanceList? LeftCurly Declaration* RightCurly
+    TemplateDeclaration     < Template Identifier TemplateParameters LeftCurly Declaration* RightCurly
 
     InheritanceList < Colon IdentifierChain (Comma IdentifierChain)*
 
@@ -439,6 +441,7 @@ Yatol:
             / Union
             / Assert
             / Label
+            / Template
             #/ In
 
     ValueKeyword    < Null
@@ -497,6 +500,7 @@ Yatol:
     In      <- "in"
     Assert  <- "assert"
     Label   <- "label"
+    Template<- "template"
 
     SREG    <- "sreg"
     UREG    <- "ureg"

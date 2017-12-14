@@ -802,6 +802,55 @@ private:
     }
 
     /**
+     * Parses an TemplateDeclaration.
+     *
+     * Returns:
+     *      On success a $(D TemplateDeclarationAstNode) otherwise $(D null).
+     */
+    TemplateDeclarationAstNode parseTemplateDeclaration()
+    {
+        assert(current.isTokTemplate);
+        TemplateDeclarationAstNode result = new TemplateDeclarationAstNode;
+        result.position = current.position;
+        advance();
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        result.name = current();
+        advance();
+        if (!current.isTokLesser)
+        {
+            expected(TokenType.lesser);
+            return null;
+        }
+        if (TemplateParametersAstNode tp = parseTemplateParameters())
+        {
+            result.templateParameters = tp;
+        }
+        else
+        {
+            parseError("invalid template parameters");
+            return null;
+        }
+        if (!current.isTokLeftCurly)
+        {
+            expected(TokenType.leftCurly);
+            return null;
+        }
+        advance();
+        parseDeclarations(result.declarations);
+        if (!current.isTokRightCurly)
+        {
+            expected(TokenType.rightCurly);
+            return null;
+        }
+        advance();
+        return result;
+    }
+
+    /**
      * Parses an OnMatchExpression.
      *
      * Returns:
@@ -3177,11 +3226,23 @@ private:
         }
         case version_:
         {
-            if (VersionBlockDeclarationAstNode decl = parseVersionBlockDeclaration())
+            if (VersionBlockDeclarationAstNode vb = parseVersionBlockDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.declarationKind = DeclarationKind.dkVersion;
-                result.declaration.versionBlockDeclaration = decl;
+                result.declaration.versionBlockDeclaration = vb;
+                return result;
+            }
+            else return null;
+        }
+        case template_:
+        {
+            if (TemplateDeclarationAstNode td = parseTemplateDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.declarationKind = DeclarationKind.dkTemplate;
+                result.declaration.templateDeclaration = td;
+                result.declaration.templateDeclaration.atAttributes = attribs;
                 return result;
             }
             else return null;
@@ -6015,5 +6076,49 @@ unittest // template params / specialization
         unit a;
         var Foo<s8, s32> a;
     });
+}
+
+unittest // template
+{
+    assertParse(q{
+        unit a;
+        template Foo<>{}
+    });
+    assertParse(q{
+        unit a;
+        template Foo<A, B> {}
+    });
+    assertParse(q{
+        unit a;
+        template Foo<A, B> { const A a; const B b;}
+    });
+    assertNotParse(q{
+        unit a;
+        template <A B> { const A a;}
+    });
+    assertNotParse(q{
+        unit a;
+        template Foo<A B> { const A a;}
+    });
+    assertNotParse(q{
+        unit a;
+        template Foo<A> { A a;}
+    });
+    assertNotParse(q{
+        unit a;
+        template Foo A B> { const A a;}
+    });
+    assertNotParse(q{
+        unit a;
+        template Foo<A { const A a;}
+    });
+    assertNotParse("
+        unit a;
+        template Foo<A>  const A a;}
+    ");
+    assertNotParse("
+        unit a;
+        template Foo<A> { const A a;
+    ");
 }
 

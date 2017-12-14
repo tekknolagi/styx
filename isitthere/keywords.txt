@@ -25,6 +25,7 @@ static
 struct
 super
 switch
+template
 throw
 true
 try

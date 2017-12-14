@@ -654,6 +654,24 @@ public:
         _source ~= ">";
     }
 
+    override void visit(TemplateDeclarationAstNode node)
+    {
+        indent();
+        node.visitAtAttributes(this);
+        _source ~= "template ";
+        _source ~= node.name.text;
+        if (node.templateParameters)
+            visit(node.templateParameters);
+        _source ~= "\n";
+        indent();
+        _source ~= "{\n";
+        growIndentLevel();
+        node.declarations.each!(a => visit(a));
+        shrinkIndentLevel();
+        indent();
+        _source ~= "}\n";
+    }
+
     override void visit(TemplateInstanceAstNode node)
     {
         _source ~= "<";
@@ -1761,4 +1779,16 @@ unittest
 }";
     test(c, e);
 }
+
+unittest
+{
+    string c = "unit a; @a template Foo<> {}";
+    string e =
+"unit a;
+@a template Foo<>
+{
+}";
+    test(c, e);
+}
+
 

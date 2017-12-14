@@ -192,6 +192,12 @@ enum source1 = "#!yatol --ast
         foo<int>(0);
     }
 
+    template Foo<T0,T1>
+    {
+        const T0 t0;
+        const T1 t1;
+    }
+
     struct Last {}
 ";
 
