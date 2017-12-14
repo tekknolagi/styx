@@ -1,3 +1,4 @@
+#!dmd -g -gs
 /**
  * YATOL's parser.
  */
@@ -147,8 +148,9 @@ private:
                 result.position = current.position;
                 result.identifiers = toks;
                 advance();
-                if (parseDeclarations(result.declarations))
+                if (DeclarationsAstNode d = parseDeclarations())
                 {
+                    result.declarations = d;
                     --_declarationLevels;
                     if (_declarationLevels < 0)
                     {
@@ -594,7 +596,10 @@ private:
             return null;
         }
         advance();
-        parseDeclarations(result.declarations);
+        if (DeclarationsAstNode d = parseDeclarations())
+        {
+            result.declarations = d;
+        }
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
@@ -669,7 +674,11 @@ private:
             return null;
         }
         advance();
-        parseDeclarations(result.declarations);
+        if (DeclarationsAstNode d = parseDeclarations())
+        {
+            result.declarations = d;
+        }
+        else return null;
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
@@ -744,7 +753,11 @@ private:
             return null;
         }
         advance();
-        parseDeclarations(result.declarations);
+        if (DeclarationsAstNode d = parseDeclarations())
+        {
+            result.declarations = d;
+        }
+        else return null;
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
@@ -791,7 +804,10 @@ private:
             return null;
         }
         advance();
-        parseDeclarations(result.declarations);
+        if (DeclarationsAstNode d = parseDeclarations())
+        {
+            result.declarations = d;
+        }
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
@@ -840,7 +856,11 @@ private:
             return null;
         }
         advance();
-        parseDeclarations(result.declarations);
+        if (DeclarationsAstNode d = parseDeclarations())
+        {
+            result.declarations = d;
+        }
+        else return null;
         if (!current.isTokRightCurly)
         {
             expected(TokenType.rightCurly);
@@ -1565,7 +1585,11 @@ private:
         if (current.isTokLeftCurly)
         {
             advance();
-            if (!parseDeclarationsOrStatements(result.declarationsOrStatements))
+            if (DeclarationsOrStatementsAstNode dos = parseDeclarationsOrStatements())
+            {
+                result.declarationsOrStatements = dos;
+            }
+            else
             {
                 parseError("invalid declarations or statements");
                 return null;
@@ -1787,14 +1811,13 @@ private:
     /**
      * Parses contiguous DeclarationsOrStatement.
      *
-     * Params:
-     *      declsOrStatements: The array filled with one or more
-     *      DeclarationsOrStatement
      * Returns:
-     *      $(D true) on success, $(D false) otherwise.
+     *      A $(D DeclarationsOrStatementsAstNode) on success, $(D null) otherwise.
      */
-    bool parseDeclarationsOrStatements(ref DeclarationOrStatementAstNode[] declsOrStatements)
+    DeclarationsOrStatementsAstNode parseDeclarationsOrStatements()
     {
+        DeclarationsOrStatementsAstNode result = new DeclarationsOrStatementsAstNode;
+        result.position = current.position;
         const ptrdiff_t oldDeclLvl = _declarationLevels;
         ++_declarationLevels;
 
@@ -1803,36 +1826,35 @@ private:
             with (TokenType) switch (current.type)
             {
             case virtual, eof:
-                return true; // virtual unit
+                return result;
             case rightCurly:
                 --_declarationLevels;
                 assert (oldDeclLvl == _declarationLevels);
-                return true;
+                return result;
             default:
                 if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
                 {
-                    declsOrStatements ~= dos;
+                    result.items ~= dos;
                     continue;
                 }
                 else
                 {
                     unexpected();
-                    return false;
+                    return null;
                 }
             }
         }
     }
 
     /**
-     * Parses contiguous Declaration.
+     * Parses contiguous declarations.
      *
-     * Params:
-     *      declarations: The array filled with the declarations.
-     * Returns:
-     *      $(D true) on success, $(D false) otherwise.
+     * Returns: a $(D DeclarationsAstNode) on success, $(D null) otherwise.
      */
-    bool parseDeclarations(ref DeclarationAstNode[] declarations)
+    DeclarationsAstNode parseDeclarations()
     {
+        DeclarationsAstNode result = new DeclarationsAstNode;
+        result.position = current.position;
         const ptrdiff_t oldDeclLvl = _declarationLevels;
         ++_declarationLevels;
         while (true)
@@ -1840,21 +1862,21 @@ private:
             with (TokenType) switch (current.type)
             {
             case virtual, eof:
-                return true; // virtual unit
+                return result; // virtual unit
             case rightCurly:
                 --_declarationLevels;
                 assert(oldDeclLvl == _declarationLevels);
-                return true;
+                return result;
             default:
                 if (DeclarationAstNode d = parseDeclaration())
                 {
-                    declarations ~= d;
+                    result.items ~= d;
                     continue;
                 }
                 else
                 {
                     unexpected();
-                    return false;
+                    return null;
                 }
             }
         }
@@ -2643,15 +2665,19 @@ private:
         if (current.isTokLeftCurly)
         {
             advance();
-            if (!parseDeclarations(result.trueDeclarations))
-                return null;
-            advance();
+            if (DeclarationsAstNode ds = parseDeclarations())
+            {
+                result.trueDeclarations = ds;
+                advance();
+            }
+            else return null;
         }
         else
         {
             if (DeclarationAstNode d = parseDeclaration())
             {
-                result.trueDeclarations ~= d;
+                result.trueDeclarations = new DeclarationsAstNode;
+                result.trueDeclarations.items ~= d;
             }
             else return null;
         }
@@ -2661,15 +2687,19 @@ private:
             if (current.isTokLeftCurly)
             {
                 advance();
-                if (!parseDeclarations(result.falseDeclarations))
-                    return null;
-                advance();
+                if (DeclarationsAstNode ds = parseDeclarations())
+                {
+                    result.falseDeclarations = ds;
+                    advance();
+                }
+                else return null;
             }
             else
             {
                 if (DeclarationAstNode d = parseDeclaration())
                 {
-                    result.falseDeclarations ~= d;
+                    result.falseDeclarations = new DeclarationsAstNode;
+                    result.falseDeclarations.items ~= d;
                 }
                 else return null;
             }
@@ -2705,15 +2735,19 @@ private:
         if (current.isTokLeftCurly)
         {
             advance();
-            if (!parseDeclarationsOrStatements(result.trueDeclarationsOrStatements))
-                return null;
-            advance();
+            if (DeclarationsOrStatementsAstNode doss = parseDeclarationsOrStatements())
+            {
+                result.trueDeclarationsOrStatements = doss;
+                advance();
+            }
+            else return null;
         }
         else
         {
             if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
             {
-                result.trueDeclarationsOrStatements ~= dos;
+                result.trueDeclarationsOrStatements = new DeclarationsOrStatementsAstNode;
+                result.trueDeclarationsOrStatements.items ~= dos;
             }
             else return null;
         }
@@ -2723,15 +2757,19 @@ private:
             if (current.isTokLeftCurly)
             {
                 advance();
-                if (!parseDeclarationsOrStatements(result.falseDeclarationsOrStatements))
-                    return null;
-                advance();
+                if (DeclarationsOrStatementsAstNode doss = parseDeclarationsOrStatements())
+                {
+                    result.falseDeclarationsOrStatements = doss;
+                    advance();
+                }
+                else return null;
             }
             else
             {
                 if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
                 {
-                    result.falseDeclarationsOrStatements ~= dos;
+                    result.falseDeclarationsOrStatements = new DeclarationsOrStatementsAstNode;
+                    result.falseDeclarationsOrStatements.items ~= dos;
                 }
                 else return null;
             }
@@ -3061,11 +3099,12 @@ private:
         {
             advance();
             BlockStatementAstNode b = new BlockStatementAstNode;
-            if (parseDeclarationsOrStatements(b.declarationsOrStatements))
+            if (DeclarationsOrStatementsAstNode dos = parseDeclarationsOrStatements())
             {
                 StatementAstNode result = new StatementAstNode;
                 result.statementKind = StatementKind.skBlock;
                 result.statement.block = b;
+                result.statement.block.declarationsOrStatements = dos;
                 advance();
                 return result;
             }

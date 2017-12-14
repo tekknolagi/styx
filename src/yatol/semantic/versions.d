@@ -62,42 +62,42 @@ private:
         return result;
     }
 
-    void pullVersionDependantStuff(ref DeclarationOrStatementAstNode[] dos)
+    void pullVersionDependantStuff(DeclarationsOrStatementsAstNode doss)
     {
         while (true)
         {
             import std.algorithm.searching : countUntil;
-            ptrdiff_t p = dos.countUntil!(a => a.statement !is null
+            ptrdiff_t p = doss.items.countUntil!(a => a.statement !is null
                 && a.statement.statementKind == StatementKind.skVersion);
             if (p != -1)
             {
-                VersionBlockStatementAstNode v = dos[p].statement.statement.versionBlockStatement;
-                DeclarationOrStatementAstNode[] m = v.trueDeclarationsOrStatements ?
-                    v.trueDeclarationsOrStatements : v.falseDeclarationsOrStatements;
+                VersionBlockStatementAstNode v = doss.items[p].statement.statement.versionBlockStatement;
+                DeclarationOrStatementAstNode[] m = v.trueDeclarationsOrStatements.items ?
+                    v.trueDeclarationsOrStatements.items : v.falseDeclarationsOrStatements.items;
                 DeclarationOrStatementAstNode[] r;
-                if (p + 1 < dos.length)
-                    r = dos[p + 1 .. $].dup;
-                dos = dos[0..p] ~ m ~ r;
+                if (p + 1 < doss.items.length)
+                    r = doss.items[p + 1 .. $].dup;
+                doss.items = doss.items[0..p] ~ m ~ r;
             }
             else break;
         }
     }
 
-    void pullVersionDependantStuff(ref DeclarationAstNode[] d)
+    void pullVersionDependantStuff(DeclarationsAstNode ds)
     {
         while (true)
         {
             import std.algorithm.searching : countUntil;
-            ptrdiff_t p = d.countUntil!(a => a.declarationKind == DeclarationKind.dkVersion);
+            ptrdiff_t p = ds.items.countUntil!(a => a.declarationKind == DeclarationKind.dkVersion);
             if (p != -1)
             {
-                VersionBlockDeclarationAstNode v = d[p].declaration.versionBlockDeclaration;
-                DeclarationAstNode[] m = v.trueDeclarations ?
-                    v.trueDeclarations : v.falseDeclarations;
+                VersionBlockDeclarationAstNode v = ds.items[p].declaration.versionBlockDeclaration;
+                DeclarationAstNode[] m = v.trueDeclarations.items ?
+                    v.trueDeclarations.items : v.falseDeclarations.items;
                 DeclarationAstNode[] r;
-                if (p + 1 < d.length)
-                    r = d[p + 1 .. $].dup;
-                d = d[0..p] ~ m ~ r;
+                if (p + 1 < ds.items.length)
+                    r = ds.items[p + 1 .. $].dup;
+                ds.items = ds.items[0..p] ~ m ~ r;
             }
             else break;
         }
@@ -137,24 +137,28 @@ public:
         visit(node.versionExpression);
         node.isTrue = evaluate();
 
-        DeclarationAstNode[] valid;
+        DeclarationsAstNode valids;
 
         if (node.isTrue)
         {
-            valid = node.trueDeclarations;
+            valids = node.trueDeclarations;
+            assert(valids !is null);
             destroy(node.falseDeclarations);
             node.falseDeclarations = null;
-            pullVersionDependantStuff(node.trueDeclarations);
         }
         else
         {
-            valid = node.falseDeclarations;
+            valids = node.falseDeclarations;
             destroy(node.trueDeclarations);
             node.trueDeclarations = null;
-            pullVersionDependantStuff(node.falseDeclarations);
         }
 
-        valid.each!(a => visit(a));
+        if (valids)
+        {
+            if (_supressVersion)
+                pullVersionDependantStuff(valids);
+            visit(valids);
+        }
     }
 
     override void visit(BlockStatementAstNode node)
@@ -211,24 +215,27 @@ public:
         visit(node.versionExpression);
         node.isTrue = evaluate();
 
-        DeclarationOrStatementAstNode[] valid;
+        DeclarationsOrStatementsAstNode valids;
 
         if (node.isTrue)
         {
-            valid = node.trueDeclarationsOrStatements;
+            valids = node.trueDeclarationsOrStatements;
             destroy(node.falseDeclarationsOrStatements);
             node.falseDeclarationsOrStatements = null;
-            pullVersionDependantStuff(node.trueDeclarationsOrStatements);
         }
         else
         {
-            valid = node.falseDeclarationsOrStatements;
+            valids = node.falseDeclarationsOrStatements;
             destroy(node.trueDeclarationsOrStatements);
             node.trueDeclarationsOrStatements = null;
-            pullVersionDependantStuff(node.falseDeclarationsOrStatements);
         }
 
-        valid.each!(a => visit(a));
+        if (valids)
+        {
+            if (_supressVersion)
+                pullVersionDependantStuff(valids);
+            visit(valids);
+        }
     }
 
     override void visit(VersionParenExpressionAstNode node)
@@ -297,15 +304,16 @@ void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions = [],
 
     UnitContainerAstNode uc = lexAndParse(code, file, line);
 
-    if (uc is null || !uc.mainUnit || !uc.mainUnit.declarations.length ||
-        !uc.mainUnit.declarations[0].declaration.versionBlockDeclaration)
+    if (uc is null || !uc.mainUnit || !uc.mainUnit.declarations ||
+        !uc.mainUnit.declarations.items.length ||
+        !uc.mainUnit.declarations.items[0].declaration.versionBlockDeclaration)
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
     VersionEvaluatorVisitor vev = new VersionEvaluatorVisitor(userVersions);
 
     vev.visit(uc);
-    const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations[0]
+    const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations.items[0]
         .declaration.versionBlockDeclaration;
 
     if (!vb.isTrue)
@@ -332,14 +340,15 @@ void assertFirstVersionIsFalse(const(char)[] code, string[] userVersions = [],
 
     UnitContainerAstNode uc = lexAndParse(code, file, line);
 
-    if (uc is null || !uc.mainUnit || !uc.mainUnit.declarations.length ||
-        !uc.mainUnit.declarations[0].declaration.versionBlockDeclaration)
+    if (uc is null || !uc.mainUnit || !uc.mainUnit.declarations ||
+        !uc.mainUnit.declarations.items.length ||
+        !uc.mainUnit.declarations.items[0].declaration.versionBlockDeclaration)
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
     new VersionEvaluatorVisitor(uc, userVersions);
 
-    const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations[0]
+    const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations.items[0]
         .declaration.versionBlockDeclaration;
 
     if (vb.isTrue)
@@ -576,7 +585,7 @@ unittest
         override void visit(FunctionDeclarationAstNode node)
         {
             node.accept(this);
-            count = node.declarationsOrStatements.length;
+            count = node.declarationsOrStatements.items.length;
         }
 
         override void test(){assert(count == 5);}
@@ -603,7 +612,7 @@ unittest
         override void visit(UnitAstNode node)
         {
             node.accept(this);
-            count = node.declarations.length;
+            count = node.declarations.items.length;
         }
 
         override void test(){assert(count == 5);}
@@ -629,7 +638,7 @@ unittest
         override void visit(UnitAstNode node)
         {
             node.accept(this);
-            count = node.declarations.length;
+            count = node.declarations.items.length;
         }
 
         override void test(){assert(count == 4);}
@@ -654,7 +663,7 @@ unittest
         override void visit(StructDeclarationAstNode node)
         {
             node.accept(this);
-            count = node.declarations.length;
+            count = node.declarations.items.length;
         }
 
         override void test(){assert(count == 4);}
@@ -682,7 +691,7 @@ unittest
         override void visit(ClassDeclarationAstNode node)
         {
             node.accept(this);
-            count = node.declarations.length;
+            count = node.declarations.items.length;
         }
 
         override void test(){assert(count == 4);}
@@ -710,7 +719,7 @@ unittest
         override void visit(UnionDeclarationAstNode node)
         {
             node.accept(this);
-            count = node.declarations.length;
+            count = node.declarations.items.length;
         }
 
         override void test(){assert(count == 4);}
@@ -738,7 +747,7 @@ unittest
         override void visit(InterfaceDeclarationAstNode node)
         {
             node.accept(this);
-            count = node.declarations.length;
+            count = node.declarations.items.length;
         }
 
         override void test(){assert(count == 4);}
@@ -766,7 +775,7 @@ unittest
         override void visit(BlockStatementAstNode node)
         {
             node.accept(this);
-            count = node.declarationsOrStatements.length;
+            count = node.declarationsOrStatements.items.length;
         }
 
         override void test(){assert(count == 5);}

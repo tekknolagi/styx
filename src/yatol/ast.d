@@ -70,7 +70,9 @@ class AstVisitor
     void visit(ClassDeclarationAstNode node){node.accept(this);}
     void visit(ContinueStatementAstNode node){node.accept(this);}
     void visit(DeclarationAstNode node){node.accept(this);}
+    void visit(DeclarationsAstNode node){node.accept(this);}
     void visit(DeclarationOrStatementAstNode node){node.accept(this);}
+    void visit(DeclarationsOrStatementsAstNode node){node.accept(this);}
     void visit(EmptyStatementAstNode node){node.accept(this);}
     void visit(EnumDeclarationAstNode node){node.accept(this);}
     void visit(EnumMemberAstNode node){node.accept(this);}
@@ -229,14 +231,15 @@ final class FunctionDeclarationAstNode: AttributedDeclaration
     /// Used to indicates the body kind.
     Token* firstBodyToken;
     /// The body.
-    DeclarationOrStatementAstNode[] declarationsOrStatements;
+    DeclarationsOrStatementsAstNode declarationsOrStatements;
     ///
     override void accept(AstVisitor visitor)
     {
         visitAtAttributes(visitor);
         if (header)
             visitor.visit(header);
-        declarationsOrStatements.each!(a => visitor.visit(a));
+        if (declarationsOrStatements)
+            visitor.visit(declarationsOrStatements);
     }
 }
 
@@ -267,13 +270,14 @@ final class StructDeclarationAstNode: AttributedDeclaration
     ///
     IdentifierChainAstNode[] duckTypeList;
     /// The declarations located in the struct.
-    DeclarationAstNode[] declarations;
+    DeclarationsAstNode declarations;
     ///
     override void accept(AstVisitor visitor)
     {
         visitAtAttributes(visitor);
         duckTypeList.each!(a => visitor.visit(a));
-        declarations.each!(a => visitor.visit(a));
+        if (declarations)
+            visitor.visit(declarations);
     }
 }
 
@@ -285,12 +289,13 @@ final class UnionDeclarationAstNode: AttributedDeclaration
     /// The template parameters.
     TemplateParametersAstNode templateParameters;
     /// The declarations located in the union.
-    DeclarationAstNode[] declarations;
+    DeclarationsAstNode declarations;
     ///
     override void accept(AstVisitor visitor)
     {
         visitAtAttributes(visitor);
-        declarations.each!(a => visitor.visit(a));
+        if (declarations)
+            visitor.visit(declarations);
     }
 }
 
@@ -302,12 +307,13 @@ final class TemplateDeclarationAstNode: AttributedDeclaration
     /// The template parameters.
     TemplateParametersAstNode templateParameters;
     /// The templatized declarations.
-    DeclarationAstNode[] declarations;
+    DeclarationsAstNode declarations;
     ///
     override void accept(AstVisitor visitor)
     {
         visitAtAttributes(visitor);
-        declarations.each!(a => visitor.visit(a));
+        if (declarations)
+            visitor.visit(declarations);
     }
 }
 
@@ -408,13 +414,14 @@ final class ClassDeclarationAstNode: AttributedDeclaration
     /// The inheritance list.
     IdentifierChainAstNode[] inheritanceList;
     /// The declarations located in the class.
-    DeclarationAstNode[] declarations;
+    DeclarationsAstNode declarations;
     ///
     override void accept(AstVisitor visitor)
     {
         visitAtAttributes(visitor);
         inheritanceList.each!(a => visitor.visit(a));
-        declarations.each!(a => visitor.visit(a));
+        if (declarations)
+            visitor.visit(declarations);
     }
 }
 
@@ -428,13 +435,14 @@ final class InterfaceDeclarationAstNode: AttributedDeclaration
     /// The inheritance list.
     IdentifierChainAstNode[] inheritanceList;
     /// The declarations located in the class.
-    DeclarationAstNode[] declarations;
+    DeclarationsAstNode declarations;
     ///
     override void accept(AstVisitor visitor)
     {
         visitAtAttributes(visitor);
         inheritanceList.each!(a => visitor.visit(a));
-        declarations.each!(a => visitor.visit(a));
+        if (declarations)
+            visitor.visit(declarations);
     }
 }
 
@@ -615,6 +623,30 @@ final class DeclarationAstNode: AstNode
         case dkTemplate: visitor.visit(declaration.templateDeclaration); break;
         case dkNone: assert(false);
         }
+    }
+}
+
+/// Declarations
+final class DeclarationsAstNode: AstNode
+{
+    /// The declarations
+    DeclarationAstNode[] items;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        items.each!(a => visitor.visit(a));
+    }
+}
+
+/// DeclarationsOrStatements
+final class DeclarationsOrStatementsAstNode: AstNode
+{
+    /// The declarations
+    DeclarationOrStatementAstNode[] items;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        items.each!(a => visitor.visit(a));
     }
 }
 
@@ -909,11 +941,12 @@ final class EmptyStatementAstNode: AstNode {}
 final class BlockStatementAstNode: AstNode
 {
     /// Declarations or statement located in the block.
-    DeclarationOrStatementAstNode[] declarationsOrStatements;
+    DeclarationsOrStatementsAstNode declarationsOrStatements;
     ///
     override void accept(AstVisitor visitor)
     {
-        declarationsOrStatements.each!(a => visitor.visit(a));
+        if (declarationsOrStatements)
+            visitor.visit(declarationsOrStatements);
     }
 }
 
@@ -1209,7 +1242,7 @@ final class UnitAstNode: AstNode
     /// When the unit is virtual, this is a reference to the MainUnit.
     UnitAstNode mainUnit; //!\\ not to visit //!\\
     /// The declarations located in the unit.
-    DeclarationAstNode[] declarations;
+    DeclarationsAstNode declarations;
     /// Indicates if this is a VirtualUnit.
     bool isVirtual() const {return mainUnit !is null;}
     /// Indicates if this is a MainUnit.
@@ -1217,7 +1250,8 @@ final class UnitAstNode: AstNode
     ///
     override void accept(AstVisitor visitor)
     {
-        declarations.each!(a => visitor.visit(a));
+        if (declarations)
+            visitor.visit(declarations);
     }
 }
 
@@ -1269,16 +1303,18 @@ final class VersionBlockDeclarationAstNode: AstNode
     /// Expressions allowing to select the true or false declarations.
     VersionParenExpressionAstNode versionExpression;
     /// The declarations when the versionExpression is verified.
-    DeclarationAstNode[] trueDeclarations;
+    DeclarationsAstNode trueDeclarations;
     /// The declarations when the versionExpression is not verified.
-    DeclarationAstNode[] falseDeclarations;
+    DeclarationsAstNode falseDeclarations;
     ///
     override void accept(AstVisitor visitor)
     {
         if (versionExpression)
             visitor.visit(versionExpression);
-        trueDeclarations.each!(a => visitor.visit(a));
-        falseDeclarations.each!(a => visitor.visit(a));
+        if (trueDeclarations)
+            visitor.visit(trueDeclarations);
+        if (falseDeclarations)
+            visitor.visit(falseDeclarations);
     }
     /// Indicates which declarations are valid.
     @Semantic bool isTrue;
@@ -1292,16 +1328,18 @@ final class VersionBlockStatementAstNode: AstNode
     /// Expressions allowing to select the true or false declarations or statements.
     VersionParenExpressionAstNode versionExpression;
     /// The declarations or statements when the versionExpression is verified.
-    DeclarationOrStatementAstNode[] trueDeclarationsOrStatements;
+    DeclarationsOrStatementsAstNode trueDeclarationsOrStatements;
     /// The declarations or statements when the versionExpression is not verified.
-    DeclarationOrStatementAstNode[] falseDeclarationsOrStatements;
+    DeclarationsOrStatementsAstNode falseDeclarationsOrStatements;
     ///
     override void accept(AstVisitor visitor)
     {
         if (versionExpression)
             visitor.visit(versionExpression);
-        trueDeclarationsOrStatements.each!(a => visitor.visit(a));
-        falseDeclarationsOrStatements.each!(a => visitor.visit(a));
+        if (trueDeclarationsOrStatements)
+            visitor.visit(trueDeclarationsOrStatements);
+        if (falseDeclarationsOrStatements)
+            visitor.visit(falseDeclarationsOrStatements);
     }
     /// Indicates which declarations or statements are valid.
     @Semantic bool isTrue;

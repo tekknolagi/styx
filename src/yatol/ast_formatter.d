@@ -189,7 +189,8 @@ public:
         indent();
         _source ~= "{\n";
         growIndentLevel();
-        node.declarations.each!(a => visit(a));
+        if (node.declarations)
+            visit(node.declarations);
         shrinkIndentLevel();
         indent();
         _source ~= "}\n";
@@ -312,7 +313,8 @@ public:
             indent();
             _source ~= "{\n";
             growIndentLevel();
-            node.declarationsOrStatements.each!(a => visit(a));
+            if (node.declarationsOrStatements)
+                visit(node.declarationsOrStatements);
             shrinkIndentLevel();
             indent();
             _source ~= "}\n";
@@ -486,7 +488,8 @@ public:
         indent();
         _source ~= "{\n";
         growIndentLevel();
-        node.declarations.each!(a => visit(a));
+        if (node.declarations)
+            visit(node.declarations);
         shrinkIndentLevel();
         indent();
         _source ~= "}\n";
@@ -616,7 +619,8 @@ public:
         indent();
         _source ~= "{\n";
         growIndentLevel();
-        node.declarations.each!(a => visit(a));
+        if (node.declarations)
+            visit(node.declarations);
         shrinkIndentLevel();
         indent();
         _source ~= "}\n";
@@ -666,7 +670,8 @@ public:
         indent();
         _source ~= "{\n";
         growIndentLevel();
-        node.declarations.each!(a => visit(a));
+        if (node.declarations)
+            visit(node.declarations);
         shrinkIndentLevel();
         indent();
         _source ~= "}\n";
@@ -755,7 +760,8 @@ public:
         indent();
         _source ~= "{\n";
         growIndentLevel();
-        node.declarations.each!(a => visit(a));
+        if (node.declarations)
+            visit(node.declarations);
         shrinkIndentLevel();
         indent();
         _source ~= "}\n";
@@ -807,18 +813,19 @@ public:
         indent();
         _source ~= "{\n";
         growIndentLevel();
-        node.trueDeclarations.each!(a => visit(a));
+        if (node.trueDeclarations)
+            visit(node.trueDeclarations);
         shrinkIndentLevel();
         indent();
         _source ~= "}\n";
-        if (node.falseDeclarations.length)
+        if (node.falseDeclarations)
         {
             indent();
             _source ~= "else\n";
             indent();
             _source ~= "{\n";
             growIndentLevel();
-            node.falseDeclarations.each!(a => visit(a));
+            visit(node.falseDeclarations);
             shrinkIndentLevel();
             indent();
             _source ~= "}\n";
@@ -834,18 +841,19 @@ public:
         indent();
         _source ~= "{\n";
         growIndentLevel();
-        node.trueDeclarationsOrStatements.each!(a => visit(a));
+        if (node.trueDeclarationsOrStatements)
+            visit(node.trueDeclarationsOrStatements);
         shrinkIndentLevel();
         indent();
         _source ~= "}\n";
-        if (node.falseDeclarationsOrStatements.length)
+        if (node.falseDeclarationsOrStatements)
         {
             indent();
             _source ~= "else\n";
             indent();
             _source ~= "{\n";
             growIndentLevel();
-            node.falseDeclarationsOrStatements.each!(a => visit(a));
+            visit(node.falseDeclarationsOrStatements);
             shrinkIndentLevel();
             indent();
             _source ~= "}\n";
