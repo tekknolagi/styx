@@ -1740,10 +1740,8 @@ private:
             expected(TokenType.identifier);
             return null;
         }
-        if (IdentifierChainAstNode ic = parseIdentifierChain())
-        {
-            result.name = ic;
-        }
+        result.name = current();
+        advance();
         if (current.isTokEqual)
         {
             advance();
@@ -1752,6 +1750,11 @@ private:
                 result.type = t;
             }
             else return null;
+        }
+        else
+        {
+            expected(TokenType.equal);
+            return null;
         }
         if (!current.isTokSemicolon)
         {
@@ -4730,9 +4733,13 @@ unittest // aka & type
         unit a;
         aka;
     });
-    assertParse(q{
+    assertNotParse(q{
         unit a;
-        aka a; // partial aka
+        aka a;
+    });
+    assertNotParse(q{
+        unit a;
+        aka a.a;
     });
     assertNotParse(q{
         unit a;

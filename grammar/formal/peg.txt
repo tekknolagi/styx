@@ -55,7 +55,7 @@ Yatol:
 
     EnumMember      < Identifier (Equal Initializer)?
 
-    AkaDeclaration  < Aka IdentifierChain (Equal Type)? Semicolon
+    AkaDeclaration  < Aka Identifier Equal Type Semicolon
 
 ################################################################################
 # Template parameters

@@ -507,15 +507,13 @@ final class VariableDeclarationAstNode: AttributedDeclaration
 final class AkaDeclarationAstNode: AttributedDeclaration
 {
     /// The target name.
-    IdentifierChainAstNode name;
+    Token* name;
     /// The source type or the source symbol.
     TypeAstNode type;
     ///
     override void accept(AstVisitor visitor)
     {
         visitAtAttributes(visitor);
-        if (name)
-            visitor.visit(name);
         if (type)
             visitor.visit(type);
     }

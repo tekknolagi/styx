@@ -77,7 +77,7 @@ public:
         node.visitAtAttributes(this);
         _source ~= "aka ";
         if (node.name)
-            visit(node.name);
+            _source ~= node.name.text;
         if (node.type)
         {
             _source ~= " = ";
@@ -1457,16 +1457,6 @@ unittest
     string e =
 "unit a;
 aka funcPtr = static function*(const s32 a, b):(s64[]);
-";
-    test(c, e);
-}
-
-unittest
-{
-    string c = "unit a; aka OtherUnit . A = ThisUnit . B;";
-    string e =
-"unit a;
-aka OtherUnit.A = ThisUnit.B;
 ";
     test(c, e);
 }
