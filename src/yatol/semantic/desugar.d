@@ -1,6 +1,8 @@
 module yatol.semantic.desugar;
 
 import
+    std.stdio;
+import
     yatol.ast;
 
 /**
@@ -11,8 +13,12 @@ class DesugarVisitor: AstVisitor
 {
     alias visit = AstVisitor.visit;
 
+    private BlockStatementAstNode _inBlock;
+
+    ///
     this(){}
 
+    ///
     this(UnitContainerAstNode uc)
     {
         visit(uc);
@@ -20,6 +26,7 @@ class DesugarVisitor: AstVisitor
 
     override void visit(DeclarationAstNode node)
     {
+        node.accept(this);
         with(DeclarationKind) switch(node.declarationKind)
         {
         case dkClass:
@@ -64,6 +71,88 @@ class DesugarVisitor: AstVisitor
         decl.declarationKind = DeclarationKind.dkTemplate;
 
         node.templateParameters = null;
+    }
+
+    //NOTE: do the same for ForeachStatement and WhileStatement ?
+    override void visit(IfElseStatementAstNode node)
+    {
+        BlockStatementAstNode saved = _inBlock;
+
+        if (node.condition)
+            visit(node.condition);
+        else if (node.ifVariable)
+            visit(node.ifVariable);
+        if (node.trueDeclarationOrStatement)
+        {
+            if (node.trueDeclarationOrStatement.statement &&
+                node.trueDeclarationOrStatement.statement.statementKind == StatementKind.skBlock)
+            {
+                _inBlock = node.trueDeclarationOrStatement.statement.statement.block;
+            }
+            visit(node.trueDeclarationOrStatement);
+        }
+        if (node.falseDeclarationOrStatement)
+        {
+            if (node.falseDeclarationOrStatement.statement &&
+                node.falseDeclarationOrStatement.statement.statementKind == StatementKind.skBlock)
+            {
+                _inBlock = node.falseDeclarationOrStatement.statement.statement.block;
+            }
+            visit(node.falseDeclarationOrStatement);
+        }
+
+        _inBlock = saved;
+    }
+
+    override void visit(DeclarationOrStatementAstNode node)
+    {
+        FlowControlBaseNode fc;
+        BlockStatementAstNode b;
+        bool isBreak;
+
+        node.accept(this);
+
+        if (node.statement &&
+            (node.statement.statementKind == StatementKind.skBreak ||
+             node.statement.statementKind == StatementKind.skContinue))
+        {
+            fc = node.statement.statement.breakStatement;
+            isBreak = node.statement.statementKind == StatementKind.skBreak;
+        }
+        if (fc && fc.expression)
+        {
+            if (_inBlock is null)
+            {
+                b = new BlockStatementAstNode;
+                node.statement.statementKind = StatementKind.skBlock;
+            }
+            else b = _inBlock;
+            node.statement.statement.block = b;
+            b.declarationsOrStatements = new DeclarationsOrStatementsAstNode;
+            DeclarationOrStatementAstNode dos1 = new DeclarationOrStatementAstNode;
+            DeclarationOrStatementAstNode dos2 = new DeclarationOrStatementAstNode;
+            b.declarationsOrStatements.items = [dos1, dos2];
+            // expression
+            StatementAstNode s1 = new StatementAstNode;
+            s1.statementKind = StatementKind.skExpression;
+            s1.statement.expression = new ExpressionStatementAstNode;
+            s1.statement.expression.assignExpression = fc.expression;
+            fc.expression = null;
+            dos1.statement = s1;
+            // break / continue
+            StatementAstNode s2 = new StatementAstNode;
+            if (isBreak)
+            {
+                s2.statementKind = StatementKind.skBreak;
+                s2.statement.breakStatement = cast(BreakStatementAstNode) fc;
+            }
+            else
+            {
+                s2.statementKind = StatementKind.skContinue;
+                s2.statement.continueStatement = cast(ContinueStatementAstNode) fc;
+            }
+            dos2.statement = s2;
+        }
     }
 }
 
@@ -173,5 +262,94 @@ unittest
     assertDesugaredAs("unit a; protection(public)",
 "unit a;
 protection(public)");
+}
+
+unittest
+{
+    assertDesugaredAs(
+"unit a;
+function foo()
+{
+    if (true)
+        break afterCall();
+}",
+"unit a;
+function foo()
+{
+    if (true)
+    {
+        afterCall();
+        break;
+    }
+}");
+}
+
+unittest
+{
+    assertDesugaredAs(
+"unit a;
+function foo()
+{
+    if (true)
+        continue afterCall();
+}",
+"unit a;
+function foo()
+{
+    if (true)
+    {
+        afterCall();
+        continue;
+    }
+}");
+}
+
+unittest
+{
+    assertDesugaredAs(
+"unit a;
+function foo()
+{
+    if (true) {
+        continue afterCall();
+    } else {
+        break afterCall();
+    }
+}",
+"unit a;
+function foo()
+{
+    if (true)
+    {
+        afterCall();
+        continue;
+    }
+    else
+    {
+        afterCall();
+        break;
+    }
+}");
+}
+
+unittest
+{
+    assertDesugaredAs(
+"unit a;
+function foo()
+{
+    if (const auto a = true) {
+        continue afterCall();
+    }
+}",
+"unit a;
+function foo()
+{
+    if (const auto a = true)
+    {
+        afterCall();
+        continue;
+    }
+}");
 }
 
