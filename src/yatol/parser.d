@@ -383,6 +383,34 @@ private:
     }
 
     /**
+     * Parses the unambiguous form of a Type.
+     *
+     * Returns:
+     *      On success a $(D TypeAstNode) otherwise $(D null).
+     */
+    TypeAstNode parseUnambiguousType()
+    {
+        assert(current.isTokLeftParen);
+        advance();
+        TypeAstNode result = parseType();
+        if (!current.isTokRightParen)
+        {
+            expected(TokenType.rightParen);
+            return null;
+        }
+        advance();
+        if (current.isTokMul || current.isTokLeftSquare)
+        {
+            if (TypeModifierAstNode mod = parseTypeModifier())
+            {
+                result.modifier = mod;
+            }
+            else return null;
+        }
+        return result;
+    }
+
+    /**
      * Parses a Type.
      *
      * Returns:
@@ -390,20 +418,22 @@ private:
      */
     TypeAstNode parseType()
     {
-        TypeAstNode result = new TypeAstNode;
-        result.position = current.position;
-        bool isBetweenParens;
+        TypeAstNode result;
         if (current.isTokAuto)
         {
+            result = new TypeAstNode;
+            result.position = current.position;
             result.autoOrBasicType = current();
             advance();
             return result;
         }
-        else if (current.isTokLeftParen)
+        if (current.isTokLeftParen)
         {
-            isBetweenParens = true;
-            advance();
+            return parseUnambiguousType();
         }
+
+        result = new TypeAstNode;
+        result.position = current.position;
         if (current.isTokBasicType)
         {
             result.autoOrBasicType = current();
@@ -442,20 +472,6 @@ private:
                     return null;
                 }
             }
-        }
-        if (current.isTokRightParen)
-        {
-            if (!isBetweenParens)
-            {
-                parseError("invalid type delimiter, missing left paren");
-                return null;
-            }
-            else advance();
-        }
-        else if (isBetweenParens && !current.isTokRightParen)
-        {
-            parseError("invalid type delimiter, missing right paren");
-            return null;
         }
         if (current.isTokMul || current.isTokLeftSquare)
         {
@@ -5887,9 +5903,13 @@ unittest // issue #1 ambiguous type modifiers when return is a func
     });
     assertNotParse(q{
         unit a;
+        const (s8)[[] a;
+    });
+    assertParse(q{
+        unit a;
         const (s8[]) a;
     });
-    assertNotParse(q{
+    assertParse(q{
         unit a;
         const (auto) a;
     });

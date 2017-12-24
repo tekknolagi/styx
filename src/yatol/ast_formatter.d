@@ -23,6 +23,7 @@ private:
     Appender!(char[]) _source;
     char[1024] _indentText = ' ';
     size_t _indentLevel;
+    bool _formattingFunctionReturn;
 
     void growIndentLevel()
     {
@@ -321,9 +322,11 @@ public:
         _source ~= ")";
         if (node.returnType)
         {
-            _source ~= ":(";
+            const bool old = _formattingFunctionReturn;
+            _formattingFunctionReturn = true;
+            _source ~= ":";
             visit(node.returnType);
-            _source ~= ")";
+            _formattingFunctionReturn = old;
         }
         if (node.firstBodyToken)
         {
@@ -688,9 +691,20 @@ public:
 
     override void visit(TypeAstNode node)
     {
+        if (_formattingFunctionReturn)
+            _source ~= "(";
         if (node.autoOrBasicType)
             _source ~= node.autoOrBasicType.text;
-        node.accept(this);
+        else if (node.qualifiedType)
+            visit(node.qualifiedType);
+        else if (node.functionType)
+            visit(node.functionType);
+        if (node.templateInstance)
+            visit(node.templateInstance);
+        if (_formattingFunctionReturn)
+            _source ~= ")";
+        if (node.modifier)
+            visit(node.modifier);
     }
 
     override void visit(TypeModifierAstNode node)
@@ -1438,7 +1452,7 @@ unittest
     string c = "unit a; aka funcPtr = static function _ (const s32 a, b):  s64[ ]   ;";
     string e =
 "unit a;
-aka funcPtr = static function _(const s32 a, b):(s64[]);
+aka funcPtr = static function _(const s32 a, b):(s64)[];
 ";
     test(c, e);
 }
@@ -1455,10 +1469,21 @@ aka funcPtr = static function _(const s32 a; var s8 b);
 
 unittest
 {
-    string c = "unit a; aka funcPtr = function _ (const s32 a, b):  s64[ ] ;";
+    string c = "unit a; aka funcPtr = function _ (const s32 a, b):  s64[ ];";
     string e =
 "unit a;
-aka funcPtr = function _(const s32 a, b):(s64[]);
+aka funcPtr = function _(const s32 a, b):(s64)[];
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c =
+"unit a; aka FuncT = function _():(function _() : s8*)[] ;";
+    string e =
+"unit a;
+aka FuncT = function _():(function _():(s8)*)[];
 ";
     test(c, e);
 }

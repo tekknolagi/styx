@@ -264,9 +264,9 @@ Yatol:
 
     Type    < TypeIdentifier TypeModifiers?
             / LeftParen TypeIdentifier RightParen TypeModifiers? # the "unambiguous form"
-            / Auto
 
     TypeIdentifier  < BasicType
+                    / Auto
                     / IdentifierChain TemplateInstance?
                     / FunctionType
 
