@@ -17,7 +17,7 @@ private string astNodesClasses()
     mixin("alias m = " ~ __MODULE__ ~ ";");
     foreach (member; __traits(allMembers, m))
     {
-        if (member.length > 6 && member[$-7..$] == "AstNode")
+        static if (member.length > 6 && member[$-7..$] == "AstNode")
             result ~= member ~ ",\n";
     }
     return result ~ ");";
@@ -82,7 +82,6 @@ class AstVisitor
     void visit(ForeachVariableDeclarationAstNode node){node.accept(this);}
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
     void visit(FunctionParameterGroupAstNode node){node.accept(this);}
-    void visit(FunctionPointerTypeAstNode node){node.accept(this);}
     void visit(IdentifierChainAstNode node){node.accept(this);}
     void visit(IfConditionVariableAstNode node){node.accept(this);}
     void visit(IfElseStatementAstNode node){node.accept(this);}
@@ -177,24 +176,6 @@ final class IdentifierChainAstNode: AstNode
 {
     /// The identifiers.
     Token*[] chain;
-}
-
-/// FunctionType
-final class FunctionPointerTypeAstNode: AstNode
-{
-    /// Indicates wether the function type needs a context.
-    bool isStatic;
-    /// The function parameters;
-    FunctionParameterGroupAstNode[] parameters;
-    /// The function return
-    TypeAstNode returnType;
-    ///
-    override void accept(AstVisitor visitor)
-    {
-        parameters.each!(a => visitor.visit(a));
-        if (returnType)
-            visitor.visit(returnType);
-    }
 }
 
 /// FunctionDeclaration
@@ -1171,7 +1152,7 @@ final class TypeAstNode: AstNode
     /// The template specialization
     TemplateInstanceAstNode templateInstance;
     /// If the type is a function, then assigned.
-    FunctionPointerTypeAstNode functionType;
+    FunctionDeclarationAstNode functionType;
     /// The first modifier.
     TypeModifierAstNode modifier;
     ///

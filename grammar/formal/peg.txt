@@ -90,12 +90,12 @@ Yatol:
 ################################################################################
 # Function declaration
 
-    FunctionDeclaration < Static? Function Identifier TemplateParameters? LeftParen FunctionParameters? RightParen Cast? FunctionBody
+    FunctionType < Static? Function Identifier TemplateParameters? LeftParen FunctionParameters? RightParen Cast?
+
+    FunctionDeclaration <  FunctionType FunctionBody
 
     FunctionBody < LeftCurly DeclarationOrStatement* RightCurly
                  / Semicolon
-
-    FunctionPointerType < Static? Function Mul LeftParen FunctionParameters? RightParen Cast?
 
     FunctionParameters < FunctionParameterGroup (Semicolon FunctionParameterGroup)*
 
@@ -268,7 +268,7 @@ Yatol:
 
     TypeIdentifier  < BasicType
                     / IdentifierChain TemplateInstance?
-                    / FunctionPointerType
+                    / FunctionType
 
     TypeModifiers < TypeModifier TypeModifiers?
 

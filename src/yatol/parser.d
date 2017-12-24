@@ -411,7 +411,7 @@ private:
         }
         else if (current.isTokFunction || current.isTokStatic)
         {
-            result.functionType = parseFunctionType();
+            result.functionType = parseFunctionDeclaration(true);
             if (!result.functionType)
             {
                 parseError("invalid function type");
@@ -1397,75 +1397,6 @@ private:
     }
 
     /**
-     * Parses a FunctionType.
-     *
-     * Returns:
-     *      On success a $(D FunctionTypeAstNode) otherwise $(D null).
-     */
-    FunctionPointerTypeAstNode parseFunctionType()
-    {
-        const bool isStatic = current.isTokStatic;
-        if (isStatic)
-        {
-            advance();
-        }
-        if (!current.isTokFunction)
-        {
-            expected(TokenType.function_);
-            return null;
-        }
-        advance();
-        if (!current.isTokMul)
-        {
-            expected(TokenType.mul);
-            return null;
-        }
-        advance();
-        if (!current.isTokLeftParen)
-        {
-            expected(TokenType.leftParen);
-            return null;
-        }
-        advance();
-        FunctionPointerTypeAstNode result = new FunctionPointerTypeAstNode;
-        result.position = current.position;
-        result.isStatic = isStatic;
-        if (!current.isTokRightParen) while (true)
-        {
-            if (FunctionParameterGroupAstNode fpg = parseFunctionParameterGroup())
-            {
-                result.parameters ~= fpg;
-                if (!current.isTokSemicolon)
-                    break;
-                else
-                    advance();
-            }
-            else
-            {
-                break;
-            }
-        }
-        if (!current.isTokRightParen)
-        {
-            expected(TokenType.rightParen);
-            return null;
-        }
-        advance();
-        if (current.isTokColon)
-        {
-            advance();
-            if (TypeAstNode returnType = parseType())
-                result.returnType = returnType;
-            else
-            {
-                parseError("expected function return type after colon");
-                return null;
-            }
-        }
-        return result;
-    }
-
-    /**
      * Parses an AtAttribute.
      *
      * Returns:
@@ -1493,7 +1424,7 @@ private:
      * Returns:
      *      On success a $(D FunctionDeclarationAstNode) otherwise $(D null).
      */
-    FunctionDeclarationAstNode parseFunctionDeclaration()
+    FunctionDeclarationAstNode parseFunctionDeclaration(bool asType)
     {
         FunctionDeclarationAstNode result = new FunctionDeclarationAstNode;
         result.position = current.position;
@@ -1502,7 +1433,11 @@ private:
             result.isStatic = true;
             advance();
         }
-        assert(current.isTokFunction);
+        if (!current.isTokFunction)
+        {
+            expected(TokenType.function_);
+            return null;
+        }
         advance();
         if (!current.isTokIdentifier)
         {
@@ -1557,8 +1492,10 @@ private:
                 return null;
             }
         }
-
-
+        if (asType)
+        {
+            return result;
+        }
         if (!current.isTokLeftCurly && !current.isTokSemicolon)
         {
             parseError("expected `;` or `{` to skip or start the function body");
@@ -3192,7 +3129,7 @@ private:
         }
         case function_:
         {
-            if (FunctionDeclarationAstNode decl = parseFunctionDeclaration())
+            if (FunctionDeclarationAstNode decl = parseFunctionDeclaration(false))
             {
                 DeclarationAstNode result = new DeclarationAstNode;
                 result.declarationKind = DeclarationKind.dkFunction;
@@ -3420,7 +3357,7 @@ unittest
         class Bat {}
         class Cow { class Fox {} }
     virtual unit b;
-    function bee(s32[] p1): function*(): static function*(): s8[]
+    function bee(s32[] p1): function _(): static function _(): s8[]
     {
         // function that returns a function that returns an s8 array
     }
@@ -3479,7 +3416,7 @@ unittest
         function a(s64 param): auto
         {}
 
-        aka Prototype = function*(s64 p): s64;
+        aka Prototype = function _(s64 p): s64;
 
         const auto a = (b[0].b[1].b[2])(8);
 
@@ -3867,12 +3804,12 @@ unittest
         function bar(u32 a,b,c; var u64 d){}
         function bar(u32 a,b,c; u64 d): u64;
         function bar(u32 a,b,c; u64 d): u64 {}
-        function bar(function*(u32 a) callback): function*();
-        var function *(const u32 a,b,c; u64 d) a;
-        var function *(u32 a,b,c; var u64 d) a;
-        var function *(u32 a,b,c; u64 d): u64 a;
-        var function *(u32 a,b,c; u64 d): u64 a;
-        var function *(function*(u32 a) callback): function*() a;
+        function bar(function _(u32 a) callback): function _();
+        var function _(const u32 a,b,c; u64 d) a;
+        var function _(u32 a,b,c; var u64 d) a;
+        var function _(u32 a,b,c; u64 d): u64 a;
+        var function _(u32 a,b,c; u64 d): u64 a;
+        var function _(function _(u32 a) callback): function _() a;
     });
 }
 
@@ -4294,11 +4231,11 @@ unittest // function and function type decl
     ");
     assertNotParse(q{
         unit a;
-        var function* foo(;
+        var function _foo(;
     });
     assertNotParse(q{
         unit a;
-        var function* foo;
+        var function  foo;
     });
     assertNotParse(q{
         unit a;
@@ -4310,11 +4247,11 @@ unittest // function and function type decl
     });
     assertNotParse(q{
         unit a;
-        var function *(;
+        var function _(;
     });
     assertNotParse(q{
         unit a;
-        var function *():;
+        var function _():;
     });
     assertNotParse(q{
         unit a;
@@ -5958,11 +5895,11 @@ unittest // issue #1 ambiguous type modifiers when return is a func
     });
     assertParse(q{
         unit a;
-        const (function*():s8[])[] a;
+        const (function _():s8[])[] a;
     });
     assertParse(q{
         unit a;
-    var function*():(function*():s8[])[] a;
+    var function _():(function _():s8[])[] a;
     });
 }
 

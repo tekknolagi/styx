@@ -76,7 +76,7 @@ enum source1 = "#!yatol --ast
         a = (b[c](param0, param1 + stuff):u32):u64;
         a = b[c](param0).b[c](param0);
         var auto a = 8;
-        aka FuncPtr = function*();
+        aka FuncPtr = (function fun())*;
         const auto a = (b[0].b[1].b[2])(8);
         if (const s8 a = call())
             do();
@@ -91,8 +91,8 @@ enum source1 = "#!yatol --ast
             }
         }
 
-        var function*():s8 a;
-        var function*():(function*():s8[])[] arrayOfFuncReturnArrayOfS8;
+        var function _():s8 a;
+        var function _():(function _():s8[])[] arrayOfFuncReturnArrayOfS8;
 
         const auto a = [];
         const auto a = [1,2];

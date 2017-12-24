@@ -64,7 +64,7 @@ private:
 
     void pullVersionDependantStuff(DeclarationsOrStatementsAstNode doss)
     {
-        while (true)
+        if (doss) while (true)
         {
             import std.algorithm.searching : countUntil;
             ptrdiff_t p = doss.items.countUntil!(a => a.statement !is null
@@ -85,7 +85,7 @@ private:
 
     void pullVersionDependantStuff(DeclarationsAstNode ds)
     {
-        while (true)
+        if (ds) while (true)
         {
             import std.algorithm.searching : countUntil;
             ptrdiff_t p = ds.items.countUntil!(a => a.declarationKind == DeclarationKind.dkVersion);

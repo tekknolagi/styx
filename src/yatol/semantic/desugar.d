@@ -157,7 +157,7 @@ class DesugarVisitor: AstVisitor
 }
 
 /**
- * Asserts that some code can be parsed, desigared and finally formatted
+ * Asserts that some code can be parsed, desugared and finally formatted
  * in a specific way.
  *
  * Params:

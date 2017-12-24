@@ -325,19 +325,22 @@ public:
             visit(node.returnType);
             _source ~= ")";
         }
-        if (node.firstBodyToken.text == ";")
-            _source ~= ";\n";
-        else
+        if (node.firstBodyToken)
         {
-            _source ~= "\n";
-            indent();
-            _source ~= "{\n";
-            growIndentLevel();
-            if (node.declarationsOrStatements)
-                visit(node.declarationsOrStatements);
-            shrinkIndentLevel();
-            indent();
-            _source ~= "}\n";
+            if (node.firstBodyToken.text == ";")
+                _source ~= ";\n";
+            else
+            {
+                _source ~= "\n";
+                indent();
+                _source ~= "{\n";
+                growIndentLevel();
+                if (node.declarationsOrStatements)
+                    visit(node.declarationsOrStatements);
+                shrinkIndentLevel();
+                indent();
+                _source ~= "}\n";
+            }
         }
     }
 
@@ -351,27 +354,6 @@ public:
             visit(node.type);
         space();
         _source ~= node.variableList.tokenChainText(false, ", ");
-    }
-
-    override void visit(FunctionPointerTypeAstNode node)
-    {
-        if (node.isStatic)
-            _source ~= "static function*(";
-        else
-            _source ~= "function*(";
-        foreach(i, p; node.parameters)
-        {
-            visit(p);
-            if (i != node.parameters.length - 1)
-                _source ~= "; ";
-        }
-        _source ~= ")";
-        if (node.returnType)
-        {
-            _source ~= ":(";
-            visit(node.returnType);
-            _source ~= ")";
-        }
     }
 
     override void visit(IdentifierChainAstNode node)
@@ -1453,30 +1435,30 @@ static function foo(const s32 a; var s32 b);
 
 unittest
 {
-    string c = "unit a; aka funcPtr = static function * (const s32 a, b):  s64[ ]   ;";
+    string c = "unit a; aka funcPtr = static function _ (const s32 a, b):  s64[ ]   ;";
     string e =
 "unit a;
-aka funcPtr = static function*(const s32 a, b):(s64[]);
+aka funcPtr = static function _(const s32 a, b):(s64[]);
 ";
     test(c, e);
 }
 
 unittest
 {
-    string c = "unit a; aka funcPtr =  static function * (const s32 a; var s8 b);";
+    string c = "unit a; aka funcPtr =  static function _ (const s32 a; var s8 b);";
     string e =
 "unit a;
-aka funcPtr = static function*(const s32 a; var s8 b);
+aka funcPtr = static function _(const s32 a; var s8 b);
 ";
     test(c, e);
 }
 
 unittest
 {
-    string c = "unit a; aka funcPtr = function * (const s32 a, b):  s64[ ] ;";
+    string c = "unit a; aka funcPtr = function _ (const s32 a, b):  s64[ ] ;";
     string e =
 "unit a;
-aka funcPtr = function*(const s32 a, b):(s64[]);
+aka funcPtr = function _(const s32 a, b):(s64[]);
 ";
     test(c, e);
 }
