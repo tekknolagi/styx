@@ -920,6 +920,11 @@ void test(const(char)[] code, const(char)[] expected,
     import std.string;
     import yatol.utils;
 
+    if (lexAndParse(expected, file, line) is null)
+    {
+        throw new AssertError("the expected code is invalid", file, line);
+    }
+
     UnitContainerAstNode uc = lexAndParse(code, file, line);
 
     if (uc is null)
@@ -949,6 +954,8 @@ unittest
     import std.exception, core.exception;
     assertThrown!AssertError(test(" ?? bbzz", "woops"));
     assertThrown!AssertError(test("unit a ;", "woops"));
+    assertThrown!AssertError(test("woops", "unit a;"));
+    assertThrown!AssertError(test("unit a ;", "unit a   ;"));
 }
 
 unittest
