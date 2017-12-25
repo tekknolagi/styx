@@ -1486,11 +1486,20 @@ aka funcPtr = function _(const s32 a, b):(s64)[];
 
 unittest
 {
-    string c =
-"unit a; aka FuncT = function _():(function _() : s8*)[] ;";
+    string c = "unit a; aka FuncT = function _():(function _() : s8*)[] ;";
     string e =
 "unit a;
 aka FuncT = function _():(function _():(s8)*)[];
+";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; aka FuncT = function< T >()  : T [ ] ;";
+    string e =
+"unit a;
+aka FuncT = function <T>():(T)[];
 ";
     test(c, e);
 }

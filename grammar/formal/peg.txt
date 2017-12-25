@@ -90,7 +90,7 @@ Yatol:
 ################################################################################
 # Function declaration
 
-    FunctionType < Static? Function Identifier TemplateParameters? LeftParen FunctionParameters? RightParen Cast?
+    FunctionType < Static? Function Identifier? TemplateParameters? LeftParen FunctionParameters? RightParen Cast?
 
     FunctionDeclaration <  FunctionType FunctionBody
 

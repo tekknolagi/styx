@@ -405,6 +405,11 @@ private:
         advance();
         if (current.isTokMul || current.isTokLeftSquare)
         {
+            if (result.modifier)
+            {
+                parseError("type modifiers already specified before right paren");
+                return null;
+            }
             if (TypeModifierAstNode mod = parseTypeModifier())
             {
                 result.modifier = mod;
@@ -1461,11 +1466,17 @@ private:
         advance();
         if (!current.isTokIdentifier)
         {
-            expected(TokenType.identifier);
-            return null;
+            if (!asType)
+            {
+                expected(TokenType.identifier);
+                return null;
+            }
         }
-        result.name = current();
-        advance();
+        else
+        {
+            result.name = current();
+            advance();
+        }
         if (current.isTokLesser)
         {
             if (TemplateParametersAstNode tp = parseTemplateParameters())
@@ -5925,6 +5936,14 @@ unittest // issue #1 ambiguous type modifiers when return is a func
     assertParse(q{
         unit a;
     var function _():(function _():s8[])[] a;
+    });
+    assertNotParse(q{
+        unit a;
+    var function ():(s8[])[] a;
+    });
+    assertParse(q{
+        unit a;
+    var function ():(s8[]) a;
     });
 }
 
