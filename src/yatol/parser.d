@@ -297,7 +297,11 @@ private:
                 {
                     lastMd.kind = ModifierKind.arrayStatDim;
                     lastMd.staticDimension = e;
-                    assert (current.isTokRightSquare);
+                    if (!current.isTokRightSquare)
+                    {
+                        expected(TokenType.rightSquare);
+                        return null;
+                    }
                     advance();
                 }
                 else
@@ -2847,6 +2851,7 @@ private:
         {
         case semiColon:
         {
+            warning("empty statement");
             StatementAstNode result = new StatementAstNode;
             result.statementKind = StatementKind.skEmpty;
             result.statement.emptyStatement = new EmptyStatementAstNode;
@@ -5903,7 +5908,7 @@ unittest // issue #1 ambiguous type modifiers when return is a func
     });
     assertNotParse(q{
         unit a;
-        const (s8)[[] a;
+        const (s8)[ a;
     });
     assertParse(q{
         unit a;
