@@ -2114,7 +2114,7 @@ private:
         with(TokenType)
         if (exp)
         {
-            if (!current.isTokOperator)
+            if (!current.isTokBinaryOperator)
             {
                 unexpected();
                 return null;

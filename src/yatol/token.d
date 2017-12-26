@@ -13,7 +13,10 @@ struct Position
     size_t column;
 }
 
-/// Enumerates the different token
+/**
+ * Enumerates the different token.
+ * Declaration order indicates the precedence.
+ */
 enum TokenType : ubyte
 {
     invalid,
@@ -109,17 +112,7 @@ enum TokenType : ubyte
     xorEqual,
     lshiftEqual,
     rshiftEqual,
-    // relational
-    equalEqual,
-    notEqual,
-    greater,
-    greaterEqual,
-    lesser,
-    lesserEqual,
-    // logical
-    andAnd,
-    orOr,
-    // operators
+    // arithmetic, bitwise operators
     mul,
     div,
     mod,
@@ -131,6 +124,16 @@ enum TokenType : ubyte
     lShift,
     rShift,
     xor,
+    // relational operators
+    equalEqual,
+    notEqual,
+    greater,
+    greaterEqual,
+    lesser,
+    lesserEqual,
+    // logical operators
+    andAnd,
+    orOr,
     // postfixes
     minusMinus,
     plusPlus,
@@ -236,17 +239,7 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     "^=",
     "<<=",
     ">>=",
-    // relational
-    "==",
-    "!=",
-    ">",
-    ">=",
-    "<",
-    "<=",
-    // logical
-    "&&",
-    "||",
-    // operators
+    // arithmetic, bitwise operators
     "*",
     "/",
     "%",
@@ -258,7 +251,17 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     "<<",
     ">>",
     "^",
-    //
+    // relational operators
+    "==",
+    "!=",
+    ">",
+    ">=",
+    "<",
+    "<=",
+    // logical operators
+    "&&",
+    "||",
+    // postfixes
     "--",
     "++",
 ];
@@ -289,10 +292,10 @@ static immutable TokenType firstBasicType = TokenType.bool_;
 /// The $(D TokenType) of the last keyword.
 static immutable TokenType lastBasicType = TokenType.ureg;
 
-/// The $(D TokenType) of the first operator.
-static immutable TokenType firstOperator = TokenType.equalEqual;
-/// The $(D TokenType) of the last operator.
-static immutable TokenType lastOperator = TokenType.xor;
+/// The $(D TokenType) of the first binary operator.
+static immutable TokenType firstBinaryOperator = TokenType.mul;
+/// The $(D TokenType) of the last binary operator.
+static immutable TokenType lastBinaryOperator = TokenType.orOr;
 
 /// The $(D TokenType) of the first number literal.
 static immutable TokenType firstNumberLiteral = TokenType.intLiteral;
@@ -305,8 +308,8 @@ static immutable TokenType firstAssignOperator = TokenType.equal;
 static immutable TokenType lastAssignOperator = TokenType.rshiftEqual;
 
 /**
- * Hashset that allows to distinguish efficiently the identifiers
- * from the keywords.
+ * Hashset that allows to differenciate efficiently betwee the identifiers
+ * and the keywords.
  */
 struct Keywords
 {
@@ -359,8 +362,8 @@ public:
      * Support for the $(D in) operator.
      *
      * Returns: $(D TokenType.identifier) if the input argument is not a
-     *  a keyword otherwise the $(D TokenType) that matches to the  keyword
-     *  passed as argument.
+     *      a keyword otherwise the $(D TokenType) that matches to the  keyword
+     *      passed as argument.
      */
     static TokenType opBinaryRight(string op: "in")(const char[] word)
     {
@@ -371,7 +374,7 @@ public:
         return result;
     }
 
-    /// Returns: true of the input argugment is a keyword.
+    /// Returns: $(D true) of the input argugment is a keyword.
     static bool isKeyword(const char[] word)
     {
         return opBinaryRight!"in"(word) != TokenType.identifier;
@@ -569,10 +572,13 @@ public:
         return _start[0.._length];
     }
 
-    /// Conveniance function used by the parser.
-    bool isTokOperator() const
+    /**
+     * Returns: A boolean indicating if the token is a binay operator.
+     * This includes arithmetic, bitwsie but also logical and relational operators.
+     */
+    bool isTokBinaryOperator() const
     {
-        return firstOperator <= type && type <= lastOperator ||
+        return firstBinaryOperator <= type && type <= lastBinaryOperator ||
             type == TokenType.in_;
     }
 

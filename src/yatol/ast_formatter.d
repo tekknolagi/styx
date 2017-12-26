@@ -1816,4 +1816,31 @@ unittest
     test(c, e);
 }
 
+unittest
+{
+    string c = "unit a; function foo(){ if (a + b > c + d){} }";
+    string e =
+"unit a;
+function foo()
+{
+    if (((a + b) > (c + d)))
+    {
+    }
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){ if (a && b > c){} }";
+    string e =
+"unit a;
+function foo()
+{
+    if ((a && (b > c)))
+    {
+    }
+}";
+    test(c, e);
+}
 
