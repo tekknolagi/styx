@@ -418,29 +418,25 @@ public:
     /// Advances the iterator.
     void popFront()
     {
-        import std.range: popFront, front, empty;
-        popFront(_tokens);
-
+        _tokens = _tokens[1..$];
         static if (TokenTypes.length)
         {
             foreach(TokenType t; TokenTypes)
-                while (!empty(_tokens) && t == front(_tokens).type)
-                    popFront(_tokens);
+                while (_tokens.length > 0 && t == _tokens[0].type)
+                    _tokens = _tokens[1..$];
         }
     }
 
     /// Returns: The current token.
     ref const(Token) front() const
     {
-        import std.range: front;
-        return front(_tokens);
+        return _tokens[0];
     }
 
     /// Indicates wether no tokens are available.
     bool empty() const
     {
-        import std.range: empty;
-        return this.front().type == TokenType.eof;
+        return _tokens[0].type == TokenType.eof;
     }
 }
 
