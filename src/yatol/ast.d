@@ -468,8 +468,8 @@ final class VariableDeclarationAstNode: AttributedDeclaration
 {
     /// Indicates if the variables in the list are static.
     bool isStatic;
-    /// Indicates if the variables in the list are constants.
-    bool isConst;
+    /// Indicates if the variables storage class.
+    Token* storageClass;
     /// The type of the variables in the list.
     TypeAstNode type;
     /// The list of variables.

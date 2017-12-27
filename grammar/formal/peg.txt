@@ -112,7 +112,7 @@ Yatol:
 ################################################################################
 # StorageClass
 
-    StorageClass < Var / Const
+    StorageClass < Var / Const / Init
 
 ################################################################################
 # Initializer
@@ -516,4 +516,5 @@ Yatol:
     True    <- "true"
     False   <- "false"
     Super   <- "super"
+    Init    <- "init"
 

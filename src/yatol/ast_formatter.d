@@ -768,9 +768,8 @@ public:
         node.visitAtAttributes(this);
         if (node.isStatic)
             _source ~= "static ";
-        if (node.isConst)
-            _source ~= "const ";
-        else _source ~= "var ";
+        if (node.storageClass)
+            _source ~= node.storageClass.text ~ " ";
         if (node.type)
             visit(node.type);
         space();
@@ -1767,12 +1766,12 @@ function foo()
 
 unittest
 {
-    string c = "unit a; @a function foo() {@b@c const auto d = 0;}";
+    string c = "unit a; @a function foo() {@b@c init auto d = 0;}";
     string e =
 "unit a;
 @a function foo()
 {
-    @b @c const auto d = 0;
+    @b @c init auto d = 0;
 }";
     test(c, e);
 }

@@ -1615,12 +1615,6 @@ private:
             }
             else return null;
         }
-        /*if (!current.isTokComma && !current.isTokSemicolon)
-        {
-            parseError("expected colon or semicolon");
-            return null;
-        }
-        else*/
         return result;
     }
 
@@ -1634,31 +1628,26 @@ private:
     {
         VariableDeclarationAstNode result = new VariableDeclarationAstNode;
         result.position = current.position();
-        bool isStatic, isConst;
+        bool isStatic;
         if (current.isTokStatic)
         {
             isStatic = true;
             advance();
         }
-        if (current.isTokConst)
+        if (current.isTokStorageClass)
         {
-            isConst = true;
-            advance();
-        }
-        else if (current.isTokVar)
-        {
+            result.storageClass = current;
             advance();
         }
         else
         {
-            expected(TokenType.var);
+            parseError("expected a storage class");
             return null;
         }
         if (TypeAstNode t = parseType())
         {
             result.type = t;
             result.isStatic = isStatic;
-            result.isConst = isConst;
             result.position = current.position;
             while (true)
             {
@@ -2354,7 +2343,7 @@ private:
         assert(current.isTokStorageClass);
         ForeachVariableDeclarationAstNode result = new ForeachVariableDeclarationAstNode;
         result.position = current.position;
-        result.isConst = current.isTokConst;
+        result.isConst = !current.isTokVar;
         advance();
         if (TypeAstNode t = parseType())
         {
@@ -2385,7 +2374,7 @@ private:
         assert(current.isTokStorageClass);
         IfConditionVariableAstNode result = new IfConditionVariableAstNode;
         result.position = current.position();
-        result.isConst = current.isTokConst;
+        result.isConst = !current.isTokVar;
         advance();
         if (TypeAstNode t = parseType())
         {
@@ -3194,7 +3183,7 @@ private:
             }
             else return null;
         }
-        case var, const_:
+        case var, const_, init:
         {
             if (VariableDeclarationAstNode vd = parseVariableDeclaration())
             {

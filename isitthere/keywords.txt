@@ -14,6 +14,7 @@ function
 if
 import
 in
+init
 interface
 is
 label

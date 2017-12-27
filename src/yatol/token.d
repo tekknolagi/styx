@@ -47,6 +47,7 @@ enum TokenType : ubyte
     if_,
     import_,
     in_,
+    init,
     interface_,
     is_,
     label,
@@ -174,6 +175,7 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     "if",
     "import",
     "in",
+    "init",
     "interface",
     "is",
     "label",
@@ -308,7 +310,7 @@ static immutable TokenType firstAssignOperator = TokenType.equal;
 static immutable TokenType lastAssignOperator = TokenType.rshiftEqual;
 
 /**
- * Hashset that allows to differenciate efficiently betwee the identifiers
+ * Hashset that allows to differenciate efficiently between the identifiers
  * and the keywords.
  */
 struct Keywords
@@ -317,13 +319,13 @@ struct Keywords
 private:
 
     /*
-        rendered on 2017-Dec-14 07:20:54.5652295 by IsItThere.
+        rendered on 2017-Dec-27 02:24:11.7556971 by IsItThere.
          - PRNG seed: 6574
          - map length: 128
          - case sensitive: true
     */
 
-    static const string[128] _words = ["", "", "", "", "", "", "", "is", "", "bool", "", "version", "", "union", "", "", "struct", "enum", "", "interface", "", "f64", "", "ureg", "", "", "u32", "return", "", "", "s64", "unit", "", "const", "true", "", "", "", "", "finally", "u8", "super", "", "", "", "", "", "function", "", "static", "u16", "", "", "", "while", "", "switch", "", "", "", "", "", "var", "", "", "", "", "try", "", "break", "assert", "", "", "", "template", "", "", "import", "", "auto", "", "throw", "f32", "", "", "label", "", "", "sreg", "", "", "s32", "else", "u64", "null", "", "", "", "in", "foreach", "", "", "", "protection", "", "s8", "", "", "", "", "", "", "", "", "class", "s16", "", "", "on", "", "virtual", "false", "aka", "", "", "", "if", "continue"];
+    static const string[128] _words = ["", "", "", "", "", "", "", "is", "", "bool", "", "version", "", "union", "", "", "struct", "enum", "", "interface", "", "f64", "", "ureg", "", "", "u32", "return", "", "", "s64", "unit", "", "const", "true", "", "", "", "", "finally", "u8", "super", "", "", "", "", "", "function", "", "static", "u16", "", "", "", "while", "", "switch", "", "", "", "", "", "var", "", "", "", "", "try", "", "break", "assert", "", "", "", "template", "", "", "import", "", "auto", "", "throw", "f32", "", "", "label", "", "", "sreg", "", "", "s32", "else", "u64", "null", "", "", "", "in", "foreach", "", "", "", "protection", "", "s8", "", "", "", "", "", "", "", "", "class", "s16", "", "", "on", "", "virtual", "false", "aka", "init", "", "", "if", "continue"];
 
     static const ubyte[256] _coefficients = [123, 181, 111, 33, 71, 193, 127, 91, 64, 172, 241, 11, 206, 96, 244, 187, 22, 254, 154, 103, 243, 60, 74, 9, 91, 32, 111, 115, 151, 60, 7, 132, 3, 210, 140, 239, 129, 34, 227, 126, 134, 56, 136, 128, 47, 251, 11, 238, 20, 44, 93, 8, 87, 134, 81, 105, 243, 148, 9, 54, 164, 174, 8, 65, 155, 57, 165, 167, 252, 187, 119, 24, 255, 239, 253, 163, 10, 9, 174, 192, 205, 17, 231, 176, 8, 26, 24, 4, 100, 127, 161, 0, 35, 230, 229, 42, 212, 109, 83, 45, 35, 189, 109, 253, 210, 17, 155, 32, 108, 206, 81, 165, 153, 71, 168, 118, 136, 53, 169, 42, 57, 147, 123, 236, 95, 214, 85, 18, 254, 200, 48, 62, 66, 210, 92, 138, 231, 96, 169, 163, 158, 98, 241, 77, 161, 167, 57, 228, 105, 3, 26, 204, 49, 29, 47, 10, 153, 33, 143, 106, 22, 98, 82, 16, 39, 63, 202, 70, 140, 254, 163, 243, 45, 52, 144, 97, 40, 101, 114, 93, 177, 123, 155, 79, 151, 1, 199, 14, 224, 222, 111, 224, 214, 9, 59, 13, 26, 25, 58, 45, 89, 250, 197, 101, 149, 124, 232, 69, 239, 1, 154, 22, 39, 184, 86, 230, 152, 9, 179, 207, 93, 72, 217, 95, 109, 141, 227, 207, 28, 155, 90, 74, 37, 208, 185, 170, 17, 194, 23, 177, 210, 11, 15, 73, 117, 230, 44, 254, 65, 92, 43, 211, 132, 79, 22, 234];
 
@@ -589,7 +591,7 @@ public:
     bool isTokKeyword() const {return firstKeyword <= type && type <= lastKeyword;}
 
     /// Conveniance function used by the parser.
-    bool isTokStorageClass() const {return isTokVar || isTokConst;}
+    bool isTokStorageClass() const {return isTokVar || isTokConst || isTokInit;}
 
     /// Conveniance function used by the parser.
     bool isTokIdentifier() const {return type == TokenType.identifier;}
@@ -872,6 +874,9 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokTemplate() const {return type == TokenType.template_;}
+
+    /// Conveniance function used by the parser.
+    bool isTokInit() const {return type == TokenType.init;}
 
     /// Conveniance function used by the parser.
     bool isTokUnaryPrefix() const
