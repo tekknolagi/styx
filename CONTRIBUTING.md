@@ -6,7 +6,7 @@ Issues are tracked here: https://github.com/BBasile/yatol/issues.
 
 ### General
 
-Do not put tags beween square brackets, they'll be added later.
+Do not put tags (even beween square brackets), they'll be added after a review.
 
 ```
 ~~[BUG, PARSER] Foo doesn't work after a Bar~~
@@ -27,9 +27,9 @@ Fundamental problems should be detailed and explained.
 
 #### Phobos style
 
-The project follows the Phobos D style (naming, case, braces) to a few exceptions:
+The project follows the Phobos D style (naming, case, braces, 4 spaces, not tans, etc) to a few exceptions:
 
-- Spaces between colons, for example for selective imports or inheritence list, are not required.
+- Space before colons, for example for selective imports or inheritence list, are not required. Spaces after colon are still required, following standard punctuation rules.
 - Top level imports use a single import statement by root package. Elements are indented and start on a new line. Packages are sorted from the lowest to the highest level.
 
 ```d
@@ -41,7 +41,7 @@ import
     yatol.foo, yatol.bar;
 ```
 
-- Always add (or never remove) a last empty line at the end of a module. This prevents a possible annoyance when using editors that support code folding.
+- Always add (or never remove) a last empty line at the end of a module. The last empty line prevents a possible annoyance when using editors that support code folding and when the last block is collapsed.
 
 #### Coding style
 

@@ -78,7 +78,7 @@ Options:
     -h or --help          : prints this message.
     -p or --pipe          : creates a source named "stdin" by piping the input.
     -t or --time          : measures the time spent to compile.
-          --until=<phase> : compiles and stops after <phase>, either "lexing", "parsing" or "semantic".
+          --until=<phase> : stops after <phase>, either "lexing", "parsing" or "semantic".
     -v or --verbose       : verbose output.
           --versions<=ids>: defines the version() identifiers list, comma separated.
 `

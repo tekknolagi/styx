@@ -31,7 +31,7 @@ unittest
 
 mixin(astNodesClasses);
 
-/// Sequence of alias that contains each AST node.
+/// Sequence of aliases that contains each AST node.
 alias AstNodes = AstNodesSeq;
 
 /**
@@ -141,7 +141,6 @@ class AstNode
     /// Set to a non null value if this node has a matching type.
     //@Semantic TypeAstNode type;
 }
-
 
 /**
  * Returns: $(D true) if the node passed as parameter matches to a grammar rule
@@ -630,7 +629,7 @@ final class CallParametersAstNode: AstNode
     }
 }
 
-/// PostfixExpressionAst
+/// PostfixExpression
 final class PostfixExpressionAstNode: AstNode
 {
     /// Assigned if this postfix is a ++/--.
@@ -918,7 +917,7 @@ final class BlockStatementAstNode: AstNode
     }
 }
 
-/// ReturnStatement
+/// Ancestor for BreakStatement, ContinueStatement and ReturnStatement
 class FlowControlBaseNode: AstNode
 {
     /// The expression that gives the return or executed before the break/continue
@@ -941,7 +940,7 @@ final class ContinueStatementAstNode: FlowControlBaseNode
     Token* label;
 }
 
-/// Label
+/// LabelStatement
 final class LabelStatementAstNode: AstNode
 {
     /// The token that identifies the label.
@@ -1059,7 +1058,7 @@ final class DeclarationOrStatementAstNode: AstNode
     }
 }
 
-/// TypedVariableList
+/// FunctionParameterGroup
 final class FunctionParameterGroupAstNode: AstNode
 {
     /// Indicates if the variables are passed by reference.
@@ -1091,7 +1090,7 @@ final class ThrowStatementAstNode: AstNode
     }
 }
 
-/// TryStatement
+/// TryOnFinallyStatement
 final class TryOnFinallyStatementAstNode: AstNode
 {
     /// The statement to try.
