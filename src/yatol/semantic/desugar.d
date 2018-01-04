@@ -62,6 +62,7 @@ class DesugarVisitor: AstVisitor
         TemplateDeclarationAstNode td = new TemplateDeclarationAstNode;
         td.declarations = new DeclarationsAstNode;
         td.name = node.name;
+        td.position = node.position;
         td.templateParameters = node.templateParameters;
         td.declarations.items = [new DeclarationAstNode];
         td.declarations.items[0].declarationKind = oldKind;
@@ -124,6 +125,7 @@ class DesugarVisitor: AstVisitor
             if (_inBlock is null)
             {
                 b = new BlockStatementAstNode;
+                b.position = fc.position;
                 node.statement.statementKind = StatementKind.skBlock;
             }
             else b = _inBlock;
@@ -136,11 +138,13 @@ class DesugarVisitor: AstVisitor
             StatementAstNode s1 = new StatementAstNode;
             s1.statementKind = StatementKind.skExpression;
             s1.statement.expression = new ExpressionStatementAstNode;
+            s1.statement.expression.position = fc.position;
             s1.statement.expression.assignExpression = fc.expression;
             fc.expression = null;
             dos1.statement = s1;
             // break / continue
             StatementAstNode s2 = new StatementAstNode;
+            s2.position = fc.position;
             if (isBreak)
             {
                 s2.statementKind = StatementKind.skBreak;
