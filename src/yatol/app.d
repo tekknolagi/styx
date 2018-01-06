@@ -4,8 +4,8 @@
 module app;
 
 import
-    std.getopt, std.file, std.stdio, std.path, std.datetime, std.array,
-    std.format;
+    std.getopt, std.file, std.stdio, std.path, std.datetime.stopwatch,
+    std.array, std.format;
 import
     yatol.token, yatol.lexer, yatol.parser, yatol.ast,
     yatol.session, yatol.semantic, yatol.ast_printer;
@@ -34,7 +34,7 @@ struct Timer
 __gshared: private:
 
     ubyte _stage;
-    TickDuration[4] _times;
+    Duration[4] _times;
     StopWatch _sw;
 
 public:
@@ -52,11 +52,11 @@ public:
     static void print()
     {
         session.info("duration:");
-        session.info("lexing  :%s ", dur!"hnsecs"(_times[0].hnsecs));
-        session.info("parsing :%s ", dur!"hnsecs"((_times[1] - _times[0]).hnsecs));
-        session.info("semantic:%s ", dur!"hnsecs"((_times[2] - _times[1]).hnsecs));
-        session.info("codegen :%s ", dur!"hnsecs"((_times[3] - _times[2]).hnsecs));
-        session.info("total   :%s ", dur!"hnsecs"(_times[3].hnsecs));
+        session.info("lexing  :%s ", _times[0]);
+        session.info("parsing :%s ", _times[1] - _times[0]);
+        session.info("semantic:%s ", _times[2] - _times[1]);
+        session.info("codegen :%s ", _times[3] - _times[2]);
+        session.info("total   :%s ", _times[3]);
     }
 }
 
