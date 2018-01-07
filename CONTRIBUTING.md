@@ -8,9 +8,7 @@ Issues are tracked here: https://github.com/BBasile/yatol/issues.
 
 Do not put tags (even beween square brackets), they'll be added after a review.
 
-```
 ~~[BUG, PARSER] Foo doesn't work after a Bar~~
-```
 
 ### Enhancements
 
@@ -27,7 +25,7 @@ Fundamental problems should be detailed and explained.
 
 #### Phobos style
 
-The project follows the Phobos D style (naming, case, braces, 4 spaces, not tans, etc) to a few exceptions:
+The project follows the Phobos D style (naming, case, braces, 4 spaces, not tabs, etc) to a few exceptions:
 
 - Space before colons, for example for selective imports or inheritence list, are not required. Spaces after colon are still required, following standard punctuation rules.
 - Top level imports use a single import statement by root package. Elements are indented and start on a new line. Packages are sorted from the lowest to the highest level.
