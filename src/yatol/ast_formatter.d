@@ -359,11 +359,28 @@ public:
         _source ~= node.variableList.tokenChainText(false, ", ");
     }
 
+    override void visit(GotoStatementAstNode node)
+    {
+        indent();
+        _source ~= "goto";
+        if (node.label)
+        {
+            _source ~= "(@";
+            _source ~= node.label.text;
+            _source ~= ")";
+        }
+        if (node.expression)
+        {
+            space();
+            visit(node.expression);
+        }
+        semicolonAndNewLine();
+    }
+
     override void visit(IdentifierChainAstNode node)
     {
         _source ~= node.chain.tokenChainText;
     }
-
 
     override void visit(IfConditionVariableAstNode node)
     {
@@ -1346,6 +1363,27 @@ function foo()
         {
             break(@here) afterCall();
         }
+    }
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo(){ label L0;
+    if (rand(12) == 0)
+    {
+        goto (@L0) afterThat;
+    }
+}";
+    string e =
+"unit a;
+function foo()
+{
+    label L0;
+    if ((rand(12) == 0))
+    {
+        goto(@L0) afterThat;
     }
 }";
     test(c, e);

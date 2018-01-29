@@ -143,6 +143,7 @@ Yatol:
                 / ForeachStatement
                 / ContinueStatement
                 / BreakStatement
+                / GotoStatement
                 / BlockStatement
                 / SwitchStatement
                 / TryOnFinallyStatement
@@ -169,7 +170,9 @@ Yatol:
 
     ContinueStatement < Continue AtLabel? AssignExpression? Semicolon
 
-    BreakStatement < Break AtLabel? AssignExpression? Semicolon
+    BreakStatement  < Break AtLabel? AssignExpression? Semicolon
+
+    GotoStatement   < Goto AtLabel? AssignExpression? Semicolon
 
     BlockStatement < LeftCurly DeclarationOrStatement* RightCurly
 
@@ -202,7 +205,6 @@ Yatol:
     VersionBlockStatement < VersionConditions DeclarationOrStatement (Else DeclarationOrStatement)?
 
     AssertStatement < Assert LeftParen Expression RightParen Semicolon
-
 
 ################################################################################
 # Composites expressions
@@ -441,6 +443,7 @@ Yatol:
             / Assert
             / Label
             / Template
+            / Goto
             #/ In
 
     ValueKeyword    < Null
@@ -518,4 +521,5 @@ Yatol:
     False   <- "false"
     Super   <- "super"
     Init    <- "init"
+    Goto    <- "goto"
 

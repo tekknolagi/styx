@@ -65,6 +65,7 @@ private:
         parseError(specifier.format(_current.text));
     }
 
+    pragma(inline, true)
     void advance()
     {
         _current = cast(Token*) &_range.front();
@@ -2581,6 +2582,57 @@ private:
     }
 
     /**
+     * Parses a GotoStatement.
+     *
+     * Returns: a $(D GotoStatementAstNode) on success, $(D null) otherwise.
+     */
+    GotoStatementAstNode parseGotoStatement()
+    {
+        assert(current.isTokGoto);
+        GotoStatementAstNode result = new GotoStatementAstNode;
+        result.position = current.position;
+        advance();
+        if (current.isTokLeftParen && lookupNext.isTokAt)
+        {
+            advance();
+            advance();
+            if (!current.isTokIdentifier)
+            {
+                parseError("expected an identifier as goto label");
+                return null;
+            }
+            result.label = current();
+            advance();
+            if (!current.isTokRightParen)
+            {
+                expected(TokenType.rightParen);
+                return null;
+            }
+            advance();
+        }
+        else
+        {
+            expected(TokenType.goto_);
+            return null;
+        }
+        if (!current.isTokSemicolon)
+            if (AssignExpressionAstNode ae = parseAssignExpression())
+        {
+            result.expression = ae;
+        }
+        if (!current.isTokSemicolon)
+        {
+            expected(TokenType.semiColon);
+            return null;
+        }
+        else
+        {
+            advance();
+            return result;
+        }
+    }
+
+    /**
      * Parses a VersionBlockDeclaration.
      *
      * Returns: a $(D VersionBlockDeclarationAstNode) on success, $(D null) otherwise.
@@ -2886,6 +2938,21 @@ private:
             else
             {
                 parseError("invalid break statement");
+                return null;
+            }
+        }
+        case goto_:
+        {
+            if (GotoStatementAstNode gs = parseGotoStatement())
+            {
+                StatementAstNode result = new StatementAstNode;
+                result.statementKind = StatementKind.skGoto;
+                result.statement.gotoStatement = gs;
+                return result;
+            }
+            else
+            {
+                parseError("invalid goto statement");
                 return null;
             }
         }
@@ -4380,7 +4447,7 @@ unittest // cover error cases for: variable declaration
     });
 }
 
-unittest // cover error cases for: continue break return statements
+unittest // cover error cases for: continue break return goto statements
 {
     assertParse(q{
         unit a;
@@ -4513,6 +4580,55 @@ unittest // cover error cases for: continue break return statements
         function foo()
         {
             return a
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            goto (@L0);
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            goto (@L0) afterThat;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            goto;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            goto (@L0;
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            goto ();
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            goto (@+);
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            goto (@L0)
         }
     });
 }

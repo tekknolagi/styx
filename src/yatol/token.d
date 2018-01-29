@@ -44,6 +44,7 @@ enum TokenType : ubyte
     finally_,
     foreach_,
     function_,
+    goto_,
     if_,
     import_,
     in_,
@@ -172,6 +173,7 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     "finally",
     "foreach",
     "function",
+    "goto",
     "if",
     "import",
     "in",
@@ -319,15 +321,15 @@ struct Keywords
 private:
 
     /*
-        rendered on 2017-Dec-27 02:24:11.7556971 by IsItThere.
+        rendered on 2018-Jan-29 10:37:48.7953951 by IsItThere.
          - PRNG seed: 6574
          - map length: 128
          - case sensitive: true
     */
 
-    static const string[128] _words = ["", "", "", "", "", "", "", "is", "", "bool", "", "version", "", "union", "", "", "struct", "enum", "", "interface", "", "f64", "", "ureg", "", "", "u32", "return", "", "", "s64", "unit", "", "const", "true", "", "", "", "", "finally", "u8", "super", "", "", "", "", "", "function", "", "static", "u16", "", "", "", "while", "", "switch", "", "", "", "", "", "var", "", "", "", "", "try", "", "break", "assert", "", "", "", "template", "", "", "import", "", "auto", "", "throw", "f32", "", "", "label", "", "", "sreg", "", "", "s32", "else", "u64", "null", "", "", "", "in", "foreach", "", "", "", "protection", "", "s8", "", "", "", "", "", "", "", "", "class", "s16", "", "", "on", "", "virtual", "false", "aka", "init", "", "", "if", "continue"];
+    static const string[128] _words = ["", "var", "", "", "", "foreach", "", "", "", "", "else", "finally", "static", "", "", "u32", "try", "while", "", "in", "", "", "", "import", "", "", "false", "goto", "auto", "f64", "", "", "", "", "interface", "", "", "class", "", "", "", "", "", "protection", "ureg", "enum", "", "", "struct", "", "u8", "is", "", "", "", "", "s32", "", "", "", "", "return", "", "function", "virtual", "", "on", "u64", "", "", "super", "", "", "", "", "continue", "", "version", "", "bool", "", "", "", "aka", "u16", "sreg", "throw", "init", "", "", "", "s8", "switch", "", "", "", "", "", "union", "break", "if", "", "", "unit", "", "f32", "", "", "s64", "", "const", "", "", "", "assert", "", "label", "template", "", "true", "", "", "", "", "", "s16", "", "null"];
 
-    static const ubyte[256] _coefficients = [123, 181, 111, 33, 71, 193, 127, 91, 64, 172, 241, 11, 206, 96, 244, 187, 22, 254, 154, 103, 243, 60, 74, 9, 91, 32, 111, 115, 151, 60, 7, 132, 3, 210, 140, 239, 129, 34, 227, 126, 134, 56, 136, 128, 47, 251, 11, 238, 20, 44, 93, 8, 87, 134, 81, 105, 243, 148, 9, 54, 164, 174, 8, 65, 155, 57, 165, 167, 252, 187, 119, 24, 255, 239, 253, 163, 10, 9, 174, 192, 205, 17, 231, 176, 8, 26, 24, 4, 100, 127, 161, 0, 35, 230, 229, 42, 212, 109, 83, 45, 35, 189, 109, 253, 210, 17, 155, 32, 108, 206, 81, 165, 153, 71, 168, 118, 136, 53, 169, 42, 57, 147, 123, 236, 95, 214, 85, 18, 254, 200, 48, 62, 66, 210, 92, 138, 231, 96, 169, 163, 158, 98, 241, 77, 161, 167, 57, 228, 105, 3, 26, 204, 49, 29, 47, 10, 153, 33, 143, 106, 22, 98, 82, 16, 39, 63, 202, 70, 140, 254, 163, 243, 45, 52, 144, 97, 40, 101, 114, 93, 177, 123, 155, 79, 151, 1, 199, 14, 224, 222, 111, 224, 214, 9, 59, 13, 26, 25, 58, 45, 89, 250, 197, 101, 149, 124, 232, 69, 239, 1, 154, 22, 39, 184, 86, 230, 152, 9, 179, 207, 93, 72, 217, 95, 109, 141, 227, 207, 28, 155, 90, 74, 37, 208, 185, 170, 17, 194, 23, 177, 210, 11, 15, 73, 117, 230, 44, 254, 65, 92, 43, 211, 132, 79, 22, 234];
+    static const ubyte[256] _coefficients = [252, 221, 39, 214, 141, 6, 220, 224, 38, 113, 130, 153, 122, 37, 23, 209, 125, 92, 222, 222, 168, 0, 200, 254, 234, 145, 83, 8, 57, 139, 209, 238, 16, 41, 133, 243, 133, 171, 30, 27, 170, 61, 54, 124, 131, 162, 241, 191, 67, 183, 32, 98, 166, 211, 16, 150, 165, 214, 26, 60, 165, 146, 81, 197, 91, 36, 43, 8, 77, 158, 71, 155, 139, 168, 73, 57, 11, 245, 236, 235, 128, 142, 152, 2, 54, 34, 155, 13, 176, 180, 62, 26, 145, 144, 127, 104, 59, 156, 137, 47, 242, 115, 231, 124, 132, 253, 25, 27, 238, 151, 22, 44, 96, 83, 48, 54, 71, 141, 53, 175, 69, 153, 232, 148, 40, 27, 150, 217, 255, 133, 62, 237, 110, 59, 130, 114, 232, 207, 15, 121, 143, 254, 154, 30, 12, 125, 9, 61, 218, 236, 163, 73, 250, 121, 82, 169, 201, 65, 99, 126, 204, 137, 118, 165, 207, 245, 86, 171, 154, 247, 152, 184, 161, 126, 207, 50, 214, 82, 48, 107, 9, 226, 70, 238, 123, 126, 99, 45, 160, 58, 35, 97, 137, 1, 235, 197, 3, 20, 181, 1, 155, 204, 9, 110, 22, 116, 67, 124, 252, 165, 153, 214, 63, 128, 143, 122, 248, 150, 126, 211, 74, 116, 45, 169, 107, 118, 83, 116, 231, 220, 216, 255, 50, 199, 176, 24, 150, 235, 104, 197, 58, 110, 120, 96, 6, 78, 9, 56, 51, 150, 176, 30, 239, 154, 110, 95];
 
     static string generateFilledTable()
     {
@@ -364,7 +366,7 @@ public:
      * Support for the $(D in) operator.
      *
      * Returns: $(D TokenType.identifier) if the input argument is not a
-     *      a keyword otherwise the $(D TokenType) that matches to the  keyword
+     *      a keyword otherwise the $(D TokenType) that matches to the keyword
      *      passed as argument.
      */
     static TokenType opBinaryRight(string op: "in")(const char[] word)
@@ -415,7 +417,7 @@ private:
 public:
 
     /// Constructs the ieterator from an array of $(D Token).
-    this()(auto ref Tokens tokens)
+    this(Tokens tokens)
     {
         _tokens = tokens;
     }
@@ -877,6 +879,8 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokInit() const {return type == TokenType.init;}
+
+    bool isTokGoto() const {return type == TokenType.goto_;}
 
     /// Conveniance function used by the parser.
     bool isTokUnaryPrefix() const

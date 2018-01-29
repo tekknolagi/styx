@@ -82,6 +82,7 @@ class AstVisitor
     void visit(ForeachVariableDeclarationAstNode node){node.accept(this);}
     void visit(FunctionDeclarationAstNode node){node.accept(this);}
     void visit(FunctionParameterGroupAstNode node){node.accept(this);}
+    void visit(GotoStatementAstNode node){node.accept(this);}
     void visit(IdentifierChainAstNode node){node.accept(this);}
     void visit(IfConditionVariableAstNode node){node.accept(this);}
     void visit(IfElseStatementAstNode node){node.accept(this);}
@@ -958,6 +959,13 @@ final class BreakStatementAstNode: FlowControlBaseNode
     Token* label;
 }
 
+/// GotoStatement
+final class GotoStatementAstNode: FlowControlBaseNode
+{
+    /// The token that indicates the label to go to.
+    Token* label;
+}
+
 /// Enumerates the possible statements
 enum StatementKind: ubyte
 {
@@ -976,6 +984,7 @@ enum StatementKind: ubyte
     skThrow,
     skVersion,
     skAssert,
+    skGoto,
 }
 
 /// Statement
@@ -1012,6 +1021,8 @@ final class StatementAstNode: AstNode
         VersionBlockStatementAstNode versionBlockStatement;
         /// Assigned if this statement is an AssertStatement.
         AssertStatementAstNode assertStatement;
+        /// Assigned if this statement is a GotoStatement;
+        GotoStatementAstNode gotoStatement;
     }
     ///
     Statement statement;
@@ -1036,6 +1047,7 @@ final class StatementAstNode: AstNode
         case skThrow: visitor.visit(statement.throwStatement); break;
         case skVersion: visitor.visit(statement.versionBlockStatement); break;
         case skAssert: visitor.visit(statement.assertStatement); break;
+        case skGoto: visitor.visit(statement.gotoStatement); break;
         case skNone: assert(false);
         }
     }

@@ -109,16 +109,20 @@ class DesugarVisitor: AstVisitor
     {
         FlowControlBaseNode fc;
         BlockStatementAstNode b;
-        bool isBreak;
+        bool isBreak, isContinue, isGoto;
 
         node.accept(this);
 
-        if (node.statement &&
-            (node.statement.statementKind == StatementKind.skBreak ||
-             node.statement.statementKind == StatementKind.skContinue))
+        if (node.statement)
+        {
+            isBreak = node.statement.statementKind == StatementKind.skBreak;
+            isContinue = node.statement.statementKind == StatementKind.skContinue;
+            isGoto = node.statement.statementKind == StatementKind.skGoto;
+        }
+
+        if (isBreak || isContinue || isGoto)
         {
             fc = node.statement.statement.breakStatement;
-            isBreak = node.statement.statementKind == StatementKind.skBreak;
         }
         if (fc && fc.expression)
         {
@@ -150,10 +154,15 @@ class DesugarVisitor: AstVisitor
                 s2.statementKind = StatementKind.skBreak;
                 s2.statement.breakStatement = cast(BreakStatementAstNode) fc;
             }
-            else
+            else if  (isContinue)
             {
                 s2.statementKind = StatementKind.skContinue;
                 s2.statement.continueStatement = cast(ContinueStatementAstNode) fc;
+            }
+            else if  (isGoto)
+            {
+                s2.statementKind = StatementKind.skGoto;
+                s2.statement.gotoStatement = cast(GotoStatementAstNode) fc;
             }
             dos2.statement = s2;
         }
@@ -353,6 +362,28 @@ function foo()
     {
         afterCall();
         continue;
+    }
+}");
+}
+
+unittest
+{
+    assertDesugaredAs(
+"unit a;
+function foo()
+{
+    label L0;
+    if (const auto a = true)
+        goto(@L0) afterCall();
+}",
+"unit a;
+function foo()
+{
+    label L0;
+    if (const auto a = true)
+    {
+        afterCall();
+        goto(@L0);
     }
 }");
 }

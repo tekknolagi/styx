@@ -157,6 +157,8 @@ enum source1 = "#!yatol --ast
 
         foreach(const auto a, const auto b; stuff)
             call(a,b);
+
+        goto(@L0) afterThat();
     }
 
     enum A
