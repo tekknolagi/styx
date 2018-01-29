@@ -31,6 +31,7 @@ Yatol:
                     / AtAttributes? AkaDeclaration
                     / AtAttributes? TemplateDeclaration
                     / VersionBlockDeclaration
+                    / LabelDeclaration
                 #   / AtAttributeSectionDeclaration
 
     SingleOrDeclarationBlock    < Declaration
@@ -42,6 +43,7 @@ Yatol:
     ClassDeclaration        < Class Identifier TemplateParameters? InheritanceList? LeftCurly Declaration* RightCurly
     InterfaceDeclaration    < Interface Identifier TemplateParameters? InheritanceList? LeftCurly Declaration* RightCurly
     TemplateDeclaration     < Template Identifier TemplateParameters LeftCurly Declaration* RightCurly
+    LabelDeclaration        < Label Identifier Semicolon
 
     InheritanceList < Colon IdentifierChain (Comma IdentifierChain)*
 
@@ -201,7 +203,6 @@ Yatol:
 
     AssertStatement < Assert LeftParen Expression RightParen Semicolon
 
-    LabelStatement < Label Identifier Semicolon
 
 ################################################################################
 # Composites expressions

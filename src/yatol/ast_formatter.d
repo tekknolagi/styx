@@ -473,7 +473,7 @@ public:
         _source ~= "}\n";
     }
 
-    override void visit(LabelStatementAstNode node)
+    override void visit(LabelDeclarationstAstNode node)
     {
         indent();
         _source ~= "label ";

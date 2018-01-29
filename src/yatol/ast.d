@@ -89,7 +89,7 @@ class AstVisitor
     void visit(IndexExpressionAstNode node){node.accept(this);}
     void visit(InitializerAstNode node){node.accept(this);}
     void visit(InterfaceDeclarationAstNode node){node.accept(this);}
-    void visit(LabelStatementAstNode node){node.accept(this);}
+    void visit(LabelDeclarationstAstNode node){node.accept(this);}
     void visit(OnExceptionInstanceAstNode node){node.accept(this);}
     void visit(OnExceptionStatementAstNode node){node.accept(this);}
     void visit(OnMatchStatementAstNode node){node.accept(this);}
@@ -534,6 +534,7 @@ enum DeclarationKind: ubyte
     dkVersion,
     dkUnion,
     dkTemplate,
+    dkLabel,
 }
 
 /// Declaration
@@ -566,6 +567,8 @@ final class DeclarationAstNode: AstNode
         UnionDeclarationAstNode unionDeclaration;
         /// Assigned if this declaration is a TemplateDeclaration
         TemplateDeclarationAstNode templateDeclaration;
+        /// Assigned if this declaration is a LabelDeclaration
+        LabelDeclarationstAstNode labelDeclaration;
     }
     ///
     Declaration declaration;
@@ -588,6 +591,7 @@ final class DeclarationAstNode: AstNode
         case dkVersion: visitor.visit(declaration.versionBlockDeclaration); break;
         case dkUnion: visitor.visit(declaration.unionDeclaration); break;
         case dkTemplate: visitor.visit(declaration.templateDeclaration); break;
+        case dkLabel: visitor.visit(declaration.labelDeclaration); break;
         case dkNone: assert(false);
         }
     }
@@ -940,8 +944,8 @@ final class ContinueStatementAstNode: FlowControlBaseNode
     Token* label;
 }
 
-/// LabelStatement
-final class LabelStatementAstNode: AstNode
+/// LabelDeclaration
+final class LabelDeclarationstAstNode: AstNode
 {
     /// The token that identifies the label.
     Token* identifier;
@@ -972,7 +976,6 @@ enum StatementKind: ubyte
     skThrow,
     skVersion,
     skAssert,
-    skLabel
 }
 
 /// Statement
@@ -1009,8 +1012,6 @@ final class StatementAstNode: AstNode
         VersionBlockStatementAstNode versionBlockStatement;
         /// Assigned if this statement is an AssertStatement.
         AssertStatementAstNode assertStatement;
-        /// Assigned if this statement is a lagel;
-        LabelStatementAstNode labelStatement;
     }
     ///
     Statement statement;
@@ -1035,7 +1036,6 @@ final class StatementAstNode: AstNode
         case skThrow: visitor.visit(statement.throwStatement); break;
         case skVersion: visitor.visit(statement.versionBlockStatement); break;
         case skAssert: visitor.visit(statement.assertStatement); break;
-        case skLabel: visitor.visit(statement.labelStatement); break;
         case skNone: assert(false);
         }
     }

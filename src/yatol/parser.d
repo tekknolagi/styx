@@ -1220,10 +1220,10 @@ private:
      * Returns:
      *      On success a $(D parseLabelStatement) otherwise $(D null).
      */
-    LabelStatementAstNode parseLabelStatement()
+    LabelDeclarationstAstNode parseLabelDeclaration()
     {
         assert(current.isTokLabel);
-        LabelStatementAstNode result = new LabelStatementAstNode;
+        LabelDeclarationstAstNode result = new LabelDeclarationstAstNode;
         result.position = current.position;
         advance();
         if (!current.isTokIdentifier)
@@ -2859,21 +2859,6 @@ private:
             advance();
             return result;
         }
-        case label:
-        {
-            if (LabelStatementAstNode ls = parseLabelStatement())
-            {
-                StatementAstNode result = new StatementAstNode;
-                result.statementKind = StatementKind.skLabel;
-                result.statement.labelStatement = ls;
-                return result;
-            }
-            else
-            {
-                parseError("invalid label");
-                return null;
-            }
-        }
         case return_:
         {
             if (ReturnStatementAstNode rs = parseReturnStatement())
@@ -3088,6 +3073,21 @@ private:
 
         with(TokenType) switch(current.type)
         {
+        case label:
+        {
+            if (LabelDeclarationstAstNode ld = parseLabelDeclaration())
+            {
+                DeclarationAstNode result = new DeclarationAstNode;
+                result.declarationKind = DeclarationKind.dkLabel;
+                result.declaration.labelDeclaration = ld;
+                return result;
+            }
+            else
+            {
+                parseError("invalid label");
+                return null;
+            }
+        }
         case enum_:
         {
             if (EnumDeclarationAstNode decl = parseEnumDeclaration())
