@@ -150,7 +150,6 @@ Yatol:
                 / ThrowStatement
                 / VersionBlockStatement
                 / AssertStatement
-                / LabelStatement
 
     EmptyStatment < Semicolon
 
