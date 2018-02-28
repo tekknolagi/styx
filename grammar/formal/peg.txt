@@ -464,8 +464,8 @@ Yatol:
                         / U32
                         / U16
                         / U8
-                        / UREG
-                        / SREG
+                        / USIZE
+                        / SSIZE
                         / Bool
 
     Unit    <- "unit"
@@ -503,8 +503,8 @@ Yatol:
     Label   <- "label"
     Template<- "template"
 
-    SREG    <- "sreg"
-    UREG    <- "ureg"
+    SSIZE   <- "ssize"
+    USIZE   <- "usize"
     F64     <- "f64"
     F32     <- "f32"
     S64     <- "s64"

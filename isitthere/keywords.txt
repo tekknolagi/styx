@@ -45,9 +45,9 @@ s16
 s32
 s64
 s8
-sreg
+ssize
 u16
 u32
 u64
 u8
-ureg
+usize
