@@ -316,7 +316,6 @@ private:
                 if (canLookup() && '0' <= *lookup() && *lookup() <= '9')
                 {
                     advance();
-                    advance();
                     lexFloatingLiteralFractionalPart();
                     return;
                 }
@@ -1635,6 +1634,18 @@ unittest
     lx.lex();
     assert(lx.tokens.length == 2);
     assert(lx.tokens[0].isTokHexLiteral);
+}
+
+unittest
+{
+    int line = __LINE__ + 1;
+    static immutable source = "0.01";
+    Lexer lx;
+    lx.setSourceFromText(source[0..3], __FILE_FULL_PATH__, line, 20);
+    lx.lex();
+    assert(lx.tokens.length == 2);
+    assert(lx.tokens[0].isTokFloatLiteral);
+    assert(lx.tokens[0].text == "0.0");
 }
 
 unittest
