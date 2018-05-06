@@ -245,16 +245,24 @@ Yatol:
 ################################################################################
 # Primary Expression
 
-    PrimaryExpression   < Identifier TemplateInstance?
+    PrimaryExpression   < CompilerEcho
+                        / Identifier TemplateInstance?
                         / NumberLiteral
                         / StringLiteral
                         / ParenExpression
                         / Super
                         / ValueKeyword
                         / ArrayInitializer
-                        / BasicType
 
     ParenExpression < LeftParen Expression RightParen
+
+################################################################################
+# Compiler echo
+
+    CompilerEcho    < Echo LeftParen Identifier (Comma EchoParameter)* RightParen
+
+    EchoParameter   < LeftCurly Expression Semicolon RightCurly
+                    / Type
 
 ################################################################################
 # Cast
@@ -317,10 +325,10 @@ Yatol:
 
     Eol <- "\r\n" / '\n'
 
-    Identifier  <~ !Keyword (Alpha) (AlphaNum)*
+    Identifier  <~ !Keyword [a-zA-Z_] [a-zA-Z0-9_]*
                 /  DollarKw
 
-    DollarKw <~Dollar Keyword
+    DollarKw    <~ Dollar Keyword
 
     AssignOperator < Equal / DivEqual / MulEqual / ModEqual / MinusEqual / PlusEqual / AmpEqual / XorEqual / PipeEqual / LShiftEqual / RShiftEqual
 
@@ -443,6 +451,7 @@ Yatol:
             / Label
             / Template
             / Goto
+            / Echo
             #/ In
 
     ValueKeyword    < Null
@@ -521,4 +530,5 @@ Yatol:
     Super   <- "super"
     Init    <- "init"
     Goto    <- "goto"
+    Echo    <- "echo"
 

@@ -5,6 +5,7 @@ break
 class
 const
 continue
+echo
 else
 enum
 false

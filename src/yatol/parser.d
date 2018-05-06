@@ -1865,6 +1865,98 @@ private:
     }
 
     /**
+     * Parses an EchoParameter.
+     *
+     * Returns: a $(D EchoParameterAstNode) on success, $(D null) otherwise.
+     */
+    EchoParameterAstNode parseEchoParameter()
+    {
+        EchoParameterAstNode result = new EchoParameterAstNode;
+        if (current.isTokLeftCurly)
+        {
+            advance();
+            if (ExpressionAstNode e = parseExpression(null))
+            {
+                result.expression = e;
+                advance();
+                if (!current.isTokRightCurly)
+                {
+                    expected(TokenType.rightCurly);
+                    return null;
+                }
+                advance();
+            }
+        }
+        else if (TypeAstNode t = parseType())
+        {
+            result.type = t;
+        }
+        else return null;
+        return result;
+    }
+
+    /**
+     * Parses a CompilerEcho.
+     *
+     * Returns: a $(D CompilerEchoAstNode) on success, $(D null) otherwise.
+     */
+    CompilerEchoAstNode parseCompilerEcho()
+    {
+        assert(current.isTokEcho);
+        CompilerEchoAstNode result = new CompilerEchoAstNode;
+        result.position = current.position;
+        advance();
+        if (!current.isTokLeftParen)
+        {
+            expected(TokenType.leftParen);
+            return null;
+        }
+        advance();
+        if (!current.isTokIdentifier)
+        {
+            expected(TokenType.identifier);
+            return null;
+        }
+        result.command = current();
+        advance();
+        if (current.isTokRightParen)
+        {
+            advance();
+            return result;
+        }
+        if (!current.isTokComma)
+        {
+            expected(TokenType.comma);
+            return null;
+        }
+        advance();
+        while (true)
+        {
+            if (EchoParameterAstNode ep = parseEchoParameter())
+            {
+                result.parameters ~= ep;
+            }
+            else
+            {
+                parseError("invalid echo parameter");
+                return null;
+            }
+            with(TokenType) switch (current.type)
+            {
+            case rightParen:
+                advance();
+                return result;
+            case comma:
+                advance();
+                continue;
+            default:
+                unexpected();
+                return null;
+            }
+        }
+    }
+
+    /**
      * Parses a PrimaryExpression.
      *
      * Returns: a $(D PrimaryExpressionAstNode) on success, $(D null) otherwise.
@@ -1873,7 +1965,8 @@ private:
     {
         if (!current.isTokSuper && !current.isTokValueKeyword &&
             !current.isTokIdentifier && !current.isTokLiteral &&
-            !current.isTokLeftParen && !current.isTokLeftSquare)
+            !current.isTokLeftParen && !current.isTokLeftSquare &&
+            !current.isTokEcho)
         {
             unexpected();
             return null;
@@ -1888,6 +1981,19 @@ private:
                 return result;
             }
             else return null;
+        }
+        else if (current.isTokEcho)
+        {
+            if (CompilerEchoAstNode cc = parseCompilerEcho())
+            {
+                result.compilerEcho = cc;
+            }
+            else
+            {
+                parseError("invalid compiler echo");
+                return null;
+            }
+            return result;
         }
         else if (!current.isTokLeftParen)
         {
@@ -2163,7 +2269,7 @@ private:
         }
         else if (current.isTokUnaryPrefix || current.isTokIdentifier ||
             current.isTokLiteral || current.isTokLeftParen || current.isTokLeftSquare ||
-            current.isTokSuper || current.isTokValueKeyword)
+            current.isTokSuper || current.isTokValueKeyword || current.isTokEcho)
         {
             if (UnaryExpressionAstNode u = parseUnaryExpression())
             {
@@ -6235,5 +6341,49 @@ unittest // template
         unit a;
         template Foo<A> { const A a;
     ");
+}
+
+unittest // echo
+{
+    assertParse(q{
+        unit a;
+        function Foo<>(){ if (echo(verb)){} }
+    });
+    assertParse(q{
+        unit a;
+        function Foo<T>(){ if (echo(verb, T, s8[])){} }
+    });
+    assertNotParse(q{
+        unit a;
+        function Foo<>(){ if (echo }
+    });
+    assertNotParse(q{
+        unit a;
+        function Foo<>(){ if (echo( }
+    });
+    assertNotParse(q{
+        unit a;
+        function Foo<>(){ if (echo(a^ }
+    });
+    assertNotParse(q{
+        unit a;
+        function Foo<>(){ if (echo() }
+    });
+    assertNotParse(q{
+        unit a;
+        function Foo<>(){ if (echo(verb,) }
+    });
+    assertNotParse(q{
+        unit a;
+        function Foo<>(){ if (echo(verb,p0]) }
+    });
+    assertNotParse(`
+        unit a;
+        function Foo<>(){ if (echo(verb,{p0;) }
+    `);
+    assertParse(q{
+        unit a;
+        function Foo<>(){ if (echo(verb, {p0+8;})){} }
+    });
 }
 

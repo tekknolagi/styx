@@ -69,10 +69,12 @@ class AstVisitor
     void visit(CallParametersAstNode node){node.accept(this);}
     void visit(ClassDeclarationAstNode node){node.accept(this);}
     void visit(ContinueStatementAstNode node){node.accept(this);}
+    void visit(CompilerEchoAstNode node){node.accept(this);}
     void visit(DeclarationAstNode node){node.accept(this);}
     void visit(DeclarationsAstNode node){node.accept(this);}
     void visit(DeclarationOrStatementAstNode node){node.accept(this);}
     void visit(DeclarationsOrStatementsAstNode node){node.accept(this);}
+    void visit(EchoParameterAstNode node){node.accept(this);}
     void visit(EmptyStatementAstNode node){node.accept(this);}
     void visit(EnumDeclarationAstNode node){node.accept(this);}
     void visit(EnumMemberAstNode node){node.accept(this);}
@@ -168,6 +170,37 @@ final class AssertStatementAstNode: AstNode
     {
         if (expression)
             visitor.visit(expression);
+    }
+}
+
+/// CompilerEcho
+final class CompilerEchoAstNode: AstNode
+{
+    /// The communication command.
+    Token* command;
+    /// The command arguments.
+    EchoParameterAstNode[] parameters;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        parameters.each!(a => visitor.visit(a));
+    }
+}
+
+/// EchoParaemterAstNode
+final class EchoParameterAstNode: AstNode
+{
+    /// The parameter as an expression.
+    ExpressionAstNode expression;
+    /// The parameter as a type.
+    TypeAstNode type;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (expression)
+            visitor.visit(expression);
+        else if (type)
+            visitor.visit(type);
     }
 }
 
@@ -427,6 +460,8 @@ final class PrimaryExpressionAstNode: AstNode
     InitializerAstNode arrayLiteral;
     /// Assigned when no identifierOrKeywordOrLiteral.
     ExpressionAstNode parenExpression;
+    /// Assigned when the primary is a compiletime communication.
+    CompilerEchoAstNode compilerEcho;
     ///
     override void accept(AstVisitor visitor)
     {
@@ -434,6 +469,8 @@ final class PrimaryExpressionAstNode: AstNode
             visitor.visit(arrayLiteral);
         if (templateInstance)
             visitor.visit(templateInstance);
+        else if (compilerEcho)
+            visitor.visit(compilerEcho);
         else if (parenExpression)
             visitor.visit(parenExpression);
     }

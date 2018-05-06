@@ -168,6 +168,19 @@ public:
         _source ~= ")";
     }
 
+    override void visit(CompilerEchoAstNode node)
+    {
+        _source ~= "echo(";
+        if (node.command)
+            _source ~= node.command.text;
+        foreach(p; node.parameters)
+        {
+            _source ~= ", ";
+            visit(p);
+        }
+        _source ~= ")";
+    }
+
     override void visit(ClassDeclarationAstNode node)
     {
         indent();
@@ -222,6 +235,18 @@ public:
         node.accept(this);
         if (node.declarationKind == DeclarationKind.dkVariable)
             semicolonAndNewLine();
+    }
+
+    override void visit(EchoParameterAstNode node)
+    {
+        if (node.expression)
+        {
+            _source ~= "{";
+            visit(node.expression);
+            _source ~= ";}";
+        }
+        else if (node.type)
+            visit(node.type);
     }
 
     override void visit(EnumDeclarationAstNode node)
@@ -551,6 +576,8 @@ public:
             visit(node.templateInstance);
         else if (node.arrayLiteral)
             visit(node.arrayLiteral);
+        else if (node.compilerEcho)
+            visit(node.compilerEcho);
         else if (node.parenExpression)
         {
             _source ~= "(";
@@ -1880,4 +1907,29 @@ function foo()
 }";
     test(c, e);
 }
+
+unittest
+{
+    string c = "unit a; function foo<T>(){const bool b = echo(compiles, {a + 8;});}";
+    string e =
+"unit a;
+function foo<T>()
+{
+    const bool b = echo(compiles, {(a + 8);});
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo<T>(){const bool b = echo(isType, T, s8[]);}";
+    string e =
+"unit a;
+function foo<T>()
+{
+    const bool b = echo(isType, T, s8[]);
+}";
+    test(c, e);
+}
+
 
