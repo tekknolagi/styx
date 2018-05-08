@@ -548,6 +548,33 @@ public:
         _pos = Position(line, column);
     }
 
+    /**
+     * Params:
+     *     line = The line.
+     *     column = The column.
+     *     text = The string literal.
+     *
+     * Returns: A pointer to a token epresenting a string literal.
+     */
+    static Token* stringLiteral(size_t line, size_t column, char[] text)
+    {
+        return new Token(text.ptr, text.ptr + text.length, line, column, TokenType.stringLiteral);
+    }
+
+    /**
+     * Params:
+     *     line = The line.
+     *     column = The column.
+     *     text = The string representing the integer.
+     *     intType = The integer type, `usize` by default.
+     *
+     * Returns: A pointer to a token epresenting a string literal.
+     */
+    static Token* intLiteral(size_t line, size_t column, char[] text, TokenType intType = TokenType.usize)
+    {
+        return new Token(text.ptr, text.ptr + text.length, line, column, intType);
+    }
+
     /// Returns: $(D true) if the identifier is a keyword prefixed with dollar.
     bool keywordAsIdentifier() {return _kwAsIdent;}
 
@@ -575,7 +602,10 @@ public:
     /// Returns: The token text, never post processed.
     const(char[]) rawText() const
     {
-        return _start[0.._length];
+        if (_start)
+            return _start[0.._length];
+        else
+            return "";
     }
 
     /**
@@ -931,6 +961,26 @@ public:
     {
         return firstAssignOperator <= type && type <= lastAssignOperator;
     }
+}
+
+
+private char[] versionTokenText = "0.0.1-alpha.6".dup;
+/// Token used to replace Expressions during semantic.
+__gshared Token versionToken;
+
+private char[] trueTokenText = "true".dup;
+/// Token used to replace Expressions during semantic.
+__gshared Token trueToken;
+
+private char[] falseTokenText = "false".dup;
+/// Token used to replace Expressions during semantic.
+__gshared Token falseToken;
+
+static this()
+{
+    versionToken = *Token.stringLiteral(0, 0, versionTokenText);
+    trueToken = Token(trueTokenText.ptr, trueTokenText.ptr + trueTokenText.length, 0, 0, TokenType.true_);
+    falseToken = Token(falseTokenText.ptr, falseTokenText.ptr + falseTokenText.length, 0, 0, TokenType.false_);
 }
 
 /**
