@@ -1872,7 +1872,12 @@ private:
     EchoParameterAstNode parseEchoParameter()
     {
         EchoParameterAstNode result = new EchoParameterAstNode;
-        if (current.isTokLeftCurly)
+        if (current.isTokKeyword)
+        {
+            result.keyword = current.type;
+            advance();
+        }
+        else if (current.isTokLeftCurly)
         {
             advance();
             if (ExpressionAstNode e = parseExpression(null))
@@ -6384,6 +6389,10 @@ unittest // echo
     assertParse(q{
         unit a;
         function Foo<>(){ if (echo(verb, {p0+8;})){} }
+    });
+    assertParse(q{
+        unit a;
+        function Foo<T>(){ if (echo(isType, T, class)){} }
     });
 }
 

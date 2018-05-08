@@ -239,7 +239,11 @@ public:
 
     override void visit(EchoParameterAstNode node)
     {
-        if (node.expression)
+        if (node.keyword != TokenType.invalid)
+        {
+            _source ~= tokenString(node.keyword);
+        }
+        else if (node.expression)
         {
             _source ~= "{";
             visit(node.expression);
@@ -1928,6 +1932,18 @@ unittest
 function foo<T>()
 {
     const bool b = echo(isType, T, s8[]);
+}";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; function foo<T>(){const bool b = echo(isType, T, class);}";
+    string e =
+"unit a;
+function foo<T>()
+{
+    const bool b = echo(isType, T, class);
 }";
     test(c, e);
 }

@@ -194,6 +194,8 @@ final class EchoParameterAstNode: AstNode
     ExpressionAstNode expression;
     /// The parameter as a type.
     TypeAstNode type;
+    /// The parameter as a keyowrd
+    TokenType keyword;
     ///
     override void accept(AstVisitor visitor)
     {

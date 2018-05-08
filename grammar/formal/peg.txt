@@ -263,6 +263,7 @@ Yatol:
 
     EchoParameter   < LeftCurly Expression Semicolon RightCurly
                     / Type
+                    / Keyword
 
 ################################################################################
 # Cast
