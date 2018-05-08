@@ -56,6 +56,9 @@ public:
     /// Returns: The count of error.
     static size_t errorsCount(){return _errorsCount;}
 
+    /// Reset the count of errors to 0.
+    void resetErrorsCount(){_errorsCount = 0;}
+
     /**
      * Adds an error message.
      *

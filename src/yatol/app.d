@@ -87,6 +87,10 @@ Options:
 
 int main(string[] args)
 {
+
+    version(unittest)
+        session.resetErrorsCount();
+
     GetoptResult gr;
     string[] sources;
     Lexer*[] lexers;
