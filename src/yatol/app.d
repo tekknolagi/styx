@@ -51,7 +51,7 @@ public:
 
     static void print()
     {
-        writefln("duration:");
+        writeln("duration:");
         writefln("lexing  :%s ", _times[0]);
         writefln("parsing :%s ", _times[1] - _times[0]);
         writefln("semantic:%s ", _times[2] - _times[1]);
@@ -102,13 +102,13 @@ int main(string[] args)
             }
             else
             {
-                writeln(`error, unrecognized file extension for "%s"`, arg);
+                writefln(`error, unrecognized file extension for "%s"`, arg);
                 return 1;
             }
         }
         else if (arg[0] != '-')
         {
-            writeln(`error, the file "%s" does not seem to exist`, arg);
+            writefln(`error, the file "%s" does not seem to exist`, arg);
             return 1;
         }
     }
@@ -158,7 +158,7 @@ int main(string[] args)
     foreach (source; sources)
     {
         if (session.verbose)
-            writeln("lexing %s...", source);
+            writefln("lexing %s...", source);
         try
         {
             lexers ~= new Lexer(source);
@@ -187,13 +187,13 @@ int main(string[] args)
     foreach (ref lexer; lexers)
     {
         if (session.verbose)
-            writeln("parsing %s...", lexer.filename);
+            writefln("parsing %s...", lexer.filename);
         parsers ~= new Parser(lexer);
         if (UnitContainerAstNode uc = parsers[$-1].parse())
         {
             if (options.ast && options.until == Until.parsing)
             {
-                writeln("AST for %s", lexer.filename);
+                writefln("AST for %s", lexer.filename);
                 AstPrinter ap = new AstPrinter();
                 ap.visit(uc);
                 writeln(ap.text);
@@ -201,7 +201,7 @@ int main(string[] args)
         }
         else
         {
-            writeln("error, failed to parse `%s`", lexer.filename);
+            writefln("error, failed to parse `%s`", lexer.filename);
             return 1;
         }
     }
@@ -220,12 +220,12 @@ int main(string[] args)
     foreach (i, ref parser; parsers)
     {
         if (session.verbose)
-            writeln("unit semantic for %s...", lexers[i].filename);
+            writefln("unit semantic for %s...", lexers[i].filename);
         if (!unitSemantic(parser.unitContainer, lexers[i]))
             return 1;
         if (options.ast)
         {
-            writeln("AST for %s", lexers[i].filename);
+            writefln("AST for %s", lexers[i].filename);
             AstPrinter ap = new AstPrinter();
             ap.visit(parser.unitContainer);
             writeln(ap.text);
