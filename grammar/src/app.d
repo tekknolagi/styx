@@ -160,7 +160,7 @@ enum source1 = "#!yatol --ast
 
         goto(@L0) afterThat();
 
-        if (echo(sameType, T, s16[])){}
+        if (echo(isType, T, s16[])){}
     }
 
     enum A

@@ -326,7 +326,7 @@ Yatol:
 
     Eol <- "\r\n" / '\n'
 
-    Identifier  <~ !Keyword [a-zA-Z_] [a-zA-Z0-9_]*
+    Identifier  <~ !KeywordList [a-zA-Z_][a-zA-Z0-9_]*
                 /  DollarKw
 
     DollarKw    <~ Dollar Keyword
@@ -411,7 +411,9 @@ Yatol:
 ################################################################################
 # Keywords
 
-    Keyword < BasicType
+    Keyword < KeywordList !Identifier
+
+    KeywordList < BasicType
             / Unit
             / Prot
             / Else
