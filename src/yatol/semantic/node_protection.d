@@ -24,11 +24,12 @@ private:
         protected_
     }
 
-    Protection[] _protection = [Protection.public_];
+    Protection _protection = Protection.public_;
+    Protection _oldProtection = Protection.public_;
 
     void setFields(Node)(Node node)
     {
-        with(Protection) final switch (_protection[$-1])
+        with(Protection) final switch (_protection)
         {
         case public_:
             node.isPublic = true;
@@ -44,17 +45,18 @@ private:
 
     void pushProtection(Protection value)
     {
-        _protection ~= value;
+        _oldProtection = _protection;
+        _protection = value;
     }
 
     void overwriteProtection(Protection value)
     {
-        _protection[$-1] = value;
+        _protection = value;
     }
 
     void popProtection()
     {
-        _protection.length -= 1;
+        _protection = _oldProtection;
     }
 
 public:
