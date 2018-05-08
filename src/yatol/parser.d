@@ -29,24 +29,18 @@ private:
     void warning(const(char[]) message)
     {
         assert(_current);
-        session.warn("%s(%d,%d): warning, %s", _lexer.filename, _current.line,
-            _current.column, message);
-        stdout.flush;
+        session.warn(_lexer.filename, _current.line, _current.column, message);
     }
 
     void parseError(const(char[]) message)
     {
         assert(_current);
         ++_errorCount;
-        session.error("%s(%d,%d): error, %s", _lexer.filename, _current.line,
-            _current.column, message);
-        stdout.flush;
+        session.error(_lexer.filename, _current.line, _current.column, message);
     }
 
     void expected(TokenType expected, string loc = __FUNCTION__, int line = __LINE__)
     {
-        version(show_error_origin)
-            session.info("error originated from %s at line %d", loc, line);
         ++_errorCount;
         static immutable string specifierDiff = "expected `%s` instead of `%s`";
         //static immutable string specifierSame = "expected supplemental `%s`";
@@ -3653,7 +3647,7 @@ unittest
         ap.visit(uc);
         import std.process;
         if ("CI" !in environment)
-            session.info(ap.text);
+            writeln(ap.text);
     }
 }
 
@@ -3687,7 +3681,7 @@ void assertParse(const(char)[] code, bool printAST = false,
             import yatol.ast_printer;
             AstPrinter ap = new AstPrinter;
             ap.visit(pr.unitContainer);
-            session.info(ap.text);
+            writeln(ap.text);
         }
     }
 }

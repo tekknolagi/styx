@@ -33,14 +33,12 @@ private:
 
     void warning(const(char[]) message)
     {
-        session.warn("%s(%d,%d): warning, %s", _filename, _frontLine,
-            _frontColumn, message);
+        session.warn(_filename, _frontLine, _frontColumn, message);
     }
 
     void error(const(char[]) message)
     {
-        session.error("%s(%d,%d): warning, %s", _filename, _frontLine,
-            _frontColumn, message);
+        session.error(_filename, _frontLine, _frontColumn, message);
     }
 
     // Puts a bookmark when starting to lex something.

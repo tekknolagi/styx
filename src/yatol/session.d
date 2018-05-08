@@ -14,15 +14,6 @@ enum MessageType
     warn,
 }
 
-/// A compiler message.
-struct Message
-{
-    /// The message type.
-    MessageType type;
-    /// The message text.
-    string text;
-}
-
 /**
  * Represents a compiler session, which includes the messages, utilities to
  * append them, some global options.
@@ -31,8 +22,8 @@ struct Session
 {
 __gshared: private:
 
-    Message[] _messages;
     size_t _errorsCount;
+    ptrdiff_t _gag;
 
 public:
 
@@ -46,71 +37,92 @@ public:
     /// Indicates if errors happened.
     static bool hasErrors(){return _errorsCount != 0;}
 
+    /// A callback for the messages. When not set, message are written to the standard output.
+    static void function(const(char)[] filename, size_t line, size_t column,
+        MessageType type, const(char)[] text) messageFunc;
+
+    /// Sets if messages are gagged.
+    static void startGagging()
+    {
+        _gag++;
+    }
+
+    /// Sets if messages are gagged.
+    static void stopGagging()
+    {
+        _gag--;
+    }
+
+    /// Returns: The count of error.
     static size_t errorsCount(){return _errorsCount;}
 
     /**
      * Adds an error message.
      *
      * Params:
-     *      text = A format specifier.
+     *      filename = The file where the error is located.
+     *      line = The line where the error is located.
+     *      column = The column where the error is located.
+     *      spec = A format specifier.
      *      args = The variadic arguments, as expected by the specifier.
      */
-    static void error(A...)(const(char)[] text, A args)
+    static void error(A...)(const(char)[] filename, size_t line, size_t column, const(char)[] spec, A args)
     {
-        _messages.length += 1;
-        _messages[$-1].type = MessageType.error;
-        _messages[$-1].text = format(text, args);
-        ++_errorsCount;
+        if (_gag)
+            return;
+
+        _errorsCount++;
+        string msg = format(spec, args);
+        if (messageFunc)
+            messageFunc(filename, line, column,  MessageType.error, msg);
+        else
+            writeln(filename, '(', line, ',', column, "): error, ", msg);
     }
 
     /**
      * Adds an informational message.
      *
      * Params:
-     *      text = A format specifier.
+     *      filename = The file where the error is located.
+     *      line = The line where the error is located.
+     *      column = The column where the error is located.
+     *      spec = A format specifier.
      *      args = The variadic arguments, as expected by the specifier.
      */
-    static void info(A...)(const(char)[] text, A args)
+    static void info(A...)(const(char)[] filename, size_t line, size_t column, const(char)[] spec, A args)
     {
-        _messages.length += 1;
-        _messages[$-1].type = MessageType.info;
-        _messages[$-1].text = format(text, args);
+        if (_gag)
+            return;
+
+        string msg = format(spec, args);
+        if (messageFunc)
+            messageFunc(filename, line, column,  MessageType.info, msg);
+        else
+            writeln(filename, '(', line, ',', column, "): information, ", msg);
     }
 
     /**
      * Adds an warning message.
      *
      * Params:
-     *      text = A format specifier.
+     *      filename = The file where the error is located.
+     *      line = The line where the error is located.
+     *      column = The column where the error is located.
+     *      spec = A format specifier.
      *      args = The variadic arguments, as expected by the specifier.
      */
-    static void warn(A...)(const(char)[] text, A args)
+    static void warn(A...)(const(char)[] filename, size_t line, size_t column, const(char)[] spec, A args)
     {
-        _messages.length += 1;
-        _messages[$-1].type = MessageType.warn;
-        _messages[$-1].text = format(text, args);
-    }
+        if (_gag)
+            return;
 
-    /// Writes the messages to the standard output.
-    static void printMessages()
-    {
-        foreach(m; _messages)
-            writeln(m.text);
-        clearMessages();
-    }
-
-    /// Clear the messages and reset the error count.
-    static void clearMessages()
-    {
-        _messages.length = 0;
-        _errorsCount = 0;
+        string msg = format(spec, args);
+        if (messageFunc)
+            messageFunc(filename, line, column,  MessageType.warn, msg);
+        else
+            writeln(filename, '(', line, ',', column, "): warning, ", msg);
     }
 }
 
 alias session = Session;
-
-static ~this()
-{
-    session.printMessages();
-}
 

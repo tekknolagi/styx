@@ -51,12 +51,12 @@ public:
 
     static void print()
     {
-        session.info("duration:");
-        session.info("lexing  :%s ", _times[0]);
-        session.info("parsing :%s ", _times[1] - _times[0]);
-        session.info("semantic:%s ", _times[2] - _times[1]);
-        session.info("codegen :%s ", _times[3] - _times[2]);
-        session.info("total   :%s ", _times[3]);
+        writefln("duration:");
+        writefln("lexing  :%s ", _times[0]);
+        writefln("parsing :%s ", _times[1] - _times[0]);
+        writefln("semantic:%s ", _times[2] - _times[1]);
+        writefln("codegen :%s ", _times[3] - _times[2]);
+        writefln("total   :%s ", _times[3]);
     }
 }
 
@@ -64,7 +64,7 @@ alias timer = Timer;
 
 void showHelp()
 {
-    session.info(
+    writeln(
 `
 ==============
 Yatol compiler
@@ -87,9 +87,6 @@ Options:
 
 int main(string[] args)
 {
-    version(unittest)
-        session.clearMessages();
-
     GetoptResult gr;
     string[] sources;
     Lexer*[] lexers;
@@ -105,13 +102,13 @@ int main(string[] args)
             }
             else
             {
-                session.error(`error, unrecognized file extension for "%s"`, arg);
+                writeln(`error, unrecognized file extension for "%s"`, arg);
                 return 1;
             }
         }
         else if (arg[0] != '-')
         {
-            session.error(`error, the file "%s" does not seem to exist`, arg);
+            writeln(`error, the file "%s" does not seem to exist`, arg);
             return 1;
         }
     }
@@ -139,7 +136,7 @@ int main(string[] args)
     if (!sources.length && !options.pipe)
     {
         showHelp();
-        session.info("\nnothing to compile, exited !");
+        writeln("nothing to compile, exited !");
         return 0;
     }
 
@@ -161,7 +158,7 @@ int main(string[] args)
     foreach (source; sources)
     {
         if (session.verbose)
-            session.info("lexing %s...", source);
+            writeln("lexing %s...", source);
         try
         {
             lexers ~= new Lexer(source);
@@ -182,7 +179,7 @@ int main(string[] args)
     {
         if (options.mtime)
             timer.print();
-        session.info("lexing phase finished, exited.");
+        writeln("lexing phase finished, exited.");
         return 0;
     }
 
@@ -190,21 +187,21 @@ int main(string[] args)
     foreach (ref lexer; lexers)
     {
         if (session.verbose)
-            session.info("parsing %s...", lexer.filename);
+            writeln("parsing %s...", lexer.filename);
         parsers ~= new Parser(lexer);
         if (UnitContainerAstNode uc = parsers[$-1].parse())
         {
             if (options.ast && options.until == Until.parsing)
             {
-                session.info("AST for %s", lexer.filename);
+                writeln("AST for %s", lexer.filename);
                 AstPrinter ap = new AstPrinter();
                 ap.visit(uc);
-                session.info(ap.text);
+                writeln(ap.text);
             }
         }
         else
         {
-            session.error("error, failed to parse `%s`", lexer.filename);
+            writeln("error, failed to parse `%s`", lexer.filename);
             return 1;
         }
     }
@@ -216,22 +213,22 @@ int main(string[] args)
     {
         if (options.mtime)
             timer.print();
-        session.info("parsing phase finished, exited.");
+        writeln("parsing phase finished, exited.");
         return 0;
     }
 
     foreach (i, ref parser; parsers)
     {
         if (session.verbose)
-            session.info("unit semantic for %s...", lexers[i].filename);
+            writeln("unit semantic for %s...", lexers[i].filename);
         if (!unitSemantic(parser.unitContainer, lexers[i]))
             return 1;
         if (options.ast)
         {
-            session.info("AST for %s", lexers[i].filename);
+            writeln("AST for %s", lexers[i].filename);
             AstPrinter ap = new AstPrinter();
             ap.visit(parser.unitContainer);
-            session.info(ap.text);
+            writeln(ap.text);
         }
     }
     if (options.mtime)
@@ -242,7 +239,7 @@ int main(string[] args)
     {
         if (options.mtime)
             timer.print();
-        session.info("semantic phase finished, exited.");
+        writeln("semantic phase finished, exited.");
         return 0;
     }
 
