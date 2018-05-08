@@ -6,7 +6,7 @@ module yatol.semantic;
 import
     yatol.lexer, yatol.ast, yatol.session,
     yatol.semantic.node_protection, yatol.semantic.versions,
-    yatol.semantic.desugar;
+    yatol.semantic.desugar, yatol.semantic.echo;
 
 
 /**
@@ -31,6 +31,10 @@ bool unitSemantic(UnitContainerAstNode uc, Lexer* lexer)
         return false;
 
     new NodeProtectionVisitor(uc, lexer);
+    if (session.hasErrors)
+        return false;
+
+    new EchoSemantic(uc, lexer);
     if (session.hasErrors)
         return false;
 
