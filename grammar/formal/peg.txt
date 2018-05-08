@@ -435,7 +435,6 @@ Yatol:
             / Const
             / Aka
             / Auto
-            / Is
             / Foreach
             / Switch
             / Null
@@ -497,7 +496,6 @@ Yatol:
     Const   <- "const"
     Aka     <- "aka"
     Auto    <- "auto"
-    Is      <- "is"
     Foreach <- "foreach"
     On      <- "on"
     Switch  <- "switch"

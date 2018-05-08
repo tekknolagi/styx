@@ -1298,15 +1298,14 @@ unittest
 unittest
 {
     int line = __LINE__ + 1;
-    enum source = `is s64 aka a`;
+    enum source = `s64 aka a`;
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();
-    assert(lx.tokens.length == 5);
-    assert(lx.tokens[0].isTokIs);
-    assert(lx.tokens[1].isTokBasicType);
-    assert(lx.tokens[2].isTokAka);
-    assert(lx.tokens[3].isTokIdentifier);
+    assert(lx.tokens.length == 4);
+    assert(lx.tokens[0].isTokBasicType);
+    assert(lx.tokens[1].isTokAka);
+    assert(lx.tokens[2].isTokIdentifier);
 }
 
 unittest

@@ -18,7 +18,6 @@ import
 in
 init
 interface
-is
 label
 null
 on
