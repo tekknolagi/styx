@@ -964,8 +964,8 @@ void test(const(char)[] code, const(char)[] expected,
     string file = __FILE_FULL_PATH__, size_t line = __LINE__)
 {
     import core.exception: AssertError;
-    import std.string;
-    import yatol.utils;
+    import std.string: stripRight;
+    import yatol.utils: lexAndParse;
 
     if (lexAndParse(expected, file, line) is null)
     {

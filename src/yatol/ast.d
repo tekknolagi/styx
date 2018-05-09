@@ -137,11 +137,13 @@ class AstNode
     void accept(AstVisitor) {}
     /// Set to $(D true) if this node represents something public.
     @Semantic bool isPublic;
-    /// Set to $(D true) if this node represents something private.
-    @Semantic bool isPrivate;
     /// Set $(D true) if this node represents something protected.
     @Semantic bool isProtected;
-    /// Set to a non null value if this node has a matching type.
+    /// Set to $(D true) if this node represents something private.
+    @Semantic bool isPrivate;
+    ///  Set to $(D true) if this node represents something strictly private.
+    @Semantic bool isStrict;
+    // Set to a non null value if this node has a matching type.
     //@Semantic TypeAstNode type;
 }
 

@@ -10,7 +10,7 @@ import
     yatol.token, yatol.lexer, yatol.parser, yatol.ast,
     yatol.session, yatol.semantic, yatol.ast_printer;
 
-enum Until
+private enum Until
 {
     _,
     lexing,
@@ -18,9 +18,9 @@ enum Until
     semantic,
 }
 
-struct Options
+private struct Options
 {
-__gshared:
+private: __gshared:
     bool mtime;
     bool ast;
     bool pipe;
@@ -29,7 +29,7 @@ __gshared:
 
 alias options = Options;
 
-struct Timer
+private struct Timer
 {
 __gshared: private:
 

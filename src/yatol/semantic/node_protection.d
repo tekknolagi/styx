@@ -20,8 +20,9 @@ private:
     enum Protection
     {
         public_,
+        protected_,
         private_,
-        protected_
+        strict,
     }
 
     Protection _protection = Protection.public_;
@@ -34,11 +35,14 @@ private:
         case public_:
             node.isPublic = true;
             break;
+        case protected_:
+            node.isProtected = true;
+            break;
         case private_:
             node.isPrivate = true;
             break;
-        case protected_:
-            node.isProtected = true;
+        case strict:
+            node.isStrict = true;
             break;
         }
     }
@@ -78,15 +82,18 @@ public:
             case "public":
                 overwriteProtection(public_);
                 break;
-            case "private":
-                overwriteProtection(private_);
-                break;
             case "protected":
                 overwriteProtection(protected_);
                 break;
+            case "private":
+                overwriteProtection(private_);
+                break;
+            case "strict":
+                overwriteProtection(strict);
+                break;
             default:
                 session.error(_lx.filename, node.protection.line, node.protection.column,
-                    "`%s` is not a valid protection, expected `public, `private` or `protected`",
+                    "`%s` is not a valid protection, expected `public, `protected`, `private` or `strict`",
                     node.protection.text);
         }
     }
@@ -151,6 +158,14 @@ public:
     {
         node.accept(this);
         setFields(node);
+    }
+
+    override void visit(TemplateDeclarationAstNode node)
+    {
+        setFields(node);
+        pushProtection(Protection.public_);
+        node.accept(this);
+        popProtection;
     }
 }
 
@@ -220,12 +235,18 @@ unittest
             function public1();
         }
 
+        protection(strict) template Baz<T>
+        {
+            protection(strict)
+                var T strict_member1;
+        }
+
         protection(invalid)
 
             function public1();
     };
 
-    import yatol.lexer, yatol.parser;
+    import yatol.lexer, yatol.parser, yatol.utils;
 
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line);
@@ -235,6 +256,15 @@ unittest
     NodeProtectionVisitor np = new NodeProtectionVisitor(uc, &lx);
     ProtectionChecker pc = new ProtectionChecker;
     pc.visit(uc);
+
+    assert(findDeclaration(uc, "Foo.private_member_1").isPrivate);
+    assert(findDeclaration(uc, "Foo.private_member_2").isPrivate);
+    assert(findDeclaration(uc, "Foo.public_member_1").isPublic);
+    assert(findDeclaration(uc, "Foo.public_member_2").isPublic);
+    assert(findDeclaration(uc, "Bar.protected_member_1").isProtected);
+    assert(findDeclaration(uc, "Bar.protected_member_2").isProtected);
+    assert(findDeclaration(uc, "Baz.strict_member1").isStrict);
+
     assert(session.errorsCount == old + 1);
 }
 
