@@ -16,6 +16,9 @@ script:
  # release build
  - dub --build=release --config=compiler --compiler=${DC}
  - dub build --build=release --config=library --compiler=${DC}
+ # test w/ files
+ - if [ "$DC" == "dmd" ]; then dmd=dmd; elif [ "$DC" == "ldc2" ]; then dmd=ldmd2; fi
+ - $dmd -run tests/test.d
  # grammar
  - cd grammar && dub run --config=generate && dub run --config=test
 
