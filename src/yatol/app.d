@@ -87,9 +87,11 @@ Options:
 
 int main(string[] args)
 {
-
     version(unittest)
         session.resetErrorsCount();
+
+    import core.runtime: dmd_coverSetMerge;
+    dmd_coverSetMerge(true);
 
     GetoptResult gr;
     string[] sources;

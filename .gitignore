@@ -1,4 +1,9 @@
 .dub
+*.lst
+*.o
+*.obj
+*.a
+*.lib
 dub.selections.json
 bin
 notes
