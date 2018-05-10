@@ -10,7 +10,7 @@ d:
  - ldc
  
 script:
- - sh ./test.sh
+ - bash ./test.sh
 
 after_success:
  - bash <(curl -s https://codecov.io/bash)
