@@ -1,0 +1,8 @@
+unit cover_echo;
+
+function foo()
+{
+    const auto a = echo(line, {0;});
+    const auto b = echo(semver, {0;});
+    echo(invalid_command);
+}
