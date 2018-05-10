@@ -126,11 +126,11 @@ public:
     }
 
     /// Constructs an instance with an AST and a list of user defined version.
-    this(UnitContainerAstNode uc, string[] userVersions, bool supressVersion = false)
+    this(UnitAstNode u, string[] userVersions, bool supressVersion = false)
     {
         _userVersions = userVersions;
         _supressVersion = supressVersion;
-        visit(uc);
+        visit(u);
     }
 
     /// $(D version) semantic should never fail.
@@ -306,18 +306,18 @@ void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions = [],
     import core.exception: AssertError;
     import yatol.utils;
 
-    UnitContainerAstNode uc = lexAndParse(code, file, line);
+    UnitAstNode u = lexAndParse(code, file, line);
 
-    if (uc is null || !uc.mainUnit || !uc.mainUnit.declarations ||
-        !uc.mainUnit.declarations.items.length ||
-        !uc.mainUnit.declarations.items[0].declaration.versionBlockDeclaration)
+    if (u is null || !u.declarations ||
+        !u.declarations.items.length ||
+        !u.declarations.items[0].declaration.versionBlockDeclaration)
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
     VersionEvaluatorVisitor vev = new VersionEvaluatorVisitor(userVersions);
 
-    vev.visit(uc);
-    const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations.items[0]
+    vev.visit(u);
+    const VersionBlockDeclarationAstNode vb = u.declarations.items[0]
         .declaration.versionBlockDeclaration;
 
     if (!vb.isTrue)
@@ -342,17 +342,17 @@ void assertFirstVersionIsFalse(const(char)[] code, string[] userVersions = [],
     import core.exception: AssertError;
     import yatol.utils;
 
-    UnitContainerAstNode uc = lexAndParse(code, file, line);
+    UnitAstNode u = lexAndParse(code, file, line);
 
-    if (uc is null || !uc.mainUnit || !uc.mainUnit.declarations ||
-        !uc.mainUnit.declarations.items.length ||
-        !uc.mainUnit.declarations.items[0].declaration.versionBlockDeclaration)
+    if (u is null || !u.declarations ||
+        !u.declarations.items.length ||
+        !u.declarations.items[0].declaration.versionBlockDeclaration)
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
-    new VersionEvaluatorVisitor(uc, userVersions);
+    new VersionEvaluatorVisitor(u, userVersions);
 
-    const VersionBlockDeclarationAstNode vb = uc.mainUnit.declarations.items[0]
+    const VersionBlockDeclarationAstNode vb = u.declarations.items[0]
         .declaration.versionBlockDeclaration;
 
     if (vb.isTrue)
@@ -574,16 +574,16 @@ unittest
 
         this()
         {
-            UnitContainerAstNode uc = lexAndParse(source);
+            UnitAstNode u = lexAndParse(source);
             VersionEvaluatorVisitor v = new VersionEvaluatorVisitor(versions, true);
-            v.visit(uc);
-            visit(uc);
+            v.visit(u);
+            visit(u);
             test();
             version(none)
             {
                 import yatol.ast_formatter;
                 AstFormatter af = new AstFormatter;
-                af.visit(uc);
+                af.visit(u);
                 writeln(af.formattedAst);
             }
         }

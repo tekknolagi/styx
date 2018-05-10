@@ -67,7 +67,6 @@ enum TokenType : ubyte
     unit,
     var,
     version_,
-    virtual,
     while_,
     // basic types
     bool_,
@@ -196,7 +195,6 @@ private static immutable string[TokenType.max + 1] tokenStringTable =
     "unit",
     "var",
     "version",
-    "virtual",
     "while",
     // basic types
     "bool",
@@ -321,13 +319,13 @@ struct Keywords
 private:
 
     /*
-        rendered on 2018-May-08 18:45:27.6019052 by IsItThere.
+        rendered on 2018-May-10 09:04:42.7415985 by IsItThere.
          - PRNG seed: 6574
          - map length: 128
          - case sensitive: true
     */
 
-    static const string[128] _words = ["", "", "", "s16", "", "", "continue", "", "", "var", "", "", "on", "", "static", "echo", "", "else", "s8", "", "", "", "switch", "u16", "", "throw", "goto", "interface", "", "import", "", "", "class", "", "", "", "", "f64", "u8", "", "protection", "", "", "", "", "", "", "", "", "", "break", "", "", "", "struct", "unit", "", "", "if", "", "", "", "aka", "", "while", "", "s64", "return", "", "try", "init", "", "const", "", "f32", "true", "label", "foreach", "", "enum", "ssize", "", "", "union", "", "", "u64", "", "version", "in", "", "", "", "", "finally", "", "template", "bool", "false", "", "usize", "super", "", "s32", "", "", "", "", "", "", "", "", "", "", "function", "auto", "null", "", "assert", "", "", "virtual", "", "u32", "", "", "", ""];
+    static const string[128] _words = ["", "", "", "s16", "", "", "continue", "", "", "var", "", "", "on", "", "static", "echo", "", "else", "s8", "", "", "", "switch", "u16", "", "throw", "goto", "interface", "", "import", "", "", "class", "", "", "", "", "f64", "u8", "", "protection", "", "", "", "", "", "", "", "", "", "break", "", "", "", "struct", "unit", "", "", "if", "", "", "", "aka", "", "while", "", "s64", "return", "", "try", "init", "", "const", "", "f32", "true", "label", "foreach", "", "enum", "ssize", "", "", "union", "", "", "u64", "", "version", "in", "", "", "", "", "finally", "", "template", "bool", "false", "", "usize", "super", "", "s32", "", "", "", "", "", "", "", "", "", "", "function", "auto", "null", "", "assert", "", "", "", "", "u32", "", "", "", ""];
 
     static const ubyte[256] _coefficients = [72, 196, 225, 139, 253, 73, 97, 168, 90, 7, 93, 110, 177, 83, 39, 103, 185, 230, 130, 30, 18, 25, 228, 83, 107, 76, 33, 2, 202, 239, 97, 228, 26, 162, 90, 84, 40, 177, 49, 159, 65, 253, 36, 93, 220, 14, 39, 133, 195, 41, 213, 184, 232, 108, 0, 162, 184, 113, 150, 236, 250, 171, 237, 89, 239, 183, 172, 103, 235, 158, 27, 197, 114, 41, 120, 171, 52, 245, 243, 67, 110, 202, 253, 47, 186, 212, 162, 57, 110, 72, 148, 113, 233, 77, 126, 101, 114, 101, 236, 242, 162, 81, 61, 202, 156, 125, 1, 244, 149, 180, 220, 176, 48, 212, 156, 90, 112, 238, 136, 65, 156, 57, 78, 168, 228, 15, 184, 125, 179, 111, 230, 61, 57, 234, 193, 172, 170, 254, 73, 235, 108, 88, 42, 125, 231, 122, 39, 14, 109, 84, 46, 144, 37, 250, 163, 118, 2, 3, 210, 11, 117, 116, 171, 223, 155, 104, 109, 92, 48, 239, 88, 153, 140, 119, 191, 214, 101, 204, 225, 85, 68, 33, 81, 75, 112, 28, 241, 246, 17, 100, 42, 74, 197, 196, 25, 87, 129, 31, 224, 94, 99, 194, 217, 178, 254, 65, 192, 201, 153, 108, 130, 185, 115, 30, 76, 152, 111, 30, 250, 196, 77, 37, 119, 35, 99, 166, 193, 11, 112, 87, 226, 133, 119, 180, 119, 139, 36, 233, 128, 189, 104, 159, 58, 82, 193, 184, 174, 54, 157, 38, 204, 196, 161, 206, 216, 240];
 
@@ -641,9 +639,6 @@ public:
 
     /// Conveniance function used by the parser.
     bool isTokUnit() const {return type == TokenType.unit;}
-
-    /// Conveniance function used by the parser.
-    bool isTokVirtual() const {return type == TokenType.virtual;}
 
     /// Conveniance function used by the parser.
     bool isTokDot() const {return type == TokenType.dot;}

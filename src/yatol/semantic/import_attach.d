@@ -15,10 +15,10 @@ private
 
 public:
 
-    this(UnitContainerAstNode uc, Lexer* lexer)
+    this(UnitAstNode u, Lexer* lexer)
     {
         _lx = lexer;
-        visit(uc);
+        visit(u);
     }
 
     override void visit(ImportDeclarationAstNode node)

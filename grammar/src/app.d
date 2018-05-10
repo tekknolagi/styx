@@ -31,10 +31,10 @@ enum source1 = "#!yatol --ast
     struct Foo{}
     var s8*[]*[] q,h; var sreg j;
     var Foo[][] foo;
-    virtual unit c;
+
     protection(private)
     protection(public) struct Foo { var sreg a,b,c; }
-    virtual unit d;
+
     function bar()
     {
         a;

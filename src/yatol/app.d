@@ -194,13 +194,13 @@ int main(string[] args)
         if (session.verbose)
             writefln("parsing %s...", lexer.filename);
         parsers ~= new Parser(lexer);
-        if (UnitContainerAstNode uc = parsers[$-1].parse())
+        if (UnitAstNode u = parsers[$-1].parse())
         {
             if (options.ast && options.until == Until.parsing)
             {
                 writefln("AST for %s", lexer.filename);
                 AstPrinter ap = new AstPrinter();
-                ap.visit(uc);
+                ap.visit(u);
                 writeln(ap.text);
             }
         }
@@ -226,13 +226,13 @@ int main(string[] args)
     {
         if (session.verbose)
             writefln("unit semantic for %s...", lexers[i].filename);
-        if (!unitSemantic(parser.unitContainer, lexers[i]))
+        if (!unitSemantic(parser.unit, lexers[i]))
             return 1;
         if (options.ast)
         {
             writefln("AST for %s", lexers[i].filename);
             AstPrinter ap = new AstPrinter();
-            ap.visit(parser.unitContainer);
+            ap.visit(parser.unit);
             writeln(ap.text);
         }
     }
@@ -240,7 +240,7 @@ int main(string[] args)
     {
         if (session.verbose)
             writefln("crossed-unit semantic for %s...", lexers[i].filename);
-        if (!crossUnitSemantic(parser.unitContainer, lexers[i]))
+        if (!crossUnitSemantic(parser.unit, lexers[i]))
             return 1;
     }
     if (options.mtime)

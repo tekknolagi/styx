@@ -58,8 +58,8 @@ final class Symbol
 }
 
 Symbol root;
-Symbol s8, s16, s32, s64, sreg;
-Symbol u8, u16, u32, u64, ureg;
+Symbol s8, s16, s32, s64, ssize;
+Symbol u8, u16, u32, u64, usize;
 Symbol f32, f64;
 Symbol bool_;
 
@@ -81,13 +81,13 @@ static this()
 
     if (session.regSize == 64)
     {
-        sreg = s64;
-        ureg = u64;
+        ssize = s64;
+        usize = u64;
     }
     else if (session.regSize == 32)
     {
-        sreg = s32;
-        ureg = u32;
+        ssize = s32;
+        usize = u32;
     }
     else assert(0);
 }
@@ -120,10 +120,10 @@ private:
 
 public:
 
-    this(UnitContainerAstNode uc)
+    this(UnitAstNode u)
     {
         _parent = root;
-        visit(uc);
+        visit(u);
     }
 
     override void visit(AkaDeclarationAstNode node)

@@ -13,8 +13,7 @@ import
 /**
  * Performs some semantic analysis at the unit level.
  *
- * <li>A first pass of symbolization without handling the imports</li>
- * <li>The import declarations are linked to their corresponding symbol</li>
+ * <li>A first pass of symbolization</li>
  * <li>the templatized declarations are rewritten as templates</li>
  * <li>the unreachable branches in $(D version()) are supressed</li>
  * <li>$(D protection()) is verified and applied to the nodes</li>
@@ -23,25 +22,25 @@ import
  *      uc = The AST produced by a parser for a unit.
  *      lexer = The lexer that scanned the unit.
  */
-bool unitSemantic(UnitContainerAstNode uc, Lexer* lexer)
+bool unitSemantic(UnitAstNode u, Lexer* lexer)
 {
-    new AstSymbolizerA(uc);
+    new AstSymbolizerA(u);
     if (session.hasErrors)
         return false;
 
-    new DesugarVisitor(uc);
+    new DesugarVisitor(u);
     if (session.hasErrors)
         return false;
 
-    new VersionEvaluatorVisitor(uc, session.userVersions, true);
+    new VersionEvaluatorVisitor(u, session.userVersions, true);
     if (session.hasErrors)
         return false;
 
-    new NodeProtectionVisitor(uc, lexer);
+    new NodeProtectionVisitor(u, lexer);
     if (session.hasErrors)
         return false;
 
-    new EchoSemantic(uc, lexer);
+    new EchoSemantic(u, lexer);
     if (session.hasErrors)
         return false;
 
@@ -55,9 +54,9 @@ bool unitSemantic(UnitContainerAstNode uc, Lexer* lexer)
  *      uc = The AST produced by a parser for a unit.
  *      lexer = The lexer that scanned the unit.
  */
-bool crossUnitSemantic(UnitContainerAstNode uc, Lexer* lexer)
+bool crossUnitSemantic(UnitAstNode u, Lexer* lexer)
 {
-    new ImportAttacherVisitor(uc, lexer);
+    new ImportAttacherVisitor(u, lexer);
     if (session.hasErrors)
         return false;
 

@@ -47,7 +47,7 @@ private:
 public:
 
     /// Creates an instance and start to visit from node.
-    this(UnitContainerAstNode node, Lexer* lexer)
+    this(UnitAstNode node, Lexer* lexer)
     {
         assert(node);
         assert(lexer);
@@ -80,18 +80,18 @@ void assertEchoedAs(const(char)[] code, const(char)[] expected,
     Lexer lx;
     lx.setSourceFromText(code, file, line);
     lx.lex();
-    UnitContainerAstNode uc = Parser(&lx).parse();
+    UnitAstNode u = Parser(&lx).parse();
 
 
-    if (uc is null)
+    if (u is null)
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
-    EchoSemantic es = new EchoSemantic(uc, &lx);
+    EchoSemantic es = new EchoSemantic(u, &lx);
     AstFormatter af = new AstFormatter();
 
-    es.visit(uc);
-    af.visit(uc);
+    es.visit(u);
+    af.visit(u);
 
     if (af.formattedAst.stripRight != expected.stripRight)
     {

@@ -2,22 +2,18 @@ Yatol:
 ################################################################################
 # SheBang line
 
-    Everything  <- SheBangLine? UnitContainer
+    Everything  <- SheBangLine? Unit
     SheBangLine <- "#!" (!endOfLine .)* endOfLine
 
 ################################################################################
 # Unit
 
-    UnitContainer < MainUnit VirtualUnits?
-
-    MainUnit < UnitDeclaration Declaration*
-    VirtualUnits < VirtualUnit*
-    VirtualUnit < Virtual UnitDeclaration Declaration*
+    Unit < UnitDeclaration Declaration*
 
 ################################################################################
 # Declarations
 
-    UnitDeclaration < Unit IdentifierChain Semicolon
+    UnitDeclaration < UnitKw IdentifierChain Semicolon
 
     Declaration     < AtAttributes? ImportDeclaration
                     / AtAttributes? ProtectionDeclaration
@@ -414,11 +410,10 @@ Yatol:
     Keyword < KeywordList !Identifier
 
     KeywordList < BasicType
-            / Unit
+            / UnitKw
             / Prot
             / Else
             / If
-            / Unit
             / Prot
             / Else
             / If
@@ -479,7 +474,7 @@ Yatol:
                         / SSIZE
                         / Bool
 
-    Unit    <- "unit"
+    UnitKw  <- "unit"
     Prot    <- "protection"
     Else    <- "else"
     If      <- "if"

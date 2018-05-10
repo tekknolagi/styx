@@ -972,15 +972,15 @@ void test(const(char)[] code, const(char)[] expected,
         throw new AssertError("the expected code is invalid", file, line);
     }
 
-    UnitContainerAstNode uc = lexAndParse(code, file, line);
+    UnitAstNode u = lexAndParse(code, file, line);
 
-    if (uc is null)
+    if (u is null)
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
     AstFormatter af = new AstFormatter();
 
-    af.visit(uc);
+    af.visit(u);
 
     if (af.formattedAst.stripRight != expected.stripRight)
     {

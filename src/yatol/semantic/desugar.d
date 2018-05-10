@@ -19,9 +19,9 @@ class DesugarVisitor: AstVisitor
     this(){}
 
     ///
-    this(UnitContainerAstNode uc)
+    this(UnitAstNode u)
     {
-        visit(uc);
+        visit(u);
     }
 
     override void visit(DeclarationAstNode node)
@@ -184,17 +184,17 @@ void assertDesugaredAs(const(char)[] code, const(char)[] expected,
     import std.string, std.stdio;
     import yatol.utils, yatol.ast_formatter;
 
-    UnitContainerAstNode uc = lexAndParse(code, file, line);
+    UnitAstNode u = lexAndParse(code, file, line);
 
-    if (uc is null)
+    if (u is null)
     {
         throw new AssertError("the code to test is invalid", file, line);
     }
     DesugarVisitor dv = new DesugarVisitor;
     AstFormatter af = new AstFormatter();
 
-    dv.visit(uc);
-    af.visit(uc);
+    dv.visit(u);
+    af.visit(u);
 
     if (af.formattedAst.stripRight != expected.stripRight)
     {

@@ -21,7 +21,7 @@ private:
     Token* _current;
     ptrdiff_t _declarationLevels;
     size_t _errorCount;
-    UnitContainerAstNode _uc;
+    UnitAstNode _u;
 
     alias Range = TokenRange!(TokenType.lineComment, TokenType.starComment);
     Range _range;
@@ -1763,7 +1763,7 @@ private:
         {
             with (TokenType) switch (current.type)
             {
-            case virtual, eof:
+            case eof:
                 return result;
             case rightCurly:
                 --_declarationLevels;
@@ -1799,8 +1799,8 @@ private:
         {
             with (TokenType) switch (current.type)
             {
-            case virtual, eof:
-                return result; // virtual unit
+            case eof:
+                return result;
             case rightCurly:
                 --_declarationLevels;
                 assert(oldDeclLvl == _declarationLevels);
@@ -3437,42 +3437,24 @@ public:
     }
 
     /**
-     * Main parser function. The function tries to parse from the main unit to
-     * the last virtual unit (if any).
+     * Main parser function.
      *
-     * Returns: An $(D UnitContainerAstNode) on success, $(D null) otherwise.
+     * Returns: An $(D UniAstNode) on success, $(D null) otherwise.
      */
-    UnitContainerAstNode parse()
+    UnitAstNode parse()
     {
         assert(current); // at least EOF token
-        _uc = new UnitContainerAstNode;
-        _uc.mainUnit = parseUnit();
-        if (!_uc.mainUnit)
-        {
-            return null;
-        }
-        while (current.isTokVirtual)
-        {
-            advance();
-            _uc.virtualUnits ~= parseUnit;
-            if (!_uc.virtualUnits[$-1])
-                return null;
-        }
-        /*if (!_range.empty)
-        {
-            unexpected;
-            return null;
-        }*/
+        _u = parseUnit();
         if (_errorCount)
             return null;
         else
-            return _uc;
+            return _u;
     }
 
     /// Returns: The AST for the unit being parsed.
-    UnitContainerAstNode unitContainer()
+    UnitAstNode unit()
     {
-        return _uc;
+        return _u;
     }
 
     /**
@@ -3549,13 +3531,13 @@ unittest
     protection(public)
         class Bat {}
         class Cow { class Fox {} }
-    virtual unit b;
+
     function bee(s32[] p1): function _(): static function _(): s8[]
     {
         // function that returns a function that returns an s8 array
     }
     protection(public) import(10) a.b, c.d;
-    virtual unit c;
+
     struct Owl
     {
         function of1(): s32;
@@ -3638,13 +3620,11 @@ unittest
 
     Parser pr = Parser(&lx);
     AstPrinter ap = new AstPrinter();
-    UnitContainerAstNode uc = pr.parse();
-    assert(uc);
-    assert(uc.mainUnit.isMain);
-    assert(!uc.mainUnit.isVirtual);
-    if (uc)
+    UnitAstNode u = pr.parse();
+    assert(u);
+    if (u)
     {
-        ap.visit(uc);
+        ap.visit(u);
         import std.process;
         if ("CI" !in environment)
             writeln(ap.text);
@@ -3675,12 +3655,12 @@ void assertParse(const(char)[] code, bool printAST = false,
     }
     else
     {
-        cov.visit(pr.unitContainer);
+        cov.visit(pr.unit);
         if (printAST)
         {
             import yatol.ast_printer;
             AstPrinter ap = new AstPrinter;
-            ap.visit(pr.unitContainer);
+            ap.visit(pr.unit);
             writeln(ap.text);
         }
     }
@@ -3770,15 +3750,6 @@ unittest
 
 unittest
 {
-    assertParse(q{
-        unit a;
-        virtual unit b;
-        virtual unit c;
-    });
-}
-
-unittest
-{
     assertNotParse(q{
         unit
     });
@@ -3805,18 +3776,6 @@ unittest
         unit a;
         virtual unit b;
         unit c;
-    });
-}
-
-unittest
-{
-    assertParse(q{
-        unit a;
-        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
-        virtual unit b;
-        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
-        virtual unit c;
-        struct Foo {struct Foo {class Foo {struct Foo {interface Foo {}}}}}
     });
 }
 
@@ -3856,18 +3815,6 @@ unittest
 {
     assertParse(q{
         unit a.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z;
-    });
-}
-
-unittest
-{
-    assertParse(q{
-        unit a.c;
-        protection(private)
-        protection(public)
-        virtual unit v;
-        protection(private)
-        protection(public)
     });
 }
 

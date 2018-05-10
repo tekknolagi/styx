@@ -16,7 +16,7 @@ import
  * Returns:
  *      The AST for the code passed as parameter.
  */
-UnitContainerAstNode lexAndParse(const(char)[] code, string file = __FILE_FULL_PATH__,
+UnitAstNode lexAndParse(const(char)[] code, string file = __FILE_FULL_PATH__,
     size_t line = __LINE__)
 {
     Lexer lx;
@@ -27,8 +27,8 @@ UnitContainerAstNode lexAndParse(const(char)[] code, string file = __FILE_FULL_P
 ///
 unittest
 {
-    UnitContainerAstNode uc = lexAndParse("unit a; const s8 a = 42:s8;");
-    assert(uc !is null);
+    UnitAstNode u = lexAndParse("unit a; const s8 a = 42:s8;");
+    assert(u !is null);
 }
 
 private class DeclarationFinder: AstVisitor
@@ -92,10 +92,10 @@ T findDeclaration(T = AstNode, Node : AstNode)(Node node, const(char)[] fqn)
 ///
 unittest
 {
-    UnitContainerAstNode uc = lexAndParse("unit a; class Foo {var s8 a;}");
-    assert(findDeclaration(uc, "Foo.a") !is null);
-    assert(findDeclaration!VariableDeclarationItemAstNode(uc, "Foo.a") !is null);
-    assert(findDeclaration!StructDeclarationAstNode(uc, "Foo.Bar") is null);
+    UnitAstNode u = lexAndParse("unit a; class Foo {var s8 a;}");
+    assert(findDeclaration(u, "Foo.a") !is null);
+    assert(findDeclaration!VariableDeclarationItemAstNode(u, "Foo.a") !is null);
+    assert(findDeclaration!StructDeclarationAstNode(u, "Foo.Bar") is null);
 }
 
 /// ditto
@@ -107,8 +107,8 @@ T findDeclaration(T = AstNode, Node : AstNode)(Node node, const(char)[][] fqn)
 ///
 unittest
 {
-    UnitContainerAstNode uc = lexAndParse("unit a; class Foo{struct Bar{ function fun(); }}");
-    assert(findDeclaration(uc, ["Foo", "Bar", "fun"]) !is null);
-    assert(findDeclaration!FunctionDeclarationAstNode(uc, ["Foo", "Bar", "fun"]) !is null);
+    UnitAstNode u = lexAndParse("unit a; class Foo{struct Bar{ function fun(); }}");
+    assert(findDeclaration(u, ["Foo", "Bar", "fun"]) !is null);
+    assert(findDeclaration!FunctionDeclarationAstNode(u, ["Foo", "Bar", "fun"]) !is null);
 }
 

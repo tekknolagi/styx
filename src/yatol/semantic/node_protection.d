@@ -66,7 +66,7 @@ private:
 public:
 
     /// Creates an instance and start to visit from node.
-    this(UnitContainerAstNode node, Lexer* lexer)
+    this(UnitAstNode node, Lexer* lexer)
     {
         assert(node);
         assert(lexer);
@@ -251,19 +251,19 @@ unittest
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line);
     lx.lex();
-    UnitContainerAstNode uc = Parser(&lx).parse();
+    UnitAstNode u = Parser(&lx).parse();
     const old = session.errorsCount;
-    NodeProtectionVisitor np = new NodeProtectionVisitor(uc, &lx);
+    NodeProtectionVisitor np = new NodeProtectionVisitor(u, &lx);
     ProtectionChecker pc = new ProtectionChecker;
-    pc.visit(uc);
+    pc.visit(u);
 
-    assert(findDeclaration(uc, "Foo.private_member_1").isPrivate);
-    assert(findDeclaration(uc, "Foo.private_member_2").isPrivate);
-    assert(findDeclaration(uc, "Foo.public_member_1").isPublic);
-    assert(findDeclaration(uc, "Foo.public_member_2").isPublic);
-    assert(findDeclaration(uc, "Bar.protected_member_1").isProtected);
-    assert(findDeclaration(uc, "Bar.protected_member_2").isProtected);
-    assert(findDeclaration(uc, "Baz.strict_member1").isStrict);
+    assert(findDeclaration(u, "Foo.private_member_1").isPrivate);
+    assert(findDeclaration(u, "Foo.private_member_2").isPrivate);
+    assert(findDeclaration(u, "Foo.public_member_1").isPublic);
+    assert(findDeclaration(u, "Foo.public_member_2").isPublic);
+    assert(findDeclaration(u, "Bar.protected_member_1").isProtected);
+    assert(findDeclaration(u, "Bar.protected_member_2").isProtected);
+    assert(findDeclaration(u, "Baz.strict_member1").isStrict);
 
     assert(session.errorsCount == old + 1);
 }

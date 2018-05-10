@@ -116,7 +116,6 @@ class AstVisitor
     void visit(UnaryExpressionAstNode node){node.accept(this);}
     void visit(UnionDeclarationAstNode node){node.accept(this);}
     void visit(UnitAstNode node){node.accept(this);}
-    void visit(UnitContainerAstNode node){node.accept(this);}
     void visit(VariableDeclarationAstNode node){node.accept(this);}
     void visit(VariableDeclarationItemAstNode node){node.accept(this);}
     void visit(VersionBlockDeclarationAstNode node){node.accept(this);}
@@ -135,6 +134,7 @@ class AstNode
     Position position;
     /// Gets visited by an AstVisitor.
     void accept(AstVisitor) {}
+
     /// Set to $(D true) if this node represents something public.
     @Semantic bool isPublic;
     /// Set $(D true) if this node represents something protected.
@@ -146,8 +146,6 @@ class AstNode
 
     /// Set for the nodes that represent a type.
     @Semantic Object symbol;
-    /// The scope.
-    @Semantic Object scope_;
     /// The unit where the node is declared.
     @Semantic Object unit;
 }
@@ -1265,35 +1263,13 @@ final class UnitAstNode: AstNode
 {
     /// The chain of tokens used in the UnitDeclaration.
     Token*[] identifiers;
-    /// When the unit is virtual, this is a reference to the MainUnit.
-    UnitAstNode mainUnit; //!\\ not to visit //!\\
     /// The declarations located in the unit.
     DeclarationsAstNode declarations;
-    /// Indicates if this is a VirtualUnit.
-    bool isVirtual() const {return mainUnit !is null;}
-    /// Indicates if this is a MainUnit.
-    bool isMain() const {return !isVirtual;}
     ///
     override void accept(AstVisitor visitor)
     {
         if (declarations)
             visitor.visit(declarations);
-    }
-}
-
-/// The AST root node
-final class UnitContainerAstNode: AstNode
-{
-    /// The main unit.
-    UnitAstNode mainUnit;
-    /// The virtual units.
-    UnitAstNode[] virtualUnits;
-    ///
-    override void accept(AstVisitor visitor)
-    {
-        if (mainUnit)
-            visitor.visit(mainUnit);
-        virtualUnits.each!(a => visitor.visit(a));
     }
 }
 
