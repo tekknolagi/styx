@@ -102,6 +102,14 @@ void assertEchoedAs(const(char)[] code, const(char)[] expected,
 
 unittest
 {
+    import core.exception: AssertError;
+    import std.exception: assertThrown;
+    assertThrown!(AssertError)(assertEchoedAs("bzzz","grrr"));
+    assertThrown!(AssertError)(assertEchoedAs("unit a;","grrr"));
+}
+
+unittest
+{
     string ln = to!string(__LINE__ + 1);
     assertEchoedAs("unit a; function foo(){const usize a = echo(line); }",
 "unit a;

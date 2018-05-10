@@ -133,9 +133,6 @@ public:
         visit(u);
     }
 
-    /// $(D version) semantic should never fail.
-    bool success(){return true;}
-
     override void visit(VersionBlockDeclarationAstNode node)
     {
         visit(node.versionExpression);
@@ -325,7 +322,6 @@ void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions = [],
         throw new AssertError("the version evaluates to false instead of true",
             file, vb.position.line);
     }
-    assert(vev.success());
 }
 
 /**
