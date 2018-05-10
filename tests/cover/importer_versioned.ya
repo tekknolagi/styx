@@ -1,0 +1,6 @@
+unit importer;
+
+version(none)
+{
+    import importable.x;
+}
