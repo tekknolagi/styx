@@ -29,7 +29,13 @@ __gshared: private:
 
 public:
 
-    byte regSize = 64;
+    version(X86_64)
+        byte regSize = 64;
+    else version(X86)
+        byte regSize = 32;
+    else
+        static assert(0);
+
     /// Indicates if verbose output is expected.
     bool verbose;
     /// Contains the users version identifiers.

@@ -1,1 +1,1 @@
-tests/cover/importable/importable_a.ya tests/cover/importable/importable_b.ya -v
+tests/cover/importable/importable_a.ya tests/cover/importable/importable_b.ya -v -m32

@@ -25,6 +25,8 @@ private: __gshared:
     bool ast;
     bool pipe;
     Until until;
+    bool m32;
+    bool m64;
 }
 
 alias options = Options;
@@ -76,6 +78,8 @@ Files:
 Options:
     -a or --ast           : prints the AST of each source.
     -h or --help          : prints this message.
+          --m32           : compiles 32 bit code.
+          --m64           : compiles 64 bit code.
     -p or --pipe          : creates a source named "stdin" by piping the input.
     -t or --time          : measures the time spent to compile.
           --until=<phase> : stops after <phase>, either "lexing", "parsing" or "semantic".
@@ -127,6 +131,8 @@ int main(string[] args)
         "until", &options.until,
         "v|verbose", &session.verbose,
         "versions", &session.userVersions,
+        "m32", &options.m32,
+        "m64", &options.m64,
     );
     catch (GetOptException ge)
     {
@@ -153,6 +159,11 @@ int main(string[] args)
         lexers ~= new Lexer;
         lexers[$-1].setSourceFromText(c, "stdin");
     }
+
+    if (options.m32)
+        session.regSize = 32;
+    else if (options.m64)
+        session.regSize = 64;
 
     if (options.mtime)
         timer.start();
