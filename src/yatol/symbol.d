@@ -312,7 +312,7 @@ public:
         {
             if (Symbol c = _parent.find(node.identifiers[i], SymbolKind.unit))
             {
-                if (_parent is root)
+                if (i == 0 && _parent is root && node.identifiers.length == 1)
                 {
                     session.error(__FILE_FULL_PATH__, Position(__LINE__, 0), "INTERNAL");
                 }
