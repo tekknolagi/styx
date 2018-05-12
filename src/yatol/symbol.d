@@ -37,7 +37,6 @@ final class Symbol
 
     this(Token* name, Symbol parent, SymbolKind kind, Symbol type = null)
     {
-        initialize();
         this.name = name;
         this.parent = parent;
         this.kind = kind;
@@ -200,14 +199,6 @@ void initialize()
     else assert(0);
 }
 
-unittest
-{
-    assert(u8 != u16);
-    assert(s8 != u8);
-    assert(s16 != u16);
-    assert(s16 == s16);
-}
-
 /**
  * This AST visitor creates symbols, among a single unit for types and variables.
  */
@@ -233,6 +224,8 @@ public:
 
     this(UnitAstNode u)
     {
+        version(unittest)
+            initialize();
         _parent = root;
         visit(u);
     }
@@ -343,7 +336,8 @@ public:
 
 void runAstSymbolizerAForTest(string source, int line = __LINE__)
 {
-    root.clear;
+    if (root)
+        root.clear;
     size_t old = session.errorsCount;
     UnitAstNode u = lexAndParse(source, __FILE_FULL_PATH__, line);
     assert(u !is null && session.errorsCount == old, "the code to test is invalid");
