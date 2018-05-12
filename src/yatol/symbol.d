@@ -37,6 +37,7 @@ final class Symbol
 
     this(Token* name, Symbol parent, SymbolKind kind, Symbol type = null)
     {
+        initialize();
         this.name = name;
         this.parent = parent;
         this.kind = kind;
@@ -164,8 +165,14 @@ Symbol u8, u16, u32, u64, usize;
 Symbol f32, f64;
 Symbol bool_;
 
-static this()
+static bool initialized;
+
+void initialize()
 {
+    if (initialized)
+        return;
+    initialized = true;
+
     root = new Symbol(null, null, SymbolKind.builtin);
 
     bool_ = new Symbol(null, root, SymbolKind.builtin);
