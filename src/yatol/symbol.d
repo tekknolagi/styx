@@ -158,21 +158,32 @@ final class Symbol
     }
 }
 
-Symbol root;
+private Symbol _root;
+
+/**
+ * Returns: The root symbol. It Contains all the units and also the default
+ * internal symbols, such as the one used representing the basic types.
+ *
+ *
+ */
+Symbol root()
+{
+    if (_root is null)
+        initialize();
+    return _root;
+}
+
 Symbol s8, s16, s32, s64, ssize;
 Symbol u8, u16, u32, u64, usize;
 Symbol f32, f64;
 Symbol bool_;
 
-static bool initialized;
-
 void initialize()
 {
-    if (initialized)
+    if (_root !is null)
         return;
-    initialized = true;
 
-    root = new Symbol(null, null, SymbolKind.builtin);
+    _root = new Symbol(null, null, SymbolKind.builtin);
 
     bool_ = new Symbol(null, root, SymbolKind.builtin);
     s8  = new Symbol(null, root, SymbolKind.builtin);
@@ -224,8 +235,7 @@ public:
 
     this(UnitAstNode u)
     {
-        version(unittest)
-            initialize();
+        initialize();
         _parent = root;
         visit(u);
     }
