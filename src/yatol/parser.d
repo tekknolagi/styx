@@ -192,6 +192,7 @@ private:
     {
         assert(current.isTokIdentifier);
         IdentifierChainAstNode result = new IdentifierChainAstNode;
+        result.position = current.position();
         while (true)
         {
             result.chain ~= current();
@@ -1730,6 +1731,7 @@ private:
             if (DeclarationAstNode d = parseDeclaration())
             {
                 DeclarationOrStatementAstNode result = new DeclarationOrStatementAstNode;
+                result.position = current.position;
                 result.declaration = d;
                 return result;
             }
@@ -1737,6 +1739,7 @@ private:
         if (StatementAstNode s = parseStatement())
         {
             DeclarationOrStatementAstNode result = new DeclarationOrStatementAstNode;
+            result.position = current.position;
             result.statement  = s;
             return result;
         }
@@ -1866,6 +1869,7 @@ private:
     EchoParameterAstNode parseEchoParameter()
     {
         EchoParameterAstNode result = new EchoParameterAstNode;
+        result.position = current.position();
         if (current.isTokKeyword)
         {
             result.keyword = current.type;
@@ -2169,6 +2173,7 @@ private:
         if (ExpressionAstNode e = parseExpression(null))
         {
             AssignExpressionAstNode result = new AssignExpressionAstNode;
+            result.position = current.position;
             result.left = e;
             e.position = current.position;
             if (current.isTokSemicolon)
@@ -2219,6 +2224,7 @@ private:
             if (ExpressionAstNode r = parseExpression(null))
             {
                 ExpressionAstNode result = new ExpressionAstNode;
+                result.position = current.position;
                 BinaryExpressionAstNode be = new BinaryExpressionAstNode;
 
                 be.position = current.position;
@@ -2273,6 +2279,7 @@ private:
             if (UnaryExpressionAstNode u = parseUnaryExpression())
             {
                 ExpressionAstNode result = new ExpressionAstNode;
+                result.position = current.position;
                 result.unaryExpression = u;
                 u.position = current.position;
                 if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal) ||
@@ -2301,6 +2308,7 @@ private:
         if (AssignExpressionAstNode ae = parseAssignExpression())
         {
             ExpressionStatementAstNode result = new ExpressionStatementAstNode;
+            result.position = current.position;
             result.assignExpression = ae;
             assert(current.isTokSemicolon);
             advance();
@@ -2894,6 +2902,7 @@ private:
         if (VersionOrExpressionAstNode voe = parseVersionOrExpression())
         {
             VersionParenExpressionAstNode result = new VersionParenExpressionAstNode;
+            result.position = current.position;
             result.expression = voe;
             advance();
             return result;
@@ -2911,6 +2920,7 @@ private:
         if (VersionAndExpressionAstNode vae = parseVersionAndExpression())
         {
             VersionOrExpressionAstNode result = new VersionOrExpressionAstNode;
+            result.position = current.position;
             result.leftExpression = vae;
             if (current.isTokPipe)
             {
@@ -2937,6 +2947,7 @@ private:
         if (VersionPrimaryExpressionAstNode vpe = parseVersionPrimaryExpression())
         {
             VersionAndExpressionAstNode result = new VersionAndExpressionAstNode;
+            result.position = current.position;
             result.leftExpression = vpe;
             if (current.isTokAmp)
             {
@@ -3010,6 +3021,7 @@ private:
         {
             warning("empty statement");
             StatementAstNode result = new StatementAstNode;
+            result.position = current.position;
             result.statementKind = StatementKind.skEmpty;
             result.statement.emptyStatement = new EmptyStatementAstNode;
             result.statement.emptyStatement.position = current.position;
@@ -3021,6 +3033,7 @@ private:
             if (ReturnStatementAstNode rs = parseReturnStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = rs.position;
                 result.statementKind = StatementKind.skReturn;
                 result.statement.returnStatement = rs;
                 return result;
@@ -3036,6 +3049,7 @@ private:
             if (BreakStatementAstNode bs = parseBreakStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = bs.position;
                 result.statementKind = StatementKind.skBreak;
                 result.statement.breakStatement = bs;
                 return result;
@@ -3051,6 +3065,7 @@ private:
             if (GotoStatementAstNode gs = parseGotoStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = gs.position;
                 result.statementKind = StatementKind.skGoto;
                 result.statement.gotoStatement = gs;
                 return result;
@@ -3066,6 +3081,7 @@ private:
             if (ContinueStatementAstNode cs = parseContinueStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = cs.position;
                 result.statementKind = StatementKind.skContinue;
                 result.statement.continueStatement = cs;
                 return result;
@@ -3081,6 +3097,7 @@ private:
             if (IfElseStatementAstNode ies = parseIfElseStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = ies.position;
                 result.statementKind = StatementKind.skIfElse;
                 result.statement.ifElseStatement = ies;
                 return result;
@@ -3096,6 +3113,7 @@ private:
             if (WhileStatementAstNode ws = parseWhileStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = ws.position;
                 result.statementKind = StatementKind.skWhile;
                 result.statement.whileStatement = ws;
                 return result;
@@ -3111,6 +3129,7 @@ private:
             if (ForeachStatementAstNode fs = parseForeachStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = fs.position;
                 result.statementKind = StatementKind.skForeach;
                 result.statement.foreachStatement = fs;
                 return result;
@@ -3126,6 +3145,7 @@ private:
             if (SwitchStatementAstNode ss = parseSwitchStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = ss.position;
                 result.statementKind = StatementKind.skSwitch;
                 result.statement.switchStatement = ss;
                 return result;
@@ -3141,6 +3161,7 @@ private:
             if (TryOnFinallyStatementAstNode tofs = parseTryOnFinallyStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = tofs.position;
                 result.statementKind = StatementKind.skTryOnFinally;
                 result.statement.tryOnFinallyStatement = tofs;
                 return result;
@@ -3156,6 +3177,7 @@ private:
             if (ThrowStatementAstNode ts = parseThrowStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = ts.position;
                 result.statementKind = StatementKind.skThrow;
                 result.statement.throwStatement = ts;
                 return result;
@@ -3171,6 +3193,7 @@ private:
             if (VersionBlockStatementAstNode vbs = parseVersionBlockStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = vbs.position;
                 result.statementKind = StatementKind.skVersion;
                 result.statement.versionBlockStatement = vbs;
                 return result;
@@ -3186,6 +3209,7 @@ private:
             if (AssertStatementAstNode as = parseAssertStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = as.position;
                 result.statementKind = StatementKind.skAssert;
                 result.statement.assertStatement = as;
                 return result;
@@ -3200,9 +3224,11 @@ private:
         {
             advance();
             BlockStatementAstNode b = new BlockStatementAstNode;
+            b.position = current.position;
             if (DeclarationsOrStatementsAstNode dos = parseDeclarationsOrStatements())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = dos.position;
                 result.statementKind = StatementKind.skBlock;
                 result.statement.block = b;
                 result.statement.block.declarationsOrStatements = dos;
@@ -3216,6 +3242,7 @@ private:
             if (ExpressionStatementAstNode es = parseExpressionStatement())
             {
                 StatementAstNode result = new StatementAstNode;
+                result.position = es.position;
                 result.statementKind = StatementKind.skExpression;
                 result.statement.expression = es;
                 return result;
@@ -3250,6 +3277,7 @@ private:
             if (LabelDeclarationstAstNode ld = parseLabelDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = ld.position;
                 result.declarationKind = DeclarationKind.dkLabel;
                 result.declaration.labelDeclaration = ld;
                 return result;
@@ -3265,6 +3293,7 @@ private:
             if (EnumDeclarationAstNode decl = parseEnumDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = decl.position;
                 result.declarationKind = DeclarationKind.dkEnum;
                 result.declaration.enumDeclaration = decl;
                 result.declaration.enumDeclaration.atAttributes = attribs;
@@ -3277,6 +3306,7 @@ private:
             if (InterfaceDeclarationAstNode decl = parseInterfaceDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = decl.position;
                 result.declarationKind = DeclarationKind.dkInterface;
                 result.declaration.interfaceDeclaration = decl;
                 result.declaration.interfaceDeclaration.atAttributes = attribs;
@@ -3289,6 +3319,7 @@ private:
             if (ClassDeclarationAstNode decl = parseClassDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = decl.position;
                 result.declarationKind = DeclarationKind.dkClass;
                 result.declaration.classDeclaration = decl;
                 result.declaration.classDeclaration.atAttributes = attribs;
@@ -3301,6 +3332,7 @@ private:
             if (StructDeclarationAstNode decl = parseStructDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = decl.position;
                 result.declarationKind = DeclarationKind.dkStruct;
                 result.declaration.structDeclaration = decl;
                 result.declaration.structDeclaration.atAttributes = attribs;
@@ -3313,6 +3345,7 @@ private:
             if (UnionDeclarationAstNode decl = parseUnionDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = decl.position;
                 result.declarationKind = DeclarationKind.dkUnion;
                 result.declaration.unionDeclaration = decl;
                 result.declaration.unionDeclaration.atAttributes = attribs;
@@ -3325,6 +3358,7 @@ private:
             if (FunctionDeclarationAstNode decl = parseFunctionDeclaration(false))
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = decl.position;
                 result.declarationKind = DeclarationKind.dkFunction;
                 result.declaration.functionDeclaration = decl;
                 result.declaration.functionDeclaration.atAttributes = attribs;
@@ -3337,6 +3371,7 @@ private:
             if (ImportDeclarationAstNode decl = parseImportDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = decl.position;
                 result.declarationKind = DeclarationKind.dkImport;
                 result.declaration.importDeclaration = decl;
                 result.declaration.importDeclaration.atAttributes = attribs;
@@ -3349,6 +3384,7 @@ private:
             if (ProtectionDeclarationAstNode decl = parseProtectionDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = decl.position;
                 result.declarationKind = DeclarationKind.dkProtection;
                 result.declaration.protectionOverwrite = decl;
                 return result;
@@ -3360,6 +3396,7 @@ private:
             if (VariableDeclarationAstNode vd = parseVariableDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = vd.position;
                 result.declarationKind = DeclarationKind.dkVariable;
                 result.declaration.variableDeclaration = vd;
                 result.declaration.variableDeclaration.atAttributes = attribs;
@@ -3372,6 +3409,7 @@ private:
             if (AkaDeclarationAstNode ad = parseAkaDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = ad.position;
                 result.declarationKind = DeclarationKind.dkAka;
                 result.declaration.akaDeclaration = ad;
                 result.declaration.akaDeclaration.atAttributes = attribs;
@@ -3384,6 +3422,7 @@ private:
             if (VersionBlockDeclarationAstNode vb = parseVersionBlockDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = vb.position;
                 result.declarationKind = DeclarationKind.dkVersion;
                 result.declaration.versionBlockDeclaration = vb;
                 return result;
@@ -3395,6 +3434,7 @@ private:
             if (TemplateDeclarationAstNode td = parseTemplateDeclaration())
             {
                 DeclarationAstNode result = new DeclarationAstNode;
+                result.position = td.position;
                 result.declarationKind = DeclarationKind.dkTemplate;
                 result.declaration.templateDeclaration = td;
                 result.declaration.templateDeclaration.atAttributes = attribs;
