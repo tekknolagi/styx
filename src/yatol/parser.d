@@ -1251,7 +1251,7 @@ private:
             return null;
         }
         EnumMemberAstNode result = new EnumMemberAstNode;
-        result.identifier = current();
+        result.name = current();
         result.position = current.position();
         advance();
         if (current.isTokComma || current.isTokRightCurly)

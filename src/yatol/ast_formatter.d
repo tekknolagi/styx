@@ -284,8 +284,8 @@ public:
 
     override void visit(EnumMemberAstNode node)
     {
-        if (node.identifier)
-            _source ~= node.identifier.text;
+        if (node.name)
+            _source ~= node.name.text;
         if (node.value)
         {
             _source ~= " = ";

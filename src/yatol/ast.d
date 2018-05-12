@@ -384,7 +384,7 @@ final class SwitchStatementAstNode: AstNode
 final class EnumMemberAstNode: AstNode
 {
     /// The enum member name.
-    Token* identifier;
+    Token* name;
     /// The member value.
     ExpressionAstNode value;
     ///
