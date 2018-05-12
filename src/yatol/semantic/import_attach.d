@@ -40,7 +40,7 @@ public:
             }
             if (result is null)
             {
-                session.error(_lx.filename, list.position.line, list.position.column,
+                session.error(_lx.filename, list.position,
                 "cannot find imported unit `%s`", yatol.token.tokenChainText(list.chain));
             }
             else

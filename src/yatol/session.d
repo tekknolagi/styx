@@ -2,6 +2,8 @@ module yatol.session;
 
 import
     std.stdio, std.format;
+import
+    yatol.token;
 
 /// Describes the type of a message
 enum MessageType
@@ -35,8 +37,8 @@ public:
     /// Indicates if errors happened.
     static bool hasErrors(){return _errorsCount != 0;}
     /// A callback for the messages. When not set, message are written to the standard output.
-    static void function(const(char)[] filename, size_t line, size_t column,
-        MessageType type, const(char)[] text) messageFunc;
+    static void function(const(char)[] filename, Position pos, MessageType type,
+        const(char)[] text) messageFunc;
 
     /// Sets if messages are gagged.
     static void startGagging()
@@ -61,12 +63,11 @@ public:
      *
      * Params:
      *      filename = The file where the error is located.
-     *      line = The line where the error is located.
-     *      column = The column where the error is located.
+     *      pos = The error position.
      *      spec = A format specifier.
      *      args = The variadic arguments, as expected by the specifier.
      */
-    static void error(A...)(const(char)[] filename, size_t line, size_t column, const(char)[] spec, A args)
+    static void error(A...)(const(char)[] filename, Position pos, const(char)[] spec, A args)
     {
         if (_gag)
             return;
@@ -74,9 +75,9 @@ public:
         _errorsCount++;
         string msg = format(spec, args);
         if (messageFunc)
-            messageFunc(filename, line, column,  MessageType.error, msg);
+            messageFunc(filename, pos,  MessageType.error, msg);
         else
-            writeln(filename, '(', line, ',', column, "): error, ", msg);
+            writeln(filename, '(', pos.line, ',', pos.column, "): error, ", msg);
     }
 
     /**
@@ -84,21 +85,20 @@ public:
      *
      * Params:
      *      filename = The file where the error is located.
-     *      line = The line where the error is located.
-     *      column = The column where the error is located.
+     *      pos = The error position.
      *      spec = A format specifier.
      *      args = The variadic arguments, as expected by the specifier.
      */
-    static void info(A...)(const(char)[] filename, size_t line, size_t column, const(char)[] spec, A args)
+    static void info(A...)(const(char)[] filename, Position pos, const(char)[] spec, A args)
     {
         if (_gag)
             return;
 
         string msg = format(spec, args);
         if (messageFunc)
-            messageFunc(filename, line, column,  MessageType.info, msg);
+            messageFunc(filename, pos,  MessageType.info, msg);
         else
-            writeln(filename, '(', line, ',', column, "): information, ", msg);
+            writeln(filename, '(', pos.line, ',', pos.column, "): information, ", msg);
     }
 
     /**
@@ -106,21 +106,20 @@ public:
      *
      * Params:
      *      filename = The file where the error is located.
-     *      line = The line where the error is located.
-     *      column = The column where the error is located.
+     *      pos = The error position.
      *      spec = A format specifier.
      *      args = The variadic arguments, as expected by the specifier.
      */
-    static void warn(A...)(const(char)[] filename, size_t line, size_t column, const(char)[] spec, A args)
+    static void warn(A...)(const(char)[] filename, Position pos, const(char)[] spec, A args)
     {
         if (_gag)
             return;
 
         string msg = format(spec, args);
         if (messageFunc)
-            messageFunc(filename, line, column,  MessageType.warn, msg);
+            messageFunc(filename, pos,  MessageType.warn, msg);
         else
-            writeln(filename, '(', line, ',', column, "): warning, ", msg);
+            writeln(filename, '(', pos.line, ',', pos.column, "): warning, ", msg);
     }
 }
 

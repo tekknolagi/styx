@@ -29,14 +29,14 @@ private:
     void warning(const(char[]) message)
     {
         assert(_current);
-        session.warn(_lexer.filename, _current.line, _current.column, message);
+        session.warn(_lexer.filename, _current.position, message);
     }
 
     void parseError(const(char[]) message)
     {
         assert(_current);
         ++_errorCount;
-        session.error(_lexer.filename, _current.line, _current.column, message);
+        session.error(_lexer.filename,_current.position, message);
     }
 
     void expected(TokenType expected, string loc = __FUNCTION__, int line = __LINE__)

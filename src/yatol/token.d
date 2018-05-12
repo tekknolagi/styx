@@ -458,8 +458,6 @@ private:
 
     char* _start;
     size_t _length;
-    size_t _line;
-    size_t _column;
     TokenType _type;
     Position _pos;
     bool _kwAsIdent;

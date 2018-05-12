@@ -92,7 +92,7 @@ public:
                 overwriteProtection(strict);
                 break;
             default:
-                session.error(_lx.filename, node.protection.line, node.protection.column,
+                session.error(_lx.filename, node.protection.position,
                     "`%s` is not a valid protection, expected `public, `protected`, `private` or `strict`",
                     node.protection.text);
         }
