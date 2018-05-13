@@ -194,6 +194,7 @@ enum source1 = "#!yatol --ast
     function foo<T>(var T t)
     {
         foo<int>(0);
+        var tpart<s8>.tpart<s8>.tpart<s8> n;
     }
 
     template Foo<T0,T1>

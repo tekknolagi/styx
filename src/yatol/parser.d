@@ -416,6 +416,39 @@ private:
     }
 
     /**
+     * Parses a TypeIdentifierPart.
+     *
+     * Returns:
+     *      On success a $(D TypeIdentifierPartAstNode) otherwise $(D null).
+     */
+    TypeIdentifierPartAstNode parseTypeIdentifierPart()
+    {
+        assert(current.isTokIdentifier);
+        TypeIdentifierPartAstNode result = new TypeIdentifierPartAstNode;
+        result.position = current.position();
+        result.identifier = current();
+        advance();
+        if (current.isTokLesser)
+        {
+            if (TemplateInstanceAstNode ti = parseTemplateInstance())
+            {
+                result.templateInstance = ti;
+            }
+            else return null;
+        }
+        if (current.isTokDot && lookupNext.isTokIdentifier)
+        {
+            advance();
+            if (TypeIdentifierPartAstNode tip = parseTypeIdentifierPart())
+            {
+                result.nextPart = tip;
+            }
+            else return null;
+        }
+        return result;
+    }
+
+    /**
      * Parses a Type.
      *
      * Returns:
@@ -460,22 +493,14 @@ private:
                 expected(TokenType.identifier);
                 return null;
             }
-            else if (IdentifierChainAstNode ic = parseIdentifierChain())
+            else if (TypeIdentifierPartAstNode tip = parseTypeIdentifierPart())
             {
-                result.qualifiedType = ic;
+                result.typeIdentifierPart = tip;
             }
-            else return null;
-            if (current.isTokLesser)
+            else
             {
-                if (TemplateInstanceAstNode ti = parseTemplateInstance())
-                {
-                    result.templateInstance = ti;
-                }
-                else
-                {
-                    parseError("invalid template specialization");
-                    return null;
-                }
+                parseError("invalid type identifier parts");
+                return null;
             }
         }
         if (current.isTokMul || current.isTokLeftSquare)
@@ -4915,6 +4940,10 @@ unittest // aka & type
         unit a;
         aka a = other
     });
+    assertNotParse(q{
+        unit a;
+        aka a = Foo<T>.Bar<+;
+    });
 }
 
 unittest // super
@@ -5964,6 +5993,15 @@ unittest // try
         {
             try something();
             on(Error e, Oops o){doThat();doThat();}
+            finally doThis();
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            try something();
+            on(Error<+ e, Oops o){doThat();doThat();}
             finally doThis();
         }
     });

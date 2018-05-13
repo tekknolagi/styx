@@ -112,6 +112,7 @@ class AstVisitor
     void visit(Token* token){}
     void visit(TryOnFinallyStatementAstNode node){node.accept(this);}
     void visit(TypeAstNode node){node.accept(this);}
+    void visit(TypeIdentifierPartAstNode node){node.accept(this);}
     void visit(TypeModifierAstNode node){node.accept(this);}
     void visit(UnaryExpressionAstNode node){node.accept(this);}
     void visit(UnionDeclarationAstNode node){node.accept(this);}
@@ -1203,12 +1204,10 @@ final class TypeAstNode: AstNode
 {
     /// A basic or auto type.
     Token* autoOrBasicType;
-    /// A qualified custom type
-    IdentifierChainAstNode qualifiedType;
-    /// The template specialization
-    TemplateInstanceAstNode templateInstance;
     /// If the type is a function, then assigned.
     FunctionDeclarationAstNode functionType;
+    /// The type identifier parts.
+    TypeIdentifierPartAstNode typeIdentifierPart;
     /// The first modifier.
     TypeModifierAstNode modifier;
     ///
@@ -1216,14 +1215,32 @@ final class TypeAstNode: AstNode
     {
         if (autoOrBasicType)
             visitor.visit(autoOrBasicType);
-        else if (qualifiedType)
-            visitor.visit(qualifiedType);
         else if (functionType)
             visitor.visit(functionType);
-        if (templateInstance)
-            visitor.visit(templateInstance);
+        else if (typeIdentifierPart)
+            visitor.visit(typeIdentifierPart);
         if (modifier)
             visitor.visit(modifier);
+    }
+}
+
+class TypeIdentifierPartAstNode: AstNode
+{
+    /// The next part of the type identifier
+    TypeIdentifierPartAstNode nextPart;
+    /// The part identifier or template name
+    Token* identifier;
+    /// The part template instance
+    TemplateInstanceAstNode templateInstance;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        if (identifier)
+            visitor.visit(identifier);
+        if (templateInstance)
+            visitor.visit(templateInstance);
+        if (nextPart)
+            visitor.visit(nextPart);
     }
 }
 

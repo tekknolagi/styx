@@ -272,10 +272,13 @@ Yatol:
     Type    < TypeIdentifier TypeModifiers?
             / LeftParen TypeIdentifier RightParen TypeModifiers? # the "unambiguous form"
 
-    TypeIdentifier  < BasicType
-                    / Auto
-                    / IdentifierChain TemplateInstance?
+    TypeIdentifier  < Auto
+                    / BasicType
                     / FunctionType
+                    / TypeIdentifierParts
+
+    TypeIdentifierParts < TypeIdentifierPart (Dot TypeIdentifierPart)*
+    TypeIdentifierPart  < Identifier TemplateInstance ?
 
     TypeModifiers < TypeModifier TypeModifiers?
 

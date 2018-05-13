@@ -743,16 +743,27 @@ public:
             _source ~= "(";
         if (node.autoOrBasicType)
             _source ~= node.autoOrBasicType.text;
-        else if (node.qualifiedType)
-            visit(node.qualifiedType);
         else if (node.functionType)
             visit(node.functionType);
-        if (node.templateInstance)
-            visit(node.templateInstance);
+        else if (node.typeIdentifierPart)
+            visit(node.typeIdentifierPart);
         if (_formattingFunctionReturn)
             _source ~= ")";
         if (node.modifier)
             visit(node.modifier);
+    }
+
+    override void visit(TypeIdentifierPartAstNode node)
+    {
+        if (node.identifier)
+            _source ~= node.identifier.text;
+        if (node.templateInstance)
+            visit(node.templateInstance);
+        if (node.nextPart)
+        {
+            _source ~= ".";
+            visit(node.nextPart);
+        }
     }
 
     override void visit(TypeModifierAstNode node)
@@ -1961,4 +1972,15 @@ function foo<T>()
     test(c, e);
 }
 
+unittest
+{
+    string c = "unit a; function foo<T,Z>(){const tmp<T>. tmp<Z> .Y b;}";
+    string e =
+"unit a;
+function foo<T, Z>()
+{
+    const tmp<T>.tmp<Z>.Y b;
+}";
+    test(c, e);
+}
 
