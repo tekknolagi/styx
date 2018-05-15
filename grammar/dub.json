@@ -12,7 +12,7 @@
       "targetType" : "executable",
       "targetPath" : "bin",
       "excludedSourceFiles" : [
-        "src\/yatol.d"
+        "src\/styx.d"
       ],
       "versions" : [
         "gen"

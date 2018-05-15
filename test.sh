@@ -13,7 +13,7 @@ cd ..
 
 # in-source unit tests + cover main appl piping features
 dub build --build=unittest-cov --config=compiler --compiler=${DC}
-echo "unit b;" > b.ya && bin/yatol -v -p -a -t b.ya <<< "unit a;"
+echo "unit b;" > b.sx && bin/styx -v -p -a -t b.sx <<< "unit a;"
 
 # release build
 dub build --build=release --config=compiler --force --compiler=${DC}

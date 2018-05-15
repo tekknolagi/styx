@@ -2,7 +2,7 @@ Contributing
 
 ## Issues
 
-Issues are tracked here: https://github.com/BBasile/yatol/issues.
+Issues are tracked here: https://github.com/BBasile/styx/issues.
 
 ### General
 
@@ -36,7 +36,7 @@ import
 import
     std.foo, std.bar;
 import
-    yatol.foo, yatol.bar;
+    styx.foo, styx.bar;
 ```
 
 - Always add (or never remove) a last empty line at the end of a module. The last empty line prevents a possible annoyance when using editors that support code folding and when the last block is collapsed.

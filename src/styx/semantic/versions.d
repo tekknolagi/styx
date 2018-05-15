@@ -1,12 +1,12 @@
 /**
  * Semantic processing for the VersionBlockDeclaration and VersionBlockStatement.
  */
-module yatol.semantic.versions;
+module styx.semantic.versions;
 
 import
     std.algorithm.iteration : each;
 import
-    yatol.ast, yatol.lexer, yatol.session;
+    styx.ast, styx.lexer, styx.session;
 
 // TODO: create the list of predefined versions + check for conflicts in the driver.
 
@@ -301,7 +301,7 @@ void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions = [],
     string file = __FILE_FULL_PATH__, size_t line = __LINE__)
 {
     import core.exception: AssertError;
-    import yatol.utils;
+    import styx.utils;
 
     UnitAstNode u = lexAndParse(code, file, line);
 
@@ -336,7 +336,7 @@ void assertFirstVersionIsFalse(const(char)[] code, string[] userVersions = [],
     string file = __FILE_FULL_PATH__, size_t line = __LINE__)
 {
     import core.exception: AssertError;
-    import yatol.utils;
+    import styx.utils;
 
     UnitAstNode u = lexAndParse(code, file, line);
 
@@ -555,7 +555,7 @@ unittest // version statements
 
 unittest
 {
-    import yatol.utils;
+    import styx.utils;
     import std.stdio;
 
     class Tester : AstVisitor
@@ -577,7 +577,7 @@ unittest
             test();
             version(none)
             {
-                import yatol.ast_formatter;
+                import styx.ast_formatter;
                 AstFormatter af = new AstFormatter;
                 af.visit(u);
                 writeln(af.formattedAst);

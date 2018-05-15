@@ -1,12 +1,12 @@
 /**
  * Contains an AstVisitor that prints the AST of a UnitContainer.
  */
-module yatol.ast_printer;
+module styx.ast_printer;
 
 import
     std.stdio, std.traits, std.format, std.algorithm;
 import
-    yatol.token, yatol.lexer, yatol.ast;
+    styx.token, styx.lexer, styx.ast;
 
 /**
  * An $(D AstVisitor) that prints the AST of a $(D UnitContainer).

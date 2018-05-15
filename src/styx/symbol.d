@@ -1,46 +1,62 @@
-module yatol.symbol;
+module styx.symbol;
 
 import
     std.stdio;
 import
-    yatol.ast, yatol.token, yatol.session, yatol.utils;
+    styx.ast, styx.token, styx.session, styx.utils;
 
-/// Enumerates the possible symbol kinds.
+/// Enumerates the possible kinds first class kinds of first class symbols
 enum SymbolKind
 {
+    invalid_,
+
     aka,
-    array,
     builtin,
-    class_,
-    enum_,
-    interface_,
     import_,
     function_,
-    functionPtr_,
     /// To be solved
     partial,
-    struct_,
-    template_,
-    union_,
     unit,
+    template_,
     /// Also for enum members (considered as constant) and function parameters
     variable,
+
+    bool_,
+
+    u8,
+    u16,
+    u32,
+    u64,
+    s8,
+    s16,
+    s32,
+    s64,
+
+    f32,
+    f64,
+
+    functionProto_,
+
+    enum_,
+
+    class_,
+    interface_,
+    struct_,
+    union_,
 }
 
-final class Symbol
+class Symbol
 {
     Token* name;
     SymbolKind kind;
-    Symbol type;
     Symbol parent;
     Symbol[] children;
 
-    this(Token* name, Symbol parent, SymbolKind kind, Symbol type = null)
+    this(Token* name, Symbol parent, SymbolKind kind)
     {
         this.name = name;
         this.parent = parent;
         this.kind = kind;
-        this.type = type;
         if (parent)
         {
             parent.children ~= this;
@@ -50,7 +66,7 @@ final class Symbol
     /**
      * Remove all the non system symbols.
      */
-    void clear()
+    final void clear()
     {
         if (this is root)
         {
@@ -163,8 +179,6 @@ private Symbol _root;
 /**
  * Returns: The root symbol. It Contains all the units and also the default
  * internal symbols, such as the one used representing the basic types.
- *
- *
  */
 Symbol root()
 {
@@ -173,10 +187,30 @@ Symbol root()
     return _root;
 }
 
-Symbol s8, s16, s32, s64, ssize;
-Symbol u8, u16, u32, u64, usize;
-Symbol f32, f64;
-Symbol bool_;
+class Type: Symbol
+{
+    alias typeKind = super.kind;
+    Type[] baseTypes;
+
+    this(Token* name, Symbol parent, SymbolKind kind)
+    {
+        super(name, parent, kind);
+    }
+
+    /// Returns: $(D true) if this type is numeric.
+    final bool isNumeric(){return SymbolKind.u8 <= typeKind && typeKind <= SymbolKind.f64;}
+
+    /// Returns: $(D true) if this type is integral.
+    final bool isIntegral(){return SymbolKind.u8 <= typeKind && typeKind <= SymbolKind.s64;}
+
+    /// Returns: $(D true) if this type is a floating point type.
+    final bool isFloatingPoint(){return SymbolKind.f32 <= typeKind && typeKind <= SymbolKind.f64;}
+}
+
+Type u8, u16, u32, u64, usize;
+Type s8, s16, s32, s64, ssize;
+Type f32, f64;
+Type bool_;
 
 void initialize()
 {
@@ -185,17 +219,17 @@ void initialize()
 
     _root = new Symbol(null, null, SymbolKind.builtin);
 
-    bool_ = new Symbol(null, root, SymbolKind.builtin);
-    s8  = new Symbol(null, root, SymbolKind.builtin);
-    s16 = new Symbol(null, root, SymbolKind.builtin);
-    s32 = new Symbol(null, root, SymbolKind.builtin);
-    s64 = new Symbol(null, root, SymbolKind.builtin);
-    u8  = new Symbol(null, root, SymbolKind.builtin);
-    u16 = new Symbol(null, root, SymbolKind.builtin);
-    u32 = new Symbol(null, root, SymbolKind.builtin);
-    u64 = new Symbol(null, root, SymbolKind.builtin);
-    f32 = new Symbol(null, root, SymbolKind.builtin);
-    f64 = new Symbol(null, root, SymbolKind.builtin);
+    bool_ = new Type(null, root, SymbolKind.bool_);
+    u8  = new Type(null, root, SymbolKind.u8);
+    u16 = new Type(null, root, SymbolKind.u16);
+    u32 = new Type(null, root, SymbolKind.u32);
+    u64 = new Type(null, root, SymbolKind.u64);
+    s8  = new Type(null, root, SymbolKind.s8);
+    s16 = new Type(null, root, SymbolKind.s16);
+    s32 = new Type(null, root, SymbolKind.s32);
+    s64 = new Type(null, root, SymbolKind.s64);
+    f32 = new Type(null, root, SymbolKind.f32);
+    f64 = new Type(null, root, SymbolKind.f64);
 
     if (session.regSize == 64)
     {
@@ -221,11 +255,21 @@ final class AstSymbolizerA: AstVisitor
 private:
 
     Symbol _parent;
+    bool _inType;
 
-    void visitNamedNode(N : AstNode)(N node, SymbolKind kind)
+    void addNamedSymbol(N : AstNode)(N node, SymbolKind kind)
     {
         Symbol old = _parent;
         _parent = new Symbol(node.name, old, kind);
+        node.symbol = _parent;
+        node.accept(this);
+        _parent = old;
+    }
+
+    void addNamedType(N : AstNode)(N node, SymbolKind kind)
+    {
+        Symbol old = _parent;
+        _parent = new Type(node.name, old, kind);
         node.symbol = _parent;
         node.accept(this);
         _parent = old;
@@ -242,27 +286,27 @@ public:
 
     override void visit(AkaDeclarationAstNode node)
     {
-        visitNamedNode(node, SymbolKind.aka);
+        addNamedSymbol(node, SymbolKind.aka);
     }
 
     override void visit(ClassDeclarationAstNode node)
     {
-        visitNamedNode(node, SymbolKind.class_);
+        addNamedType(node, SymbolKind.class_);
     }
 
     override void visit(EnumDeclarationAstNode node)
     {
-        visitNamedNode(node, SymbolKind.enum_);
+        addNamedType(node, SymbolKind.enum_);
     }
 
     override void visit(EnumMemberAstNode node)
     {
-        visitNamedNode(node, SymbolKind.variable);
+        addNamedSymbol(node, SymbolKind.variable);
     }
 
     override void visit(FunctionDeclarationAstNode node)
     {
-        visitNamedNode(node, SymbolKind.function_);
+        addNamedSymbol(node, SymbolKind.function_);
     }
 
     override void visit(FunctionParameterGroupAstNode node)
@@ -280,17 +324,17 @@ public:
 
     override void visit(InterfaceDeclarationAstNode node)
     {
-        visitNamedNode(node, SymbolKind.interface_);
+        addNamedType(node, SymbolKind.interface_);
     }
 
     override void visit(StructDeclarationAstNode node)
     {
-        visitNamedNode(node, SymbolKind.struct_);
+        addNamedType(node, SymbolKind.struct_);
     }
 
     override void visit(TemplateDeclarationAstNode node)
     {
-        visitNamedNode(node, SymbolKind.template_);
+        addNamedSymbol(node, SymbolKind.template_);
     }
 
     override void visit(TemplateParametersAstNode node)
@@ -306,13 +350,53 @@ public:
 
     override void visit(TypeAstNode node)
     {
-        //note: wait for https://github.com/BBasile/yatol/issues/28
-        node.accept(this);
+        Symbol old = _parent;
+        const bool oldinType = _inType;
+        _inType = true;
+
+        if (node.autoOrBasicType)
+        {
+            if (node.autoOrBasicType.isTokAuto)
+            {
+                _parent = new Symbol(node.autoOrBasicType, old, SymbolKind.partial);
+                node.symbol = _parent;
+            }
+            else
+            {
+                switch(node.autoOrBasicType.type)
+                {
+                    case TokenType.bool_: node.symbol = bool_; break;
+
+                    case TokenType.u8: node.symbol  = u8; break;
+                    case TokenType.u16: node.symbol = u16; break;
+                    case TokenType.u32: node.symbol = u32; break;
+                    case TokenType.u64: node.symbol = u64; break;
+
+                    case TokenType.s8: node.symbol  = s8; break;
+                    case TokenType.s16: node.symbol = s16; break;
+                    case TokenType.s32: node.symbol = s32; break;
+                    case TokenType.s64: node.symbol = s64; break;
+
+                    case TokenType.f32: node.symbol = f32; break;
+                    case TokenType.f64: node.symbol = f64; break;
+
+                    default: assert(0);
+                }
+                if (Type t = cast(Type) old)
+                    if (node.symbol)
+                {
+                    t.baseTypes ~= cast(Type) node.symbol;
+                }
+            }
+        }
+
+        _inType = oldinType;
+        _parent = old;
     }
 
     override void visit(UnionDeclarationAstNode node)
     {
-        visitNamedNode(node, SymbolKind.union_);
+        addNamedType(node, SymbolKind.union_);
     }
 
     override void visit(UnitAstNode node)
@@ -340,7 +424,7 @@ public:
 
     override void visit(VariableDeclarationItemAstNode node)
     {
-        visitNamedNode(node, SymbolKind.variable);
+        addNamedSymbol(node, SymbolKind.variable);
     }
 }
 
@@ -352,6 +436,15 @@ void runAstSymbolizerAForTest(string source, int line = __LINE__)
     UnitAstNode u = lexAndParse(source, __FILE_FULL_PATH__, line);
     assert(u !is null && session.errorsCount == old, "the code to test is invalid");
     new AstSymbolizerA(u);
+}
+
+unittest
+{
+    assert(root());
+    assert(u8.isIntegral);
+    assert(!f32.isIntegral);
+    assert(f32.isFloatingPoint);
+    assert(f64.isNumeric);
 }
 
 unittest
@@ -403,6 +496,21 @@ unittest
     runAstSymbolizerAForTest(s);
     with(SymbolKind) assert(root.findQualified("u.foo.a", [unit, function_, variable]));
     with(SymbolKind) assert(root.findQualified("u.foo.b", [unit, function_, variable]));
+}
+
+unittest
+{
+    enum s = q{  unit u; enum E:bool {a,b}  };
+    runAstSymbolizerAForTest(s);
+    with(SymbolKind)
+    {
+        Symbol sy = root.findQualified("u.E", [unit, enum_]);
+        assert(sy);
+        assert(sy.children.length == 2);
+        assert((cast(Type)sy).baseTypes[0].kind == SymbolKind.bool_);
+        assert(sy.children[0].kind == SymbolKind.variable && sy.children[0].name.text == "a");
+        assert(sy.children[1].kind == SymbolKind.variable && sy.children[1].name.text == "b");
+    }
 }
 
 unittest

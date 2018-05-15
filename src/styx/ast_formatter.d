@@ -1,12 +1,12 @@
 /**
  * Contains an AstVisitor that formats the AST of a UnitContainer.
  */
-module yatol.ast_formatter;
+module styx.ast_formatter;
 
 import
     std.array, std.algorithm.iteration, std.stdio;
 import
-    yatol.ast, yatol.token;
+    styx.ast, styx.token;
 
 
 /**
@@ -976,7 +976,7 @@ void test(const(char)[] code, const(char)[] expected,
 {
     import core.exception: AssertError;
     import std.string: stripRight;
-    import yatol.utils: lexAndParse;
+    import styx.utils: lexAndParse;
 
     if (lexAndParse(expected, file, line) is null)
     {

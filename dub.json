@@ -1,5 +1,5 @@
 ﻿{
-  "name" : "yatol",
+  "name" : "styx",
   "authors" : [
     "Basile Burg"
   ],
@@ -16,10 +16,10 @@
       "name" : "library",
       "targetType" : "staticLibrary",
       "excludedSourceFiles" : [
-        "src/yatol/app.d"
+        "src/styx/app.d"
       ]
     }
   ],
-  "description" : "YATOL is Yet Another TOy Language",
+  "description" : "STYX programming language",
   "license" : "BSD 3-clause",
 }

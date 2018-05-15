@@ -1,9 +1,9 @@
-module yatol.semantic.echo;
+module styx.semantic.echo;
 
 import
     std.stdio, std.conv, std.exception;
 import
-    yatol.token, yatol.lexer, yatol.ast, yatol.session;
+    styx.token, styx.lexer, styx.ast, styx.session;
 
 /**
  * Visitor that transforms CompilerEchoes in other expressions.
@@ -75,7 +75,7 @@ void assertEchoedAs(const(char)[] code, const(char)[] expected,
     string file = __FILE_FULL_PATH__, size_t line = __LINE__)
 {
     import std.string, core.exception;
-    import yatol.utils, yatol.ast_formatter, yatol.parser;
+    import styx.utils, styx.ast_formatter, styx.parser;
 
     Lexer lx;
     lx.setSourceFromText(code, file, line);

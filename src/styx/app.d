@@ -1,5 +1,5 @@
 /**
- * Yatol compiler main application.
+ * Styx compiler main application.
  */
 module app;
 
@@ -7,8 +7,8 @@ import
     std.getopt, std.file, std.stdio, std.path, std.datetime.stopwatch,
     std.array, std.format;
 import
-    yatol.token, yatol.lexer, yatol.parser, yatol.ast,
-    yatol.session, yatol.semantic, yatol.ast_printer;
+    styx.token, styx.lexer, styx.parser, styx.ast,
+    styx.session, styx.semantic, styx.ast_printer;
 
 private enum Until
 {
@@ -68,13 +68,13 @@ void showHelp()
 {
     writeln(
 `
-==============
-Yatol compiler
-==============
+=============
+Styx compiler
+=============
 Command line syntax:
-    yatol <.ya Files...> [<Options>]
+    styx <.ya Files...> [<Options>]
 Files:
-    a list of yatol source files, space-separated.
+    a list of styx source files, space-separated.
 Options:
     -a or --ast           : prints the AST of each source.
     -h or --help          : prints this message.
@@ -106,7 +106,7 @@ int main(string[] args)
     {
         if (arg.exists)
         {
-            if (arg.length > 3 && arg[$-3..$] == ".ya")
+            if (arg.length > 3 && arg[$-3..$] == ".sx")
             {
                 sources ~= arg;
             }

@@ -1,12 +1,12 @@
 /**
  * Contains the AST node classes and a visitor class.
  */
-module yatol.ast;
+module styx.ast;
 
 import
     std.conv, std.algorithm.iteration, std.meta, std.stdio;
 import
-    yatol.token;
+    styx.token;
 
 /// Used to annotate the fields set by the semantic.
 enum Semantic;

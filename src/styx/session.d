@@ -1,9 +1,9 @@
-module yatol.session;
+module styx.session;
 
 import
     std.stdio, std.format;
 import
-    yatol.token;
+    styx.token;
 
 /// Describes the type of a message
 enum MessageType

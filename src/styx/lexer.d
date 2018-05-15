@@ -1,17 +1,17 @@
 /**
- * YATOL's lexer.
+ * Styx's lexer.
  */
-module yatol.lexer;
+module styx.lexer;
 
 import
     core.stdc.stdlib;
 import
     std.stdio, std.file;
 import
-    yatol.token, yatol.session;
+    styx.token, styx.session;
 
 /**
- * Scans a yatol source file.
+ * Scans a styx source file.
  */
 struct Lexer
 {
@@ -1532,7 +1532,7 @@ unittest
 unittest
 {
     int line = __LINE__ + 1;
-    enum source = "#!bin/yatol -until=parsing \r\n unit a;";
+    enum source = "#!bin/styx -until=parsing \r\n unit a;";
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line, 20);
     lx.lex();

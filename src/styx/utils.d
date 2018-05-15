@@ -1,12 +1,12 @@
 /**
  * Utilities and miscellaneous sub routines.
  */
-module yatol.utils;
+module styx.utils;
 
 import
     std.stdio;
 import
-    yatol.lexer, yatol.parser, yatol.ast;
+    styx.lexer, styx.parser, styx.ast;
 
 /**
  * Lexes and parses some code. Usually used for the embedded compiler tests.

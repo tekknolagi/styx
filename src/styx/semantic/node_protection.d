@@ -1,9 +1,9 @@
-module yatol.semantic.node_protection;
+module styx.semantic.node_protection;
 
 import
     std.stdio;
 import
-    yatol.token, yatol.lexer, yatol.ast, yatol.session;
+    styx.token, styx.lexer, styx.ast, styx.session;
 
 /**
  * An AST visitor that sets the protection of each node.
@@ -246,7 +246,7 @@ unittest
             function public1();
     };
 
-    import yatol.lexer, yatol.parser, yatol.utils;
+    import styx.lexer, styx.parser, styx.utils;
 
     Lexer lx;
     lx.setSourceFromText(source, __FILE_FULL_PATH__, line);

@@ -1,9 +1,9 @@
-module yatol.semantic.desugar;
+module styx.semantic.desugar;
 
 import
     std.stdio;
 import
-    yatol.ast;
+    styx.ast;
 
 /**
  * This $(D AstVisitor) is used to rewrite syntactic shortcuts into their
@@ -182,7 +182,7 @@ void assertDesugaredAs(const(char)[] code, const(char)[] expected,
 {
     import core.exception: AssertError;
     import std.string, std.stdio;
-    import yatol.utils, yatol.ast_formatter;
+    import styx.utils, styx.ast_formatter;
 
     UnitAstNode u = lexAndParse(code, file, line);
 

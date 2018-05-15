@@ -1,13 +1,13 @@
 /**
  * Drives the semantic phase.
  */
-module yatol.semantic;
+module styx.semantic;
 
 import
-    yatol.lexer, yatol.ast, yatol.session,
-    yatol.semantic.node_protection, yatol.semantic.versions,
-    yatol.semantic.desugar, yatol.semantic.echo, yatol.symbol,
-    yatol.semantic.import_attach;
+    styx.lexer, styx.ast, styx.session,
+    styx.semantic.node_protection, styx.semantic.versions,
+    styx.semantic.desugar, styx.semantic.echo, styx.symbol,
+    styx.semantic.import_attach;
 
 
 /**

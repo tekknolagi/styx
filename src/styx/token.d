@@ -1,8 +1,8 @@
 /**
- * The yatol token type, as produced by the lexer.
+ * The Styx token type, as produced by the lexer.
  * Also contains a static hash map used to match the keywords.
  */
-module yatol.token;
+module styx.token;
 
 /// Stores a position in the source code.
 struct Position

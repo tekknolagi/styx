@@ -19,7 +19,7 @@ immutable string covCwd;
 static this()
 {
     enum d = __FILE_FULL_PATH__.dirName;
-    yatolPath   = d.dirName ~ dirSeparator ~ "bin" ~ dirSeparator ~ "yatol";
+    yatolPath   = d.dirName ~ dirSeparator ~ "bin" ~ dirSeparator ~ "styx";
     testsPath   = d ~ dirSeparator;
     compileCwd  = d ~ dirSeparator ~ "compile";
     failCwd     = d ~ dirSeparator ~ "fail";
@@ -53,7 +53,7 @@ int main(string[] args)
     writeln("Starting the coverage tests");
     writeln("========================================================");
 
-    auto cov_entries = dirEntries(testsPath ~ "cover", "*.ya", SpanMode.shallow).array;
+    auto cov_entries = dirEntries(testsPath ~ "cover", "*.sx", SpanMode.shallow).array;
     foreach(i, e; cov_entries)
     {
         executeTest(e.name, TestType.cover);
@@ -66,7 +66,7 @@ int main(string[] args)
     writeln("Starting the tests that must compile...");
     writeln("========================================================");
 
-    auto compile_entries = dirEntries(testsPath ~ "compile", "*.ya", SpanMode.shallow).array;
+    auto compile_entries = dirEntries(testsPath ~ "compile", "*.sx", SpanMode.shallow).array;
     foreach(i, e; compile_entries)
     {
         if (!executeTest(e.name, TestType.compile))
@@ -86,7 +86,7 @@ int main(string[] args)
     writeln("Starting tests that must fail...");
     writeln("========================================================");
 
-    auto fail_entries = dirEntries(testsPath ~ "fail", "*.ya", SpanMode.shallow).array;
+    auto fail_entries = dirEntries(testsPath ~ "fail", "*.sx", SpanMode.shallow).array;
     foreach(i, e; fail_entries)
     {
         if (!executeTest(e.name, TestType.fail))

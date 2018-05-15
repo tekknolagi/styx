@@ -1,9 +1,9 @@
-module yatol.semantic.import_attach;
+module styx.semantic.import_attach;
 
 import
     std.stdio;
 import
-    yatol.session, yatol.token, yatol.lexer, yatol.ast, yatol.symbol;
+    styx.session, styx.token, styx.lexer, styx.ast, styx.symbol;
 
 class ImportAttacherVisitor: AstVisitor
 {
@@ -41,14 +41,14 @@ public:
             if (result is null)
             {
                 session.error(_lx.filename, list.position,
-                "cannot find imported unit `%s`", yatol.token.tokenChainText(list.chain));
+                "cannot find imported unit `%s`", styx.token.tokenChainText(list.chain));
             }
             else
             {
                 node.symbol = result;
                 if (session.verbose)
                 {
-                    writeln("binded import `", yatol.token.tokenChainText(list.chain),
+                    writeln("binded import `", styx.token.tokenChainText(list.chain),
                         "` declared in ", _lx.filename);
                 }
             }

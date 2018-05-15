@@ -1,15 +1,15 @@
 #!dmd -g -gs
 /**
- * YATOL's parser.
+ * Styx's parser.
  */
-module yatol.parser;
+module styx.parser;
 
 import
     core.stdc.stdlib;
 import
     std.stdio, std.format, std.algorithm;
 import
-    yatol.token, yatol.lexer, yatol.ast, yatol.session;
+    styx.token, styx.lexer, styx.ast, styx.session;
 
 /// The parser
 struct Parser
@@ -3583,7 +3583,7 @@ unittest
 
 unittest
 {
-    import yatol.ast_printer;
+    import styx.ast_printer;
     enum line = __LINE__;
     enum source = `
     unit a;
@@ -3723,7 +3723,7 @@ void assertParse(const(char)[] code, bool printAST = false,
         cov.visit(pr.unit);
         if (printAST)
         {
-            import yatol.ast_printer;
+            import styx.ast_printer;
             AstPrinter ap = new AstPrinter;
             ap.visit(pr.unit);
             writeln(ap.text);
