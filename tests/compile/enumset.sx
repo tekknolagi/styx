@@ -36,12 +36,12 @@ protection(public)
         _set |= 1:S << e:S;
     }
 
-    @operator("-=") function include(const E e)
+    @operator("-=") function exclude(const E e)
     {
         _set &= _set ^ (1:S << e:S);
     }
 
-    @operator("=") function assign(const E[] e)
+    @operator("=") function assign(const E[] es)
     {
         _set = 0;
         foreach(const E e; es)
