@@ -113,6 +113,17 @@ public:
     {
         _source ~= "@";
         _source ~= node.identifierOrKeyword.text;
+        if (node.parameters.length)
+        {
+            _source ~= "(";
+            foreach(i, p; node.parameters)
+            {
+                visit(p);
+                if (i != node.parameters.length - 1)
+                    _source ~= ", ";
+            }
+            _source ~= ")";
+        }
         space();
     }
 
@@ -1981,6 +1992,16 @@ function foo<T, Z>()
 {
     const tmp<T>.tmp<Z>.Y b;
 }";
+    test(c, e);
+}
+
+unittest
+{
+    string c = "unit a; @ metadata (13,42) function foo();";
+    string e =
+"unit a;
+@metadata(13, 42) function foo();
+";
     test(c, e);
 }
 

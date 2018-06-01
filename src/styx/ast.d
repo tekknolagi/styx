@@ -548,8 +548,15 @@ final class AkaDeclarationAstNode: AttributedDeclaration
 /// AtAttribute
 final class AtAttributeAstNode: AstNode
 {
-    /// Either an identifier or a keyword
+    /// The attribute identifier.
     Token* identifierOrKeyword;
+    ///
+    PrimaryExpressionAstNode[] parameters;
+    ///
+    override void accept(AstVisitor visitor)
+    {
+        parameters.each!(a => visitor.visit(a));
+    }
 }
 
 ///

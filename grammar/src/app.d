@@ -181,7 +181,7 @@ enum source1 = "#!styx --ast
     {
         @bar class Bar
         {
-            @baz interface Baz
+            @baz(\"stuff\") interface Baz
             {
             }
         }

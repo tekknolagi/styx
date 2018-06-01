@@ -104,8 +104,11 @@ Styx:
 
     # AtAttributeSectionDeclaration < AtAttribute Colon
 
-    AtAttributes < AtAttribute*
-    AtAttribute <- At Identifier / At Keyword
+    AtAttributes    < AtAttribute*
+    AtAttribute     < At Identifier AtAttributeParameters?
+                    / At Keyword AtAttributeParameters?
+
+    AtAttributeParameters < LeftParen PrimaryExpression (Comma PrimaryExpression)* RightParen
 
 ################################################################################
 # StorageClass

@@ -1461,6 +1461,32 @@ private:
         }
         result.identifierOrKeyword = current();
         advance();
+        if (current.isTokLeftParen)
+        {
+            advance();
+            while (true)
+            {
+                if (PrimaryExpressionAstNode pe = parsePrimaryExpression())
+                {
+                    result.parameters ~= pe;
+                    if (current.isTokRightParen)
+                    {
+                        advance();
+                        break;
+                    }
+                    else if (current.isTokComma)
+                    {
+                        advance();
+                    }
+                    else
+                    {
+                        unexpected();
+                        return null;
+                    }
+                }
+                else return null;
+            }
+        }
         return result;
     }
 
@@ -4505,6 +4531,34 @@ unittest // function and function type decl
     assertNotParse(q{
         unit a;
         @++,virtual foo();
+    });
+}
+
+unittest // attributes
+{
+    assertParse(q{
+        unit a;
+        @operator("in") function foo();
+    });
+    assertParse(q{
+        unit a;
+        @metadata(42,13) function foo();
+    });
+    assertNotParse(q{
+        unit a;
+        @metadata(42,) function foo();
+    });
+    assertNotParse(q{
+        unit a;
+        @metadata(42,+ function foo();
+    });
+    assertNotParse(q{
+        unit a;
+        @metadata(42# function foo();
+    });
+    assertNotParse(q{
+        unit a;
+        @metadata() function foo();
     });
 }
 
