@@ -1,0 +1,84 @@
+unit enumset;
+
+aka Set8 = u8;
+aka Set16 = u16;
+aka Set32 = u32;
+aka Set64 = u64;
+
+struct EnumSet<E,S>
+{
+
+protection(private)
+
+    var S _set;
+
+protection(public)
+
+    @prologue function commonChecker()
+    {
+        assert(__echo(isOrdered, E));
+        assert(E.max <= S.sizeof * 8);
+    }
+
+    @constructor function create(const E[] es): auto
+    {
+        this = es;
+        return this;
+    }
+
+    @operator("in") function included(const E e): bool
+    {
+        return _set >> e:S & 1:S;
+    }
+
+    @operator("+=") function include(const E e)
+    {
+        _set |= 1:S << e:S;
+    }
+
+    @operator("-=") function include(const E e)
+    {
+        _set &= _set ^ (1:S << e:S);
+    }
+
+    @operator("=") function assign(const E[] e)
+    {
+        _set = 0;
+        foreach(const E e; es)
+            this += e;
+    }
+
+    @operator(opAsString, "==", ">=", ">", "<", "<=", "!=")
+    function compare<T>(const T t): auto
+    {
+        return __echo(source, "return _set ", opAsString , " t;");
+    }
+
+    @const function set(): S {return _set;}
+}
+
+@unittest("Tests the operators") function test1()
+{
+    enum Office: u8
+    {
+          Calgary
+        , Atlanta
+        , Sidney
+        , Roma
+        , Paris
+    }
+
+    aka Offices = EnumSet<Office, Set8>;
+
+    var Offices o;
+    o += Office.Calgary;
+    o += Office.Roma;
+
+    assert(Office.Calgary in o);
+    //assert(Office.Atlanta !in o);
+    assert(Office.Roma in o);
+
+    o -= Office.Roma;
+
+    //assert(Office.Roma !in o);
+}
