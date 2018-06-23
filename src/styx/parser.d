@@ -93,7 +93,7 @@ private:
             return null;
         }
         advance();
-        if (ExpressionAstNode e = parseExpression(null))
+        if (ExpressionAstNode e = parseExpression(null, TokenType.rightParen))
         {
             result.expression = e;
             if (!current.isTokRightParen)
@@ -241,7 +241,7 @@ private:
             advance();
             return result;
         }
-        else if (ExpressionAstNode e = parseExpression(null))
+        else if (ExpressionAstNode e = parseExpression(null, TokenType.semiColon))
         {
             result.singleInitializer = e;
             return result;
@@ -289,7 +289,7 @@ private:
                     lastMd.kind = ModifierKind.arrayDynDim;
                     advance();
                 }
-                else if (ExpressionAstNode e = parseExpression(null))
+                else if (ExpressionAstNode e = parseExpression(null, TokenType.rightSquare))
                 {
                     lastMd.kind = ModifierKind.arrayStatDim;
                     lastMd.staticDimension = e;
@@ -932,7 +932,7 @@ private:
             if (current.isTokDotDot)
             {
                 advance();
-                if (ExpressionAstNode e2 = parseExpression(null))
+                if (ExpressionAstNode e2 = parseExpression(null, TokenType.rightSquare))
                     result.rightExpression = e2;
                 else return null;
             }
@@ -1929,7 +1929,7 @@ private:
         else if (current.isTokLeftCurly)
         {
             advance();
-            if (ExpressionAstNode e = parseExpression(null))
+            if (ExpressionAstNode e = parseExpression(null, TokenType.rightCurly))
             {
                 result.expression = e;
                 advance();
