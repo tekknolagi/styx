@@ -158,7 +158,9 @@ Styx:
 
     ElseStatement < Else DeclarationOrStatement
 
-    WhileStatement < While LeftParen IfCondition RightParen DeclarationOrStatement
+    WhileStatement < While IfCondition DeclarationOrStatement
+
+    WhileCondition < LeftParen
 
     ForeachStatement < Foreach LeftParen ForeachVariableDeclaration (Comma ForeachVariableDeclaration)* Semicolon SingleOrRangeExpression RightParen DeclarationOrStatement
 
@@ -177,7 +179,9 @@ Styx:
     AtLabel < LeftParen At Identifier RightParen
 
     IfCondition < LeftParen Expression RightParen
+                / Expression
                 / LeftParen IfConditionVariable RightParen
+                / IfConditionVariable
 
     IfConditionVariable < StorageClass Type VariableDeclarationItem
 

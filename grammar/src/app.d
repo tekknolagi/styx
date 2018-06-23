@@ -80,6 +80,7 @@ enum source1 = "#!styx --ast
         const auto a = (b[0].b[1].b[2])(8);
         if (const s8 a = call())
             do();
+        a = b !in c;
         switch(a)
         {
             on (0,1) doThis();
@@ -161,6 +162,9 @@ enum source1 = "#!styx --ast
         goto(@L0) afterThat();
 
         if (echo(isType, T, s16[])){}
+
+        if true {doThat();}
+        while true {doThat();}
     }
 
     enum A

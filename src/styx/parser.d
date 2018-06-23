@@ -2258,9 +2258,14 @@ private:
     /**
      * Parses an Expression.
      *
+     * Params:
+     *      exp = The left hand side of a binary expression.
+     *      ending = Specifies an alternative ending, e.g left curly bracket for an
+     *          IfCondition.
+     *
      * Returns: a $(D ExpressionAstNode) on success, $(D null) otherwise.
      */
-    ExpressionAstNode parseExpression(ExpressionAstNode exp)
+    ExpressionAstNode parseExpression(ExpressionAstNode exp, TokenType ending = TokenType.invalid)
     {
         with(TokenType)
         if (exp)
@@ -2333,6 +2338,10 @@ private:
                 result.position = current.position;
                 result.unaryExpression = u;
                 u.position = current.position;
+                if (ending != TokenType.invalid && current.type == ending)
+                {
+                    return result;
+                }
                 if (current.type.among(semiColon, rightCurly, rightParen, rightSquare, comma, dotDot, equal) ||
                     current.isTokAssignOperator)
                 {
@@ -2379,13 +2388,10 @@ private:
         WhileStatementAstNode result = new WhileStatementAstNode;
         result.position = current.position();
         advance();
-        if (!current.isTokLeftParen)
-        {
-            expected(TokenType.leftParen);
-            return null;
-        }
-        advance();
-        if (ExpressionAstNode c = parseExpression(null))
+        const bool needRightParen = current.isTokLeftParen;
+        if (needRightParen)
+            advance();
+        if (ExpressionAstNode c = parseExpression(null, TokenType.leftCurly))
         {
             result.condition = c;
         }
@@ -2394,12 +2400,15 @@ private:
             parseError("invalid while condition");
             return null;
         }
-        if (!current.isTokRightParen)
+        if (needRightParen)
         {
-            expected(TokenType.rightParen);
-            return null;
+            if (!current.isTokRightParen)
+            {
+                expected(TokenType.rightParen);
+                return null;
+            }
+            else advance();
         }
-        advance();
         if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
         {
             result.declarationOrStatement = dos;
@@ -2574,18 +2583,17 @@ private:
         IfElseStatementAstNode result = new IfElseStatementAstNode;
         result.position = current.position();
         advance();
-        if (!current.isTokLeftParen)
+        const bool needRightParen = current.isTokLeftParen;
+        if (needRightParen)
         {
-            expected(TokenType.leftParen);
-            return null;
+            advance();
         }
-        advance();
         if (current.isTokStorageClass)
         {
             if (IfConditionVariableAstNode icv = parseIfConditionVariableAstNode())
                 result.ifVariable = icv;
         }
-        else if (ExpressionAstNode c = parseExpression(null))
+        else if (ExpressionAstNode c = parseExpression(null, TokenType.leftCurly))
         {
             result.condition = c;
         }
@@ -2594,12 +2602,15 @@ private:
             parseError("invalid if condition");
             return null;
         }
-        if (!current.isTokRightParen)
+        if (needRightParen)
         {
-            expected(TokenType.rightParen);
-            return null;
+            if (!current.isTokRightParen)
+            {
+                expected(TokenType.rightParen);
+                return null;
+            }
+            else advance();
         }
-        advance();
         if (DeclarationOrStatementAstNode dos = parseDeclarationOrStatement())
         {
             result.trueDeclarationOrStatement = dos;
@@ -5096,7 +5107,7 @@ unittest // while
             while (true {}
         }
     });
-    assertNotParse(q{
+    assertParse(q{
         unit a;
         function foo()
         {
@@ -5461,6 +5472,27 @@ unittest // if else
                 ;
             else
                 ;
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            if true {doThat();}
+        }
+    });
+    assertNotParse(q{
+        unit a;
+        function foo()
+        {
+            if true doThat();
+        }
+    });
+    assertParse(q{
+        unit a;
+        function foo()
+        {
+            if true;
         }
     });
     assertNotParse(q{

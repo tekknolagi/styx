@@ -63,7 +63,7 @@ protection(public)
     {
           Calgary
         , Atlanta
-        , Sidney
+        , Sydney
         , Roma
         , Paris
     }
@@ -75,10 +75,10 @@ protection(public)
     o += Office.Roma;
 
     assert(Office.Calgary in o);
-    //assert(Office.Atlanta !in o);
+    assert(!(Office.Atlanta in o));
     assert(Office.Roma in o);
 
     o -= Office.Roma;
 
-    //assert(Office.Roma !in o);
+    assert(!(Office.Roma in o));
 }
