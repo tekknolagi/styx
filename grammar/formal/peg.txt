@@ -160,8 +160,6 @@ Styx:
 
     WhileStatement < While IfCondition DeclarationOrStatement
 
-    WhileCondition < LeftParen
-
     ForeachStatement < Foreach LeftParen ForeachVariableDeclaration (Comma ForeachVariableDeclaration)* Semicolon SingleOrRangeExpression RightParen DeclarationOrStatement
 
     ForeachVariableDeclaration < StorageClass Type Identifier
