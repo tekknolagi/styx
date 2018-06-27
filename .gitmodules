@@ -1,0 +1,3 @@
+[submodule "libfirm-d"]
+	path = libfirm-d
+	url = https://github.com/BBasile/libfirm-d.git
