@@ -253,8 +253,6 @@ void initialize()
     else assert(0);
 }
 
-
-
 /**
  *
  */
@@ -263,22 +261,40 @@ class Scope
 
     Symbol[] symbols;
     Scope parent;
-    Position position;
-    Position end;
-    //UnitAstNode _unit;
+    Position startPos;
+    Position stopPos;
 
+    /**
+     * Appends a symbol to the scope.
+     */
+    void insertBack(Symbol value)
+    {
+        symbols ~= value;
+    }
 
     /**
      * Returns: A new scope which inherits currently known symbols.
      */
-    Scope push(Position start, Position stop)
+    Scope push(Position startPos, Position stopPos)
     {
         Scope result = new Scope;
         result.parent = this;
-        result.symbols = symbols;
-        result.position = start;
-        result.end = stop;
-        //result._unit = _unit;
+        result.symbols = symbols.dup;
+        result.startPos = startPos;
+        result.stopPos = stopPos;
+        return result;
+    }
+
+    /**
+     * Returns: A copy of the scope.
+     */
+    Scope advance()
+    {
+        Scope result = new Scope;
+        result.parent = parent;
+        result.symbols = symbols.dup;
+        result.startPos = startPos;
+        result.stopPos = stopPos;
         return result;
     }
 

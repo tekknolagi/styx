@@ -133,8 +133,8 @@ class AstVisitor
 /// The base AST node.
 class AstNode
 {
-    /// Information about the position
-    Position position;
+    /// Information about the startPos
+    Position startPos;
     /// Gets visited by an AstVisitor.
     void accept(AstVisitor) {}
 
@@ -226,8 +226,8 @@ final class IdentifierChainAstNode: AstNode
 /// FunctionDeclaration
 final class FunctionDeclarationAstNode: AttributedDeclaration
 {
-    /// Body ending position
-    Position end;
+    /// Body ending position.
+    Position stopPos;
     /// The function attributes.
     AtAttributeAstNode[] attributes;
     /// The function name.
@@ -278,8 +278,8 @@ final class ImportDeclarationAstNode: AttributedDeclaration
 /// StructDeclaration
 final class StructDeclarationAstNode: AttributedDeclaration
 {
-    /// Body ending position
-    Position end;
+    /// Body ending position.
+    Position stopPos;
     /// The struct name.
     Token* name;
     /// The template parameters.
@@ -301,8 +301,8 @@ final class StructDeclarationAstNode: AttributedDeclaration
 /// UnionDeclaration
 final class UnionDeclarationAstNode: AttributedDeclaration
 {
-    /// Body ending position
-    Position end;
+    /// Body ending position.
+    Position stopPos;
     /// The union name.
     Token* name;
     /// The template parameters.
@@ -321,6 +321,8 @@ final class UnionDeclarationAstNode: AttributedDeclaration
 /// TemplateDeclaration.
 final class TemplateDeclarationAstNode: AttributedDeclaration
 {
+    /// Body ending position.
+    Position stopPos;
     /// The template name.
     Token* name;
     /// The template parameters.
@@ -409,6 +411,8 @@ final class EnumMemberAstNode: AstNode
 /// EnumDeclaration
 final class EnumDeclarationAstNode: AttributedDeclaration
 {
+    /// Body ending position.
+    Position stopPos;
     /// The enum name.
     Token* name;
     /// The enum type
@@ -428,8 +432,8 @@ final class EnumDeclarationAstNode: AttributedDeclaration
 /// ClassDeclaration
 final class ClassDeclarationAstNode: AttributedDeclaration
 {
-    /// Body ending position
-    Position end;
+    /// Body ending position.
+    Position stopPos;
     /// The class name.
     Token* name;
     /// The template parameters.
@@ -451,8 +455,8 @@ final class ClassDeclarationAstNode: AttributedDeclaration
 /// InterfaceDeclaration
 final class InterfaceDeclarationAstNode: AttributedDeclaration
 {
-    /// Body ending position
-    Position end;
+    /// Body ending position.
+    Position stopPos;
     /// The interface name.
     Token* name;
     /// The template parameters.
@@ -979,7 +983,7 @@ final class EmptyStatementAstNode: AstNode {}
 final class BlockStatementAstNode: AstNode
 {
     /// Ending position
-    Position end;
+    Position stopPos;
     /// Declarations or statement located in the block.
     DeclarationsOrStatementsAstNode declarationsOrStatements;
     ///

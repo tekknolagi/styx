@@ -1,6 +1,8 @@
 module styx.semantic.symbolize;
 
 import
+    std.stdio;
+import
     styx.token,
     styx.ast, styx.symbol, styx.utils, styx.session;
 
@@ -14,26 +16,49 @@ final class AstSymbolizerA: AstVisitor
 
 private:
 
-    Symbol _parent;
-    Scope _currentScope;
+    Symbol _currSmb;
+    Scope  _currScp;
     bool _inType;
 
-    void addNamedSymbol(N : AstNode)(N node, SymbolKind kind)
+    void addNamedSymbolInScope(N : AstNode)(N node, SymbolKind kind)
     {
-        Symbol old = _parent;
-        _parent = new Symbol(node.name, old, kind);
-        node.symbol = _parent;
+        Symbol oldSmb = _currSmb;
+
+        node.scope_ = _currScp;
+        _currSmb = new Symbol(node.name, oldSmb, kind);
+        node.symbol = _currSmb;
+        _currScp = _currScp.advance();
+        _currScp.insertBack(_currSmb);
         node.accept(this);
-        _parent = old;
+        _currSmb = oldSmb;
+    }
+
+    void addNamedSymbolInNewScope(N : AstNode)(N node, SymbolKind kind)
+    {
+        Symbol oldSmb = _currSmb;
+
+        node.scope_ = _currScp;
+        _currSmb = new Symbol(node.name, oldSmb, kind);
+        node.symbol = _currSmb;
+        _currScp = _currScp = _currScp.push(node.startPos, node.stopPos);
+        _currScp.insertBack(_currSmb);
+        node.accept(this);
+        _currSmb = oldSmb;
+        _currScp = _currScp.pop();
     }
 
     void addNamedType(N : AstNode)(N node, SymbolKind kind)
     {
-        Symbol old = _parent;
-        _parent = new Type(node.name, old, kind);
-        node.symbol = _parent;
+        Symbol oldSmb = _currSmb;
+
+        node.scope_ = _currScp;
+        _currSmb = new Type(node.name, oldSmb, kind);
+        node.symbol = _currSmb;
+        _currScp = _currScp = _currScp.push(node.startPos, node.stopPos);
+        _currScp.insertBack(_currSmb);
         node.accept(this);
-        _parent = old;
+        _currSmb = oldSmb;
+        _currScp = _currScp.pop();
     }
 
 public:
@@ -41,31 +66,23 @@ public:
     this(UnitAstNode u)
     {
         initialize();
-        _parent = root;
+        _currSmb = root;
         visit(u);
     }
 
     override void visit(AkaDeclarationAstNode node)
     {
-        addNamedSymbol(node, SymbolKind.aka);
-        _currentScope.symbols ~= node.symbol;
-        node.accept(this);
+        addNamedSymbolInScope(node, SymbolKind.aka);
     }
 
     override void visit(BlockStatementAstNode node)
     {
-        _currentScope = _currentScope.push(node.position, node.end);
-        node.scope_ = _currentScope;
         node.accept(this);
-        _currentScope = _currentScope.pop();
     }
 
     override void visit(ClassDeclarationAstNode node)
     {
-        _currentScope = _currentScope.push(node.position, node.end);
-        node.scope_ = _currentScope;
         addNamedType(node, SymbolKind.class_);
-        _currentScope = _currentScope.pop();
     }
 
     override void visit(EnumDeclarationAstNode node)
@@ -75,15 +92,13 @@ public:
 
     override void visit(EnumMemberAstNode node)
     {
-        addNamedSymbol(node, SymbolKind.variable);
+        addNamedSymbolInScope(node, SymbolKind.variable);
     }
 
     override void visit(FunctionDeclarationAstNode node)
     {
-        _currentScope = _currentScope.push(node.position, node.end);
-        node.scope_ = _currentScope;
-        addNamedSymbol(node, SymbolKind.function_);
-        _currentScope = _currentScope.pop();
+
+        addNamedSymbolInNewScope(node, SymbolKind.function_);
     }
 
     override void visit(FunctionParameterGroupAstNode node)
@@ -91,45 +106,39 @@ public:
         node.accept(this);
         foreach(tk; node.variableList)
         {
-            new Symbol(tk, _parent, SymbolKind.variable);
+            new Symbol(tk, _currSmb, SymbolKind.variable);
         }
     }
 
     override void visit(InterfaceDeclarationAstNode node)
     {
-        _currentScope = _currentScope.push(node.position, node.end);
-        node.scope_ = _currentScope;
         addNamedType(node, SymbolKind.interface_);
-        _currentScope = _currentScope.pop();
     }
 
     override void visit(StructDeclarationAstNode node)
     {
-        _currentScope = _currentScope.push(node.position, node.end);
-        node.scope_ = _currentScope;
         addNamedType(node, SymbolKind.struct_);
-        _currentScope = _currentScope.pop();
     }
 
     override void visit(TemplateDeclarationAstNode node)
     {
-        addNamedSymbol(node, SymbolKind.template_);
+        addNamedSymbolInNewScope(node, SymbolKind.template_);
     }
 
     override void visit(TemplateParametersAstNode node)
     {
-        Symbol old = _parent;
+        Symbol old = _currSmb;
         foreach(tk; node.parameters)
         {
-            _parent = new Symbol(tk, old, SymbolKind.partial);
+            _currSmb = new Symbol(tk, old, SymbolKind.partial);
             node.accept(this);
         }
-        _parent = old;
+        _currSmb = old;
     }
 
     override void visit(TypeAstNode node)
     {
-        Symbol old = _parent;
+        Symbol old = _currSmb;
         const bool oldinType = _inType;
         _inType = true;
 
@@ -137,8 +146,8 @@ public:
         {
             if (node.autoOrBasicType.isTokAuto)
             {
-                _parent = new Symbol(node.autoOrBasicType, old, SymbolKind.partial);
-                node.symbol = _parent;
+                _currSmb = new Symbol(node.autoOrBasicType, old, SymbolKind.partial);
+                node.symbol = _currSmb;
             }
             else
             {
@@ -146,12 +155,12 @@ public:
                 {
                     case TokenType.bool_: node.symbol = bool_; break;
 
-                    case TokenType.u8: node.symbol  = u8; break;
+                    case TokenType.u8:  node.symbol  = u8; break;
                     case TokenType.u16: node.symbol = u16; break;
                     case TokenType.u32: node.symbol = u32; break;
                     case TokenType.u64: node.symbol = u64; break;
 
-                    case TokenType.s8: node.symbol  = s8; break;
+                    case TokenType.s8:  node.symbol  = s8; break;
                     case TokenType.s16: node.symbol = s16; break;
                     case TokenType.s32: node.symbol = s32; break;
                     case TokenType.s64: node.symbol = s64; break;
@@ -170,52 +179,48 @@ public:
         }
 
         _inType = oldinType;
-        _parent = old;
+        _currSmb = old;
     }
 
     override void visit(UnionDeclarationAstNode node)
     {
-        _currentScope = _currentScope.push(node.position, node.end);
-        node.scope_ = _currentScope;
         addNamedType(node, SymbolKind.union_);
-        _currentScope = _currentScope.pop();
     }
 
     override void visit(UnitAstNode node)
     {
-        _currentScope = new Scope;
-        _currentScope.position = node.position;
-        _currentScope.end = Position(int.max, 0);
+        _currScp = new Scope;
+        _currScp.startPos = node.startPos;
+        _currScp.stopPos  = Position(int.max, 0);
 
-        _parent = root;
+        _currSmb = root;
         foreach(i; 0..node.identifiers.length)
         {
-            if (Symbol c = _parent.find(node.identifiers[i], SymbolKind.unit))
+            if (Symbol c = _currSmb.find(node.identifiers[i], SymbolKind.unit))
             {
-                if (i == 0 && _parent is root && node.identifiers.length == 1)
+                if (i == 0 && _currSmb is root && node.identifiers.length == 1)
                 {
                     session.error(__FILE_FULL_PATH__, Position(__LINE__, 0), "INTERNAL");
                 }
-                _parent = c;
+                _currSmb = c;
             }
             else
             {
-                _parent = new Symbol(node.identifiers[i], _parent, SymbolKind.unit);
+                _currSmb = new Symbol(node.identifiers[i], _currSmb, SymbolKind.unit);
             }
         }
-        node.symbol = _parent;
+        node.symbol = _currSmb;
         node.accept(this);
-        _parent = root;
+        _currSmb = root;
     }
 
     override void visit(VariableDeclarationItemAstNode node)
     {
-        addNamedSymbol(node, SymbolKind.variable);
-        _currentScope.symbols ~= node.symbol;
+        addNamedSymbolInScope(node, SymbolKind.variable);
     }
 }
 
-void runAstSymbolizerAForTest(string source, int line = __LINE__)
+UnitAstNode runAstSymbolizerAForTest(string source, int line = __LINE__)
 {
     if (root)
         root.clear;
@@ -223,6 +228,7 @@ void runAstSymbolizerAForTest(string source, int line = __LINE__)
     UnitAstNode u = lexAndParse(source, __FILE_FULL_PATH__, line);
     assert(u !is null && session.errorsCount == old, "the code to test is invalid");
     new AstSymbolizerA(u);
+    return u;
 }
 
 unittest
@@ -310,5 +316,43 @@ unittest
     assert(sym.children.length == 0);
 }
 
+unittest
+{
+    enum s = q{
+        unit u;
+        function f1()
+        {
+            const int a;
+            function f2();
+            const int b;
+            function f3();
+        }
+    };
+    UnitAstNode u = runAstSymbolizerAForTest(s);
 
+    {
+        AstNode node = u.findDeclaration("f1");
+        assert(node);
+        assert(node.scope_);
+        assert(node.scope_.symbols.length == 0);
+    }
+    {
+        AstNode node = u.findDeclaration("f1.a");
+        assert(node);
+        assert(node.scope_);
+        assert(node.scope_.symbols.length == 1);
+        with(SymbolKind) assert(node.scope_.symbols[0] is
+            root.findQualified("u.f1", [unit, function_]));
+    }
+    {
+        AstNode node = u.findDeclaration("f1.f2");
+        assert(node);
+        assert(node.scope_);
+        assert(node.scope_.symbols.length == 2);
+        with(SymbolKind) assert(node.scope_.symbols[0] is
+            root.findQualified("u.f1", [unit, function_]));
+        with(SymbolKind) assert(node.scope_.symbols[1] is
+            root.findQualified("u.f1.a", [unit, function_, variable]));
+    }
+}
 

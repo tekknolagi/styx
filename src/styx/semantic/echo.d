@@ -22,7 +22,7 @@ private:
         {
         case "semver":
             if (node.compilerEcho.parameters.length)
-                session.error(_lx.filename, node.position,
+                session.error(_lx.filename, node.startPos,
                     "no parameter expected for `version`");
 
             node.identifierOrKeywordOrLiteral = &versionToken;
@@ -31,15 +31,15 @@ private:
 
         case "line":
             if (node.compilerEcho.parameters.length)
-                session.error(_lx.filename, node.position,
+                session.error(_lx.filename, node.startPos,
                     "no parameter expected for `line`");
 
-            node.identifierOrKeywordOrLiteral = Token.intLiteral(0, 0, to!(char[])(node.position.line));
+            node.identifierOrKeywordOrLiteral = Token.intLiteral(0, 0, to!(char[])(node.startPos.line));
             node.compilerEcho = null;
             break;
 
         default:
-            session.error(_lx.filename, node.position,
+            session.error(_lx.filename, node.startPos,
                 "invalid echo command `%s`", node.compilerEcho.command.text);
         }
     }

@@ -40,7 +40,7 @@ public:
             }
             if (result is null)
             {
-                session.error(_lx.filename, list.position,
+                session.error(_lx.filename, list.startPos,
                 "cannot find imported unit `%s`", styx.token.tokenChainText(list.chain));
             }
             else

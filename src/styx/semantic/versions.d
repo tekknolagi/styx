@@ -320,7 +320,7 @@ void assertFirstVersionIsTrue(const(char)[] code, string[] userVersions = [],
     if (!vb.isTrue)
     {
         throw new AssertError("the version evaluates to false instead of true",
-            file, vb.position.line);
+            file, vb.startPos.line);
     }
 }
 
@@ -354,7 +354,7 @@ void assertFirstVersionIsFalse(const(char)[] code, string[] userVersions = [],
     if (vb.isTrue)
     {
         throw new AssertError("the version evaluates to true instead of false",
-            file, vb.position.line);
+            file, vb.startPos.line);
     }
 }
 ///
