@@ -6,7 +6,7 @@ module styx.ast;
 import
     std.conv, std.algorithm.iteration, std.meta, std.stdio;
 import
-    styx.token;
+    styx.token, styx.symbol;
 
 /// Used to annotate the fields set by the semantic.
 enum Semantic;
@@ -51,6 +51,8 @@ string genVisitMethods(string statements)
     }
     return result;
 }
+
+
 
 /**
  * The AST visitor.
@@ -145,8 +147,10 @@ class AstNode
     ///  Set to $(D true) if this node represents something strictly private.
     @Semantic bool isStrict;
 
-    /// Set for the nodes that represent a type.
-    @Semantic Object symbol;
+    /// Associated Symbol
+    @Semantic Symbol symbol;
+    /// Associated Scope
+    @Semantic Scope scope_;
     /// The unit where the node is declared.
     @Semantic Object unit;
 }
@@ -222,6 +226,8 @@ final class IdentifierChainAstNode: AstNode
 /// FunctionDeclaration
 final class FunctionDeclarationAstNode: AttributedDeclaration
 {
+    /// Body ending position
+    Position end;
     /// The function attributes.
     AtAttributeAstNode[] attributes;
     /// The function name.
@@ -272,6 +278,8 @@ final class ImportDeclarationAstNode: AttributedDeclaration
 /// StructDeclaration
 final class StructDeclarationAstNode: AttributedDeclaration
 {
+    /// Body ending position
+    Position end;
     /// The struct name.
     Token* name;
     /// The template parameters.
@@ -293,6 +301,8 @@ final class StructDeclarationAstNode: AttributedDeclaration
 /// UnionDeclaration
 final class UnionDeclarationAstNode: AttributedDeclaration
 {
+    /// Body ending position
+    Position end;
     /// The union name.
     Token* name;
     /// The template parameters.
@@ -418,6 +428,8 @@ final class EnumDeclarationAstNode: AttributedDeclaration
 /// ClassDeclaration
 final class ClassDeclarationAstNode: AttributedDeclaration
 {
+    /// Body ending position
+    Position end;
     /// The class name.
     Token* name;
     /// The template parameters.
@@ -439,6 +451,8 @@ final class ClassDeclarationAstNode: AttributedDeclaration
 /// InterfaceDeclaration
 final class InterfaceDeclarationAstNode: AttributedDeclaration
 {
+    /// Body ending position
+    Position end;
     /// The interface name.
     Token* name;
     /// The template parameters.
@@ -964,6 +978,8 @@ final class EmptyStatementAstNode: AstNode {}
 /// BlockStatement
 final class BlockStatementAstNode: AstNode
 {
+    /// Ending position
+    Position end;
     /// Declarations or statement located in the block.
     DeclarationsOrStatementsAstNode declarationsOrStatements;
     ///

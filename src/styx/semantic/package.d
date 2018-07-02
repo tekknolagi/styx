@@ -6,7 +6,7 @@ module styx.semantic;
 import
     styx.lexer, styx.ast, styx.session,
     styx.semantic.node_protection, styx.semantic.versions,
-    styx.semantic.desugar, styx.semantic.echo, styx.symbol,
+    styx.semantic.desugar, styx.semantic.echo, styx.semantic.symbolize,
     styx.semantic.import_attach;
 
 

@@ -6,7 +6,7 @@ module styx.utils;
 import
     std.stdio;
 import
-    styx.lexer, styx.parser, styx.ast;
+    styx.lexer, styx.parser, styx.ast, styx.symbol;
 
 /**
  * Lexes and parses some code. Usually used for the embedded compiler tests.
