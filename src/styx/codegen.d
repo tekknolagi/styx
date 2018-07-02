@@ -1,7 +1,7 @@
 module styx.codegen;
 
-import
-    firm;
+//import
+//    firm;
 import
     styx.ast;
 

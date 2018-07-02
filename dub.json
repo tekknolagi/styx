@@ -22,9 +22,5 @@
   ],
   "description" : "STYX programming language",
   "license" : "BSD 3-clause",
-  "dependencies" : {
-    "firm-d" : {
-      "path" : "./libfirm-d"
-    }
-  }
+  "dependencies" : {}
 }
