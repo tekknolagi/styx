@@ -10,9 +10,9 @@ A particular focus is put on testing, using D features such as in code unit test
 
 #### Accomplishment
 
-- lexical : **[========% ]**, would be enough to bootstrap, but needs many improvements.
-- semantic: **[=%        ]**, started. (estimated <10%)
-- codegen : **[%         ]**, LLVM ? libfirm ? transpilation ?
+- lexical: **90%**, would be enough to bootstrap, but needs many improvements.
+- semantic: **10%**, started.
+- codegen: **0%**, LLVM ? libfirm ? transpilation ?
 
 #### Health
 
