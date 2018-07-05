@@ -305,7 +305,7 @@ class Scope
      */
     Scope pop()
     {
-        return parent;
+        return parent.advance();
     }
 
     /**
