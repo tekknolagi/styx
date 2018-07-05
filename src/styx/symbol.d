@@ -1,9 +1,9 @@
 module styx.symbol;
 
 import
-    std.stdio;
+    std.stdio, std.algorithm.iteration, std.array;
 import
-    styx.token, styx.session;
+    styx.token, styx.session, styx.ast;
 
 /// Enumerates the possible kinds first class kinds of first class symbols
 enum SymbolKind
@@ -53,6 +53,8 @@ class Symbol
     SymbolKind kind;
     Symbol parent;
     Symbol[] children;
+    AstNode astNode;
+
 
     ///
     this(Token* name, Symbol parent, SymbolKind kind)
@@ -273,7 +275,7 @@ class Scope
     }
 
     /**
-     * Returns: A new scope which inherits currently known symbols.
+     * Returns: A child scope which inherits currently known symbols.
      */
     Scope push(Position startPos, Position stopPos)
     {
@@ -304,6 +306,33 @@ class Scope
     Scope pop()
     {
         return parent;
+    }
+
+    /**
+     * Finds an unqualified symbols known in this scope.
+     *
+     * Params:
+     *     name = The symbol name, either as a string or as a $(D Token*).
+     *
+     * Returns: On success a symbol and its overload, $(D null) otherwise.
+     */
+    // TODO-cFundamentals: find qualified symbol in scope
+    // TODO-cFundamentals: test Scope.find with imported units
+    Symbol[] find(Name)(Name name)
+    {
+        static if (is(Name == Token*)) auto n = name.text;
+        else alias n = name;
+
+        // this unit ...
+        Symbol[] results = symbols.filter!(a => a.name.text == n).array;
+
+        // imported units
+        results ~= symbols.filter!(a => a.kind == SymbolKind.import_)
+                          .map!(a => a.astNode.scope_)
+                          .map!(a => a.find(name))
+                          .joiner
+                          .array;
+        return results;
     }
 }
 

@@ -27,6 +27,7 @@ private:
         node.scope_ = _currScp;
         _currSmb = new Symbol(node.name, oldSmb, kind);
         node.symbol = _currSmb;
+        _currSmb.astNode = node;
         _currScp = _currScp.advance();
         _currScp.insertBack(_currSmb);
         node.accept(this);
@@ -40,6 +41,7 @@ private:
         node.scope_ = _currScp;
         _currSmb = new Symbol(node.name, oldSmb, kind);
         node.symbol = _currSmb;
+        _currSmb.astNode = node;
         _currScp = _currScp = _currScp.push(node.startPos, node.stopPos);
         _currScp.insertBack(_currSmb);
         node.accept(this);
@@ -54,6 +56,7 @@ private:
         node.scope_ = _currScp;
         _currSmb = new Type(node.name, oldSmb, kind);
         node.symbol = _currSmb;
+        _currSmb.astNode = node;
         _currScp = _currScp = _currScp.push(node.startPos, node.stopPos);
         _currScp.insertBack(_currSmb);
         node.accept(this);
@@ -106,7 +109,8 @@ public:
         node.accept(this);
         foreach(tk; node.variableList)
         {
-            new Symbol(tk, _currSmb, SymbolKind.variable);
+            Symbol p = new Symbol(tk, _currSmb, SymbolKind.variable);
+            _currScp.insertBack(p);
         }
     }
 
@@ -128,10 +132,11 @@ public:
     override void visit(TemplateParametersAstNode node)
     {
         Symbol old = _currSmb;
+        node.accept(this);
         foreach(tk; node.parameters)
         {
-            _currSmb = new Symbol(tk, old, SymbolKind.partial);
-            node.accept(this);
+            Symbol p = new Symbol(tk, old, SymbolKind.partial);
+            _currScp.insertBack(p);
         }
         _currSmb = old;
     }
@@ -353,6 +358,10 @@ unittest
             root.findQualified("u.f1", [unit, function_]));
         with(SymbolKind) assert(node.scope_.symbols[1] is
             root.findQualified("u.f1.a", [unit, function_, variable]));
+
+        Symbol[] fr = node.scope_.find("f1");
+        assert(fr.length == 1);
+        assert(fr[0] is node.scope_.symbols[0]);
     }
 }
 

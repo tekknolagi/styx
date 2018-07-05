@@ -5,6 +5,7 @@ import
 import
     styx.session, styx.token, styx.lexer, styx.ast, styx.symbol;
 
+//TODO-cMaybe: Move this to SymbolizerA
 class ImportAttacherVisitor: AstVisitor
 {
     alias visit = AstVisitor.visit;
@@ -30,6 +31,7 @@ public:
             {
                 if (Symbol c = result.find(list.chain[i], SymbolKind.unit))
                 {
+                    c.astNode = node;
                     result = c;
                 }
                 else
