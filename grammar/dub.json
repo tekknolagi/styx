@@ -31,5 +31,5 @@
     "pegged" : ">=0.0.0"
   },
   "license" : "BSD 3-clause",
-  "description" : "project to design and test YATOL grammar"
+  "description" : "project to design and test STYX grammar"
 }
