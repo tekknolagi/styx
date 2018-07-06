@@ -214,6 +214,7 @@ public:
                 _currSmb = new Symbol(node.identifiers[i], _currSmb, SymbolKind.unit);
             }
         }
+        _currScp.insertBack(_currSmb);
         node.symbol = _currSmb;
         node.accept(this);
         _currSmb = root;
@@ -339,29 +340,38 @@ unittest
         AstNode node = u.findDeclaration("f1");
         assert(node);
         assert(node.scope_);
-        assert(node.scope_.symbols.length == 0);
+        assert(node.scope_.symbols.length == 1);
+        with(SymbolKind) assert(node.scope_.symbols[0] is
+            root.findQualified("u", [unit]));
     }
     {
         AstNode node = u.findDeclaration("f1.a");
         assert(node);
         assert(node.scope_);
-        assert(node.scope_.symbols.length == 1);
-        with(SymbolKind) assert(node.scope_.symbols[0] is
+        assert(node.scope_.symbols.length == 2);
+        with(SymbolKind) assert(node.scope_.symbols[1] is
             root.findQualified("u.f1", [unit, function_]));
     }
     {
         AstNode node = u.findDeclaration("f1.f2");
         assert(node);
         assert(node.scope_);
-        assert(node.scope_.symbols.length == 2);
-        with(SymbolKind) assert(node.scope_.symbols[0] is
-            root.findQualified("u.f1", [unit, function_]));
+        assert(node.scope_.symbols.length == 3);
         with(SymbolKind) assert(node.scope_.symbols[1] is
+            root.findQualified("u.f1", [unit, function_]));
+        with(SymbolKind) assert(node.scope_.symbols[2] is
             root.findQualified("u.f1.a", [unit, function_, variable]));
 
-        Symbol[] fr = node.scope_.find("f1");
-        assert(fr.length == 1);
-        assert(fr[0] is node.scope_.symbols[0]);
+        {
+            Symbol[] fr = node.scope_.find("u");
+            assert(fr.length == 1);
+            assert(fr[0] is u.symbol);
+        }
+        {
+            Symbol[] fr = node.scope_.find("f1");
+            assert(fr.length == 1);
+            assert(fr[0] is node.scope_.symbols[1]);
+        }
     }
 }
 
