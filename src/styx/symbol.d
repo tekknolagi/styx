@@ -168,10 +168,10 @@ class Symbol
         import std.range: zip;
 
         Symbol result = this;
-        foreach(s; zip(n, kinds))
+        foreach(s, t; zip(n, kinds))
         {
 
-            if (Symbol c = result.find(s[0], s[1]))
+            if (Symbol c = result.find(s, t))
             {
                 result = c;
             }
@@ -309,7 +309,7 @@ class Scope
     }
 
     /**
-     * Finds an unqualified symbols known in this scope.
+     * Finds unqualified symbols known in this scope.
      *
      * Params:
      *     name = The symbol name, either as a string or as a $(D Token*).
