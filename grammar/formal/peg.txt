@@ -427,7 +427,6 @@ Styx:
             / If
             / Import
             / Interface
-            / Virtual
             / Struct
             / Class
             / Function
@@ -488,7 +487,6 @@ Styx:
     If      <- "if"
     Import  <- "import"
     Interface <- "interface"
-    Virtual <- "virtual"
     Struct  <- "struct"
     Class   <- "class"
     Function<- "function"
