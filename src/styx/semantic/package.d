@@ -24,7 +24,7 @@ import
  */
 bool unitSemantic(UnitAstNode u, Lexer* lexer)
 {
-    new AstSymbolizerA(u);
+    new AstSymbolizerA(u, lexer);
     if (session.hasErrors)
         return false;
 
