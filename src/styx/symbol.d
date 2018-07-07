@@ -318,7 +318,6 @@ class Scope
      *
      * Returns: On success a symbol and its overload, $(D null) otherwise.
      */
-    // TODO-cFundamentals: find qualified symbol in scope
     // TODO-cFundamentals: test Scope.find with imported units
     Symbol[] find(Name)(Name name)
     {
@@ -334,6 +333,56 @@ class Scope
                           .map!(a => a.find(name))
                           .joiner
                           .array;
+        return results;
+    }
+
+    /**
+     * Finds unqualified symbols known in this scope.
+     *
+     * Params:
+     *     name = The symbol name, either as a string or as a $(D Token*).
+     *     kind = The symbol kind.
+     *
+     * Returns: On success a symbol and its overload, $(D null) otherwise.
+     */
+    Symbol[] find(Name)(Name name, SymbolKind kind)
+    {
+        return find(name).filter!(a => a.kind == kind).array;
+    }
+
+    /**
+     * Finds qualified symbols known in this scope.
+     *
+     * Params:
+     *     name = The symbol name, either as a string, as $(D Token*[]) or as $(D string[])
+     *     kind = The symbol kind.
+     *
+     * Returns: On success the symbol, $(D null) otherwise.
+     */
+    Symbol[] findQualified(QName)(QName qname, SymbolKind[] kinds)
+    {
+        static if (is(QName == Token*[]))
+        {
+            assert(kinds.length == qname.length);
+            auto n = qname.map!(a => a.text).array;
+        }
+        else static if (isSomeString!QName)
+        {
+            import std.range: walkLength;
+
+            auto n = qname.splitter(".").array;
+            assert(kinds.length == n.length);
+        }
+        else static if (is(QName : string[]))
+        {
+            alias n = qname;
+        }
+        else static assert(0);
+
+        assert(kinds[0] == SymbolKind.unit, "TODO");
+
+        Symbol[] results = find(n[0], kinds[0])
+            .map!(a => a.findQualified(n[1..$], kinds[1..$])).array;
         return results;
     }
 }

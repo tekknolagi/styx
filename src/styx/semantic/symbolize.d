@@ -375,3 +375,22 @@ unittest
     }
 }
 
+unittest
+{
+    enum s = q{
+        unit u;
+        class Foo {const int bar;}
+        function fun(){ }
+    };
+    UnitAstNode u = runAstSymbolizerAForTest(s);
+
+    {
+        AstNode fun_node = u.findDeclaration("fun");
+        AstNode bar_node = u.findDeclaration("bar");
+        assert(fun_node);
+        assert(bar_node);
+        with(SymbolKind) assert(fun_node.scope_
+            .findQualified("u.Foo.bar", [unit, class_, variable])[0] is bar_node.symbol);
+    }
+}
+
