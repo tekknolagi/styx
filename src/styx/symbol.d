@@ -1,7 +1,7 @@
 module styx.symbol;
 
 import
-    std.stdio, std.algorithm.iteration, std.array;
+    std.stdio, std.algorithm.iteration, std.array, std.traits;
 import
     styx.token, styx.session, styx.ast;
 
@@ -149,21 +149,23 @@ class Symbol
      */
     Symbol findQualified(QName)(QName qname, SymbolKind[] kinds)
     {
-        static if (is(Name == Token*[]))
+        static if (is(QName == Token*[]))
         {
-            import std.algorithm.iteration: map;
-
             assert(kinds.length == qname.length);
             auto n = qname.map!(a => a.text);
         }
-        else
+        else static if (isSomeString!QName)
         {
-            import std.algorithm.iteration: splitter;
             import std.range: walkLength;
 
             auto n = qname.splitter(".");
             assert(kinds.length == n.save.walkLength);
         }
+        else static if (is(QName : string[]))
+        {
+            alias n = qname;
+        }
+        else static assert(0);
 
         import std.range: zip;
 
