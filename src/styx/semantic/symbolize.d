@@ -201,7 +201,7 @@ public:
                     _currSmb is root && node.identifiers.length == 1)
                 {
                     session.error(_lexer.filename, node.startPos,
-                        "unit `%s` is already existing", tokenChainText(node.identifiers));
+                        "a unit named `%s` is already parsed", tokenChainText(node.identifiers));
                 }
                 _currSmb = c[0];
             }
