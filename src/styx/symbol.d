@@ -9,6 +9,7 @@ import
 enum SymbolKind
 {
     invalid_,
+    unamed,
 
     aka,
     builtin,
@@ -47,14 +48,18 @@ enum SymbolKind
     union_,
 }
 
+/**
+ * Represents a symbol but also its scoped declarations.
+ */
 class Symbol
 {
-    Token* name;
-    SymbolKind kind;
-    Symbol parent;
-    Symbol[] children;
-    AstNode astNode;
-
+    Token*      name;
+    SymbolKind  kind;
+    Symbol      unit;
+    Symbol      parent;
+    Symbol      scope_;
+    Symbol[]    children;
+    AstNode     astNode;
 
     ///
     this(Token* name, Symbol parent, SymbolKind kind)
@@ -92,7 +97,16 @@ class Symbol
     }
 
     /**
-     * Finds a direct children.
+     * Returns: $(D true) if this symbol is visible from $(D loc), $(D false)
+     * otherwise.
+     */
+    final bool isVisibleFrom(Symbol loc)
+    {
+        return false;
+    }
+
+    /**
+     * Finds direct children.
      *
      * Params:
      *     name = The symbol name, either as a string or as a $(D Token*).
@@ -100,55 +114,42 @@ class Symbol
      *
      * Returns: On success the symbol, $(D null) otherwise.
      */
-    Symbol find(Name)(Name name, SymbolKind kind)
+    Symbol[] find(Name)(Name name, SymbolKind kind)
     {
         static if (is(Name == Token*)) auto n = name.text;
         else alias n = name;
 
-        Symbol result;
-        foreach(c; children)
-            if (c.kind == kind && c.name && c.name.text == n)
-        {
-            result = c;
-            break;
-        }
-        return result;
+        return children.filter!(a => a.kind == kind && a.name.text == n).array;
     }
 
     /**
-     * Finds a direct children.
+     * Finds direct children.
      *
      * Params:
      *     name = The symbol name, either as a string or as a $(D Token*).
      *
      * Returns: On success the symbol, $(D null) otherwise.
      */
-    Symbol find(Name)(Name name)
+    Symbol[] find(Name)(Name name)
     {
         static if (is(Name == Token*)) auto n = name.text;
         else alias n = name;
 
-        Symbol result;
-        foreach(c; children)
-            if (c.name && c.name.text == n)
-        {
-            result = c;
-            break;
-        }
-        return result;
+        return children.filter!(a => a.name.text == n).array;
     }
 
     /**
-     * Finds a qualified children.
+     * Finds children, qualified from this node.
      *
      * Params:
-     *     name = The symbol name, either as a string or as $(D Token*[]).
-     *     kind = The symbol kind.
+     *     name = The symbols name, either as a string or as $(D Token*[]).
+     *     kind = The symbols kind.
      *
-     * Returns: On success the symbol, $(D null) otherwise.
+     * Returns: On success the symbols, $(D null) otherwise.
      */
-    Symbol findQualified(QName)(QName qname, SymbolKind[] kinds)
+    Symbol[] findQualified(QName)(QName qname, SymbolKind[] kinds)
     {
+        assert(kinds.length);
         static if (is(QName == Token*[]))
         {
             assert(kinds.length == qname.length);
@@ -169,25 +170,47 @@ class Symbol
 
         import std.range: zip;
 
-        Symbol result = this;
+
+        Symbol current = this;
+        Symbol[] results;
+        size_t levelIndex;
+        size_t lastLevelIndex = kinds.length - 1;
+
         foreach(s, t; zip(n, kinds))
         {
-
-            if (Symbol c = result.find(s, t))
+            Symbol[] c = current.find(s, t);
+            if (levelIndex != lastLevelIndex && c.length == 1)
             {
-                result = c;
+                current = c[0];
             }
-            else
+            else if (levelIndex == lastLevelIndex && c.length > 0)
             {
-                result = null;
-                break;
+                results = c;
             }
+            else break;
+            ++levelIndex;
         }
-        return result;
+        return results;
     }
 }
 
-private Symbol _root;
+/**
+ * Finds fully qualified children. First kind must be unit.
+ *
+ * Params:
+ *     name = The symbols name, either as a string or as $(D Token*[]).
+ *     kind = The symbols kind.
+ *
+ * Returns: On success the symbols, $(D null) otherwise.
+ */
+Symbol[] findFullyQualified(QName)(QName qname, SymbolKind[] kinds)
+{
+    assert(kinds.length);
+    assert(kinds[0] == SymbolKind.unit);
+    return root.findQualified!(QName)(qname, kinds);
+}
+
+private __gshared Symbol _root;
 
 /**
  * Returns: The root symbol. It Contains all the units and also the default
@@ -225,7 +248,7 @@ __gshared Type s8, s16, s32, s64, ssize;
 __gshared Type f32, f64;
 __gshared Type bool_;
 
-void initialize()
+package void initialize()
 {
     if (_root !is null)
         return;
@@ -255,135 +278,5 @@ void initialize()
         usize = u32;
     }
     else assert(0);
-}
-
-/**
- *
- */
-class Scope
-{
-
-    Symbol[] symbols;
-    Scope parent;
-    Position startPos;
-    Position stopPos;
-
-    /**
-     * Appends a symbol to the scope.
-     */
-    void insertBack(Symbol value)
-    {
-        symbols ~= value;
-    }
-
-    /**
-     * Returns: A child scope which inherits currently known symbols.
-     */
-    Scope push(Position startPos, Position stopPos)
-    {
-        Scope result = new Scope;
-        result.parent = this;
-        result.symbols = symbols.dup;
-        result.startPos = startPos;
-        result.stopPos = stopPos;
-        return result;
-    }
-
-    /**
-     * Returns: A copy of the scope.
-     */
-    Scope advance()
-    {
-        Scope result = new Scope;
-        result.parent = parent;
-        result.symbols = symbols.dup;
-        result.startPos = startPos;
-        result.stopPos = stopPos;
-        return result;
-    }
-
-    /**
-     * Returns: The parent scope.
-     */
-    Scope pop()
-    {
-        return parent.advance();
-    }
-
-    /**
-     * Finds unqualified symbols known in this scope.
-     *
-     * Params:
-     *     name = The symbol name, either as a string or as a $(D Token*).
-     *
-     * Returns: On success a symbol and its overload, $(D null) otherwise.
-     */
-    // TODO-cFundamentals: test Scope.find with imported units
-    Symbol[] find(Name)(Name name)
-    {
-        static if (is(Name == Token*)) auto n = name.text;
-        else alias n = name;
-
-        // this unit ...
-        Symbol[] results = symbols.filter!(a => a.name.text == n).array;
-
-        // imported units
-        results ~= symbols.filter!(a => a.kind == SymbolKind.import_)
-                          .map!(a => a.astNode.scope_)
-                          .map!(a => a.find(name))
-                          .joiner
-                          .array;
-        return results;
-    }
-
-    /**
-     * Finds unqualified symbols known in this scope.
-     *
-     * Params:
-     *     name = The symbol name, either as a string or as a $(D Token*).
-     *     kind = The symbol kind.
-     *
-     * Returns: On success a symbol and its overload, $(D null) otherwise.
-     */
-    Symbol[] find(Name)(Name name, SymbolKind kind)
-    {
-        return find(name).filter!(a => a.kind == kind).array;
-    }
-
-    /**
-     * Finds qualified symbols known in this scope.
-     *
-     * Params:
-     *     name = The symbol name, either as a string, as $(D Token*[]) or as $(D string[])
-     *     kind = The symbol kind.
-     *
-     * Returns: On success the symbol, $(D null) otherwise.
-     */
-    Symbol[] findQualified(QName)(QName qname, SymbolKind[] kinds)
-    {
-        static if (is(QName == Token*[]))
-        {
-            assert(kinds.length == qname.length);
-            auto n = qname.map!(a => a.text).array;
-        }
-        else static if (isSomeString!QName)
-        {
-            import std.range: walkLength;
-
-            auto n = qname.splitter(".").array;
-            assert(kinds.length == n.length);
-        }
-        else static if (is(QName : string[]))
-        {
-            alias n = qname;
-        }
-        else static assert(0);
-
-        assert(kinds[0] == SymbolKind.unit, "TODO");
-
-        Symbol[] results = find(n[0], kinds[0])
-            .map!(a => a.findQualified(n[1..$], kinds[1..$])).array;
-        return results;
-    }
 }
 

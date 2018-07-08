@@ -29,10 +29,11 @@ public:
             Symbol result = root;
             foreach (i; 0..list.chain.length)
             {
-                if (Symbol c = result.find(list.chain[i], SymbolKind.unit))
+                Symbol[] c = result.find(list.chain[i], SymbolKind.unit);
+                if (c.length == 1)
                 {
-                    c.astNode = node;
-                    result = c;
+                    c[0].astNode = node;
+                    result = c[0];
                 }
                 else
                 {

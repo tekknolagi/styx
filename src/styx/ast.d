@@ -149,10 +149,6 @@ class AstNode
 
     /// Associated Symbol
     @Semantic Symbol symbol;
-    /// Associated Scope
-    @Semantic Scope scope_;
-    /// The unit where the node is declared.
-    @Semantic Object unit;
 }
 
 /**

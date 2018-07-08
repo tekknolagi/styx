@@ -16,17 +16,18 @@ final class AstSymbolizerA: AstVisitor
 
 private:
 
-    Symbol _currSmb;
-    Scope  _currScp;
-    bool _inType;
-    Lexer* _lexer;
+    Symbol  _currUnt;
+    Symbol  _currSmb;
+    Symbol  _crrScop;
+    bool    _inType;
+    Lexer*  _lexer;
 
     void checkSameSymbolName(N : AstNode)(N node, SymbolKind kind)
     {
         if (kind == SymbolKind.function_)
             return;
 
-        Symbol[] s = _currScp.find(node.name);
+        Symbol[] s = _currSmb.find(node.name);
         if (s.length && s[0].parent is _currSmb)
         {
             session.error(_lexer.filename, node.startPos,
@@ -35,48 +36,28 @@ private:
         }
     }
 
-    void addNamedSymbolInScope(N : AstNode)(N node, SymbolKind kind)
+    void addNamedSymbol(N : AstNode)(N node, SymbolKind kind)
     {
         Symbol oldSmb = _currSmb;
         checkSameSymbolName(node, kind);
-        node.scope_ = _currScp;
         _currSmb = new Symbol(node.name, oldSmb, kind);
-        node.symbol = _currSmb;
         _currSmb.astNode = node;
-        _currScp = _currScp.advance();
-        _currScp.insertBack(_currSmb);
+        _currSmb.unit = _currUnt;
+        node.symbol = _currSmb;
         node.accept(this);
         _currSmb = oldSmb;
-    }
-
-    void addNamedSymbolInNewScope(N : AstNode)(N node, SymbolKind kind)
-    {
-        Symbol oldSmb = _currSmb;
-        checkSameSymbolName(node, kind);
-        node.scope_ = _currScp;
-        _currSmb = new Symbol(node.name, oldSmb, kind);
-        node.symbol = _currSmb;
-        _currSmb.astNode = node;
-        _currScp = _currScp = _currScp.push(node.startPos, node.stopPos);
-        _currScp.insertBack(_currSmb);
-        node.accept(this);
-        _currSmb = oldSmb;
-        _currScp = _currScp.pop();
     }
 
     void addNamedType(N : AstNode)(N node, SymbolKind kind)
     {
         Symbol oldSmb = _currSmb;
         checkSameSymbolName(node, kind);
-        node.scope_ = _currScp;
         _currSmb = new Type(node.name, oldSmb, kind);
-        node.symbol = _currSmb;
         _currSmb.astNode = node;
-        _currScp = _currScp = _currScp.push(node.startPos, node.stopPos);
-        _currScp.insertBack(_currSmb);
+        _currSmb.unit = _currUnt;
+        node.symbol = _currSmb;
         node.accept(this);
         _currSmb = oldSmb;
-        _currScp = _currScp.pop();
     }
 
 public:
@@ -91,14 +72,15 @@ public:
 
     override void visit(AkaDeclarationAstNode node)
     {
-        addNamedSymbolInScope(node, SymbolKind.aka);
+        addNamedSymbol(node, SymbolKind.aka);
     }
 
     override void visit(BlockStatementAstNode node)
     {
-        _currScp = _currScp.push(node.startPos, node.stopPos);
+        Symbol old = _currSmb;
+        _currSmb = Symbol.newInternal(_currSmb, SymbolKind.unamed);
         node.accept(this);
-        _currScp = _currScp.pop();
+        _currSmb = old;
     }
 
     override void visit(ClassDeclarationAstNode node)
@@ -113,13 +95,12 @@ public:
 
     override void visit(EnumMemberAstNode node)
     {
-        addNamedSymbolInScope(node, SymbolKind.variable);
+        addNamedSymbol(node, SymbolKind.variable);
     }
 
     override void visit(FunctionDeclarationAstNode node)
     {
-
-        addNamedSymbolInNewScope(node, SymbolKind.function_);
+        addNamedSymbol(node, SymbolKind.function_);
     }
 
     override void visit(FunctionParameterGroupAstNode node)
@@ -128,7 +109,6 @@ public:
         foreach(tk; node.variableList)
         {
             Symbol p = new Symbol(tk, _currSmb, SymbolKind.variable);
-            _currScp.insertBack(p);
         }
     }
 
@@ -144,7 +124,7 @@ public:
 
     override void visit(TemplateDeclarationAstNode node)
     {
-        addNamedSymbolInNewScope(node, SymbolKind.template_);
+        addNamedSymbol(node, SymbolKind.template_);
     }
 
     override void visit(TemplateParametersAstNode node)
@@ -154,7 +134,6 @@ public:
         foreach(tk; node.parameters)
         {
             Symbol p = new Symbol(tk, old, SymbolKind.partial);
-            _currScp.insertBack(p);
         }
         _currSmb = old;
     }
@@ -212,35 +191,33 @@ public:
 
     override void visit(UnitAstNode node)
     {
-        _currScp = new Scope;
-        _currScp.startPos = node.startPos;
-        _currScp.stopPos  = Position(int.max, 0);
-
         _currSmb = root;
         foreach(i; 0..node.identifiers.length)
         {
-            if (Symbol c = _currSmb.find(node.identifiers[i], SymbolKind.unit))
+            Symbol[] c = _currSmb.find(node.identifiers[i], SymbolKind.unit);
+            if (c.length == 1)
             {
-                if (i == 0 && _currSmb is root && node.identifiers.length == 1)
+                if (i == node.identifiers.length-1 &&
+                    _currSmb is root && node.identifiers.length == 1)
                 {
-                    session.error(__FILE_FULL_PATH__, Position(__LINE__, 0), "INTERNAL");
+                    session.error(_lexer.filename, node.startPos,
+                        "unit `%s` is already existing", tokenChainText(node.identifiers));
                 }
-                _currSmb = c;
+                _currSmb = c[0];
             }
             else
             {
                 _currSmb = new Symbol(node.identifiers[i], _currSmb, SymbolKind.unit);
+                _currUnt = _currSmb;
             }
         }
-        _currScp.insertBack(_currSmb);
         node.symbol = _currSmb;
         node.accept(this);
-        _currSmb = root;
     }
 
     override void visit(VariableDeclarationItemAstNode node)
     {
-        addNamedSymbolInScope(node, SymbolKind.variable);
+        addNamedSymbol(node, SymbolKind.variable);
     }
 }
 
@@ -286,27 +263,27 @@ unittest
     };
     runAstSymbolizerAForTest(s);
     assert((cast(AkaDeclarationAstNode) root
-        .findQualified("u.s8_alt", [SymbolKind.unit, SymbolKind.aka]).astNode).type.symbol is s8);
+        .findQualified("u.s8_alt", [SymbolKind.unit, SymbolKind.aka])[0].astNode).type.symbol is s8);
     assert((cast(AkaDeclarationAstNode) root
-        .findQualified("u.u8_alt", [SymbolKind.unit, SymbolKind.aka]).astNode).type.symbol is u8);
+        .findQualified("u.u8_alt", [SymbolKind.unit, SymbolKind.aka])[0].astNode).type.symbol is u8);
     assert((cast(AkaDeclarationAstNode) root
-        .findQualified("u.s16_alt", [SymbolKind.unit, SymbolKind.aka]).astNode).type.symbol is s16);
+        .findQualified("u.s16_alt", [SymbolKind.unit, SymbolKind.aka])[0].astNode).type.symbol is s16);
     assert((cast(AkaDeclarationAstNode) root
-        .findQualified("u.u16_alt", [SymbolKind.unit, SymbolKind.aka]).astNode).type.symbol is u16);
+        .findQualified("u.u16_alt", [SymbolKind.unit, SymbolKind.aka])[0].astNode).type.symbol is u16);
     assert((cast(AkaDeclarationAstNode) root
-        .findQualified("u.s32_alt", [SymbolKind.unit, SymbolKind.aka]).astNode).type.symbol is s32);
+        .findQualified("u.s32_alt", [SymbolKind.unit, SymbolKind.aka])[0].astNode).type.symbol is s32);
     assert((cast(AkaDeclarationAstNode) root
-        .findQualified("u.u32_alt", [SymbolKind.unit, SymbolKind.aka]).astNode).type.symbol is u32);
+        .findQualified("u.u32_alt", [SymbolKind.unit, SymbolKind.aka])[0].astNode).type.symbol is u32);
     assert((cast(AkaDeclarationAstNode) root
-        .findQualified("u.s64_alt", [SymbolKind.unit, SymbolKind.aka]).astNode).type.symbol is s64);
+        .findQualified("u.s64_alt", [SymbolKind.unit, SymbolKind.aka])[0].astNode).type.symbol is s64);
     assert((cast(AkaDeclarationAstNode) root
-        .findQualified("u.u64_alt", [SymbolKind.unit, SymbolKind.aka]).astNode).type.symbol is u64);
+        .findQualified("u.u64_alt", [SymbolKind.unit, SymbolKind.aka])[0].astNode).type.symbol is u64);
     assert((cast(AkaDeclarationAstNode) root
-        .findQualified("u.f32_alt", [SymbolKind.unit, SymbolKind.aka]).astNode).type.symbol is f32);
+        .findQualified("u.f32_alt", [SymbolKind.unit, SymbolKind.aka])[0].astNode).type.symbol is f32);
     assert((cast(AkaDeclarationAstNode) root
-        .findQualified("u.f64_alt", [SymbolKind.unit, SymbolKind.aka]).astNode).type.symbol is f64);
+        .findQualified("u.f64_alt", [SymbolKind.unit, SymbolKind.aka])[0].astNode).type.symbol is f64);
     assert((cast(AkaDeclarationAstNode) root
-        .findQualified("u.bool_alt", [SymbolKind.unit, SymbolKind.aka]).astNode).type.symbol is bool_);
+        .findQualified("u.bool_alt", [SymbolKind.unit, SymbolKind.aka])[0].astNode).type.symbol is bool_);
 }
 
 unittest
@@ -314,6 +291,7 @@ unittest
     enum s = q{  unit u; function func(){var auto v = 0;}  };
     runAstSymbolizerAForTest(s);
     with(SymbolKind) assert(root.findQualified("u.func.v", [unit, function_, variable]));
+    with(SymbolKind) assert(findFullyQualified("u.func.v", [unit, function_, variable]));
 }
 
 unittest
@@ -342,22 +320,22 @@ unittest
 {
     enum s = q{  unit u; aka z = s8;  };
     runAstSymbolizerAForTest(s);
-    with(SymbolKind) assert(root.findQualified("u.z", [unit, aka]));
+    with(SymbolKind) assert(root.findQualified("u.z", [unit, aka]).length);
 }
 
 unittest
 {
     enum s = q{  unit u; aka z = s8;  };
     runAstSymbolizerAForTest(s);
-    with(SymbolKind) assert(!root.findQualified("u.s8", [unit, aka]));
+    with(SymbolKind) assert(!root.findQualified("u.s8", [unit, aka]).length);
 }
 
 unittest
 {
     enum s = q{  unit u; function foo(const s8 a,b){}  };
     runAstSymbolizerAForTest(s);
-    with(SymbolKind) assert(root.findQualified("u.foo.a", [unit, function_, variable]));
-    with(SymbolKind) assert(root.findQualified("u.foo.b", [unit, function_, variable]));
+    with(SymbolKind) assert(root.findQualified("u.foo.a", [unit, function_, variable]).length);
+    with(SymbolKind) assert(root.findQualified("u.foo.b", [unit, function_, variable]).length);
 }
 
 unittest
@@ -366,7 +344,7 @@ unittest
     runAstSymbolizerAForTest(s);
     with(SymbolKind)
     {
-        Symbol sy = root.findQualified("u.E", [unit, enum_]);
+        Symbol sy = root.findQualified("u.E", [unit, enum_])[0];
         assert(sy);
         assert(sy.children.length == 2);
         assert((cast(Type)sy).baseTypes[0].kind == SymbolKind.bool_);
@@ -379,7 +357,7 @@ unittest
 {
     enum s = q{  unit u; aka z = s8;  };
     runAstSymbolizerAForTest(s);
-    Symbol sym = root.findQualified("u.z", [SymbolKind.unit, SymbolKind.aka]);
+    Symbol sym = root.findQualified("u.z", [SymbolKind.unit, SymbolKind.aka])[0];
     assert(sym);
     sym.clear;
     assert(sym.children.length == 0);
@@ -415,77 +393,5 @@ unittest
     auto e = session.errorsCount;
     runAstSymbolizerAForTest(s);
     assert(session.errorsCount == e);
-}
-
-unittest
-{
-    enum s = q{
-        unit u;
-        function f1()
-        {
-            const int a;
-            function f2();
-            const int b;
-            function f3();
-        }
-    };
-    UnitAstNode u = runAstSymbolizerAForTest(s);
-
-    {
-        AstNode node = u.findDeclaration("f1");
-        assert(node);
-        assert(node.scope_);
-        assert(node.scope_.symbols.length == 1);
-        with(SymbolKind) assert(node.scope_.symbols[0] is
-            root.findQualified("u", [unit]));
-    }
-    {
-        AstNode node = u.findDeclaration("f1.a");
-        assert(node);
-        assert(node.scope_);
-        assert(node.scope_.symbols.length == 2);
-        with(SymbolKind) assert(node.scope_.symbols[1] is
-            root.findQualified("u.f1", [unit, function_]));
-    }
-    {
-        AstNode node = u.findDeclaration("f1.f2");
-        assert(node);
-        assert(node.scope_);
-        assert(node.scope_.symbols.length == 3);
-        with(SymbolKind) assert(node.scope_.symbols[1] is
-            root.findQualified("u.f1", [unit, function_]));
-        with(SymbolKind) assert(node.scope_.symbols[2] is
-            root.findQualified("u.f1.a", [unit, function_, variable]));
-
-        {
-            Symbol[] fr = node.scope_.find("u");
-            assert(fr.length == 1);
-            assert(fr[0] is u.symbol);
-        }
-        {
-            Symbol[] fr = node.scope_.find("f1");
-            assert(fr.length == 1);
-            assert(fr[0] is node.scope_.symbols[1]);
-        }
-    }
-}
-
-unittest
-{
-    enum s = q{
-        unit u;
-        class Foo {const int bar;}
-        function fun(){ }
-    };
-    UnitAstNode u = runAstSymbolizerAForTest(s);
-
-    {
-        AstNode fun_node = u.findDeclaration("fun");
-        AstNode bar_node = u.findDeclaration("bar");
-        assert(fun_node);
-        assert(bar_node);
-        with(SymbolKind) assert(fun_node.scope_
-            .findQualified("u.Foo.bar", [unit, class_, variable])[0] is bar_node.symbol);
-    }
 }
 
