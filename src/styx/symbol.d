@@ -202,7 +202,7 @@ Symbol root()
 
 class Type: Symbol
 {
-    alias typeKind = super.kind;
+    alias typeKind = Symbol.kind;
     Type[] baseTypes;
 
     this(Token* name, Symbol parent, SymbolKind kind)
