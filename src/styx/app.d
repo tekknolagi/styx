@@ -240,7 +240,10 @@ int main(string[] args)
         if (session.verbose)
             writefln("unit semantic for %s...", lexers[i].filename);
         if (!unitSemantic(parser.unit, lexers[i]))
+        {
+            writefln("error, unit semantic for `%s` failed", lexers[i].filename);
             return 1;
+        }
         if (options.ast)
         {
             writefln("AST for %s", lexers[i].filename);
@@ -254,7 +257,10 @@ int main(string[] args)
         if (session.verbose)
             writefln("crossed-unit semantic for %s...", lexers[i].filename);
         if (!crossUnitSemantic(parser.unit, lexers[i]))
+        {
+            writefln("error, crossed-unit semantic for `%s` failed", lexers[i].filename);
             return 1;
+        }
     }
     if (options.mtime)
     {
