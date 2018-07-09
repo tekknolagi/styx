@@ -1,7 +1,7 @@
 module styx.semantic.echo;
 
 import
-    std.stdio, std.conv, std.exception;
+    std.stdio, std.conv, std.exception, std.algorithm;
 import
     styx.token, styx.lexer, styx.ast, styx.session;
 
@@ -18,10 +18,11 @@ private:
 
     void evaluate(PrimaryExpressionAstNode node)
     {
-        switch(node.compilerEcho.command.text)
+    with(node.compilerEcho)
+        switch(command.text)
         {
         case "semver":
-            if (node.compilerEcho.parameters.length)
+            if (parameters.length)
                 session.error(_lx.filename, node.startPos,
                     "no parameter expected for `version`");
 
@@ -30,7 +31,7 @@ private:
             break;
 
         case "line":
-            if (node.compilerEcho.parameters.length)
+            if (parameters.length)
                 session.error(_lx.filename, node.startPos,
                     "no parameter expected for `line`");
 
@@ -38,9 +39,72 @@ private:
             node.compilerEcho = null;
             break;
 
+        case "is":
+            if (parameters.length != 2)
+            {
+                session.error(_lx.filename, node.startPos,
+                    "2 parameters expected for `is`, and not %d", parameters.length);
+                break;
+            }
+            if (!parameters[0].type)
+            {
+                session.error(_lx.filename, node.startPos,
+                    "Type expected as first `is` parameter");
+                break;
+            }
+            if (!parameters[0].type.symbol)
+            {
+                session.error(_lx.filename, node.startPos,
+                    "Type represented by first `is` parameter is not solved");
+                break;
+            }
+            if (parameters[1].type && !parameters[1].type.symbol)
+            {
+                session.error(_lx.filename, node.startPos,
+                    "Type represented by second `is` parameter is not solved");
+                break;
+            }
+            with (TokenType) if (!parameters[1].type &&
+                !parameters[1].keyword.among(class_, interface_, struct_))
+            {
+                session.error(_lx.filename, node.startPos,
+                    "Type, `class` `interface`, `struct` or `union` expected as second `is` parameter");
+                break;
+            }
+            if (parameters[0].type && parameters[1].type)
+            {
+                node.identifierOrKeywordOrLiteral =
+                    parameters[0].type.symbol == parameters[1].type.symbol ? &trueToken : &falseToken;
+            }
+            else
+            {
+                switch (parameters[1].keyword)
+                {
+                case TokenType.class_:
+                    node.identifierOrKeywordOrLiteral =
+                    cast(ClassDeclarationAstNode) parameters[0].type.symbol.astNode ? &trueToken : &falseToken;
+                    break;
+                case TokenType.interface_:
+                    node.identifierOrKeywordOrLiteral =
+                    cast(InterfaceDeclarationAstNode) parameters[0].type.symbol.astNode ? &trueToken : &falseToken;
+                    break;
+                case TokenType.struct_:
+                    node.identifierOrKeywordOrLiteral =
+                    cast(StructDeclarationAstNode) parameters[0].type.symbol.astNode ? &trueToken : &falseToken;
+                    break;
+                case TokenType.union_:
+                    node.identifierOrKeywordOrLiteral =
+                    cast(UnionDeclarationAstNode) parameters[0].type.symbol.astNode ? &trueToken : &falseToken;
+                    break;
+                default: assert(false);
+                }
+            }
+            node.compilerEcho = null;
+            break;
+
         default:
             session.error(_lx.filename, node.startPos,
-                "invalid echo command `%s`", node.compilerEcho.command.text);
+                "invalid echo command `%s`", command.text);
         }
     }
 
@@ -128,4 +192,5 @@ function foo()
     const char[] a = " ~ versionToken.text ~ ";
 }");
 }
+
 

@@ -1,0 +1,8 @@
+unit a;
+
+function foo()
+{
+    if (echo(is, s32, s32)){}
+    if (echo(is, u64, u64)){}
+    if (echo(is, f64, s8)){}
+}

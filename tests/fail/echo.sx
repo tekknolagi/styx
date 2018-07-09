@@ -1,0 +1,12 @@
+unit a;
+
+function foo()
+{
+    if (echo(is)) {}
+    if (echo(is, s32)) {}
+    if (echo(is, s32, label)) {}
+    if (echo(is, label, label)) {}
+    if (echo(is, s32, fantomas)) {}
+    if (echo(not_a_command)) {}
+}
+

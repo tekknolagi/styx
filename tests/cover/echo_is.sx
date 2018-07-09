@@ -1,0 +1,27 @@
+unit a;
+
+function foo()
+{
+    if (echo(is)) {}
+    if (echo(is, s32)) {}
+    if (echo(is, s32, label)) {}
+    if (echo(is, label, label)) {}
+    if (echo(is, s32, fantomas)) {}
+    if (echo(not_a_command)) {}
+}
+
+aka T = s32;
+
+function bar()
+{
+    // need expression semantic for a.T
+    if (echo(is, s32 /*a.T*/, s32))
+    {
+        const auto a = "true";
+    }
+    else
+    {
+        const auto a = "false";
+    }
+}
+
