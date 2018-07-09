@@ -16,6 +16,9 @@ private:
 
     Lexer* _lx;
 
+    /**
+     * Try to replace echo expression with another primary expression.
+     */
     void evaluate(PrimaryExpressionAstNode node)
     {
     with(node.compilerEcho)

@@ -549,6 +549,7 @@ final class AkaDeclarationAstNode: AttributedDeclaration
     /// The target name.
     Token* name;
     /// The source type or the source symbol.
+    //TODO: replace by Symbol since forwarding inner funcs is important feature planned to simplify composition.
     TypeAstNode type;
     ///
     override void accept(AstVisitor visitor)

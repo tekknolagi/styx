@@ -73,14 +73,18 @@ class Symbol
         }
     }
 
-    ///
+    /**
+     * Returns: An new unamed Symbol, for example the the symbol associated to a
+     * BlockStatementAstNode is one.
+     */
     static Symbol newInternal(Symbol parent, SymbolKind kind)
     {
         return new Symbol(null, parent, kind);
     }
 
     /**
-     * Remove all the non system symbols.
+     * Removes all the non system symbols.
+     * Used for to clean the root between two tests.
      */
     final void clear()
     {
@@ -243,11 +247,34 @@ class Type: Symbol
     final bool isFloatingPoint(){return SymbolKind.f32 <= typeKind && typeKind <= SymbolKind.f64;}
 }
 
-__gshared Type u8, u16, u32, u64, usize;
-__gshared Type s8, s16, s32, s64, ssize;
-__gshared Type f32, f64;
+/// Symbol for the $(D u8) basic type.
+__gshared Type u8;
+/// Symbol for the $(D u16) basic type.
+__gshared Type u16;
+/// Symbol for the $(D u32) basic type.
+__gshared Type u32;
+/// Symbol for the $(D u64) basic type.
+__gshared Type u64;
+/// Symbol for the $(D usize) basic type.
+__gshared Type usize;
+/// Symbol for the $(D s8) basic type.
+__gshared Type s8;
+/// Symbol for the $(D s16) basic type.
+__gshared Type s16;
+/// Symbol for the $(D s32) basic type.
+__gshared Type s32;
+/// Symbol for the $(D s64) basic type.
+__gshared Type s64;
+/// Symbol for the $(D ssize) basic type.
+__gshared Type ssize;
+/// Symbol for the $(D f32) basic type.
+__gshared Type f32;
+/// Symbol for the $(D f64) basic type.
+__gshared Type f64;
+/// Symbol for the $(D bool) basic type.
 __gshared Type bool_;
 
+// Lazily called when the compiler wants to touch the $(D root) Symbol.
 package void initialize()
 {
     if (_root !is null)
