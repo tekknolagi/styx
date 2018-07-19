@@ -2272,6 +2272,8 @@ private:
      */
     ExpressionAstNode parseExpression(ExpressionAstNode exp, TokenType ending = TokenType.invalid)
     {
+        ExpressionAstNode result = new ExpressionAstNode;
+        result.startPos = current.position;
         with(TokenType)
         if (exp)
         {
@@ -2284,8 +2286,6 @@ private:
             advance();
             if (ExpressionAstNode r = parseExpression(null))
             {
-                ExpressionAstNode result = new ExpressionAstNode;
-                result.startPos = current.position;
                 BinaryExpressionAstNode be = new BinaryExpressionAstNode;
 
                 be.startPos = current.position;
@@ -2339,10 +2339,7 @@ private:
         {
             if (UnaryExpressionAstNode u = parseUnaryExpression())
             {
-                ExpressionAstNode result = new ExpressionAstNode;
-                result.startPos = current.position;
                 result.unaryExpression = u;
-                u.startPos = current.position;
                 if (ending != TokenType.invalid && current.type == ending)
                 {
                     return result;
