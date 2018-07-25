@@ -323,6 +323,8 @@ Styx:
     HexLiteralSuffix <- Colon BasicType
 
     FloatLiteral  <~ Num+ Dot Num+ FloatLiteralSuffix?
+                     / Num+ Exp Num+ FloatLiteralSuffix?
+    Exp <- "e" / "E"
     FloatLiteralSuffix <- Colon BasicFloatType
 
     IntLiteral  <~ Num+ IntLiteralSuffix?
