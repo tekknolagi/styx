@@ -6,6 +6,18 @@ The language has mostly a C syntax and a simple LL(1) grammar.
 Its grammar is formally designed using a PEG and the compiler is fully hand written in D.
 A particular focus is put on testing, using D features such as in code unit tests or code instrumentation for coverage.
 
+### Building
+
+A recent [D](https://dlang.org/download.html) compiler (packaged with DUB) is needed.
+
+#### Compiler
+
+    dub build --config=compiler
+    
+#### Inline tests
+
+    dub test --build=unittest
+
 ### Status
 
 #### Accomplishment
